@@ -46,21 +46,12 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         pageConfiguration = popupConfiguration
             ?? PageConfiguration.make(hoverHandler: hoverHandler, dialupModePage: dialupModePage)
 
-        // A real titled window (so ⌘W/⌘M, Mission Control, Stage Manager and resizing all work),
-        // but the title bar and its buttons are drawn by the HTML chrome.
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1100, height: 780),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-            backing: .buffered, defer: false
-        )
+        // A frameless, transparent window (see DialupWindow): the HTML chrome draws the title bar,
+        // the buttons and the window corners. ⌘W/⌘M, Mission Control and resizing still work.
+        let window = DialupWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 780))
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 520, height: 340)
         window.title = "Dialup"
-        window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true
-        for button: NSWindow.ButtonType in [.closeButton, .miniaturizeButton, .zoomButton] {
-            window.standardWindowButton(button)?.isHidden = true
-        }
         super.init(window: window)
 
         window.contentView = layoutView
@@ -272,12 +263,18 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     private func preferencesDidChange() {
         emit("prefs", preferencesPayload)
+        refreshShadow()
         applyDialupMode() // skin-specific scrollbars
         for tab in tabs where tab.isShowingStartPage { tab.webView.reload() }
         emitTabs()
     }
 
     static let soundsDidChange = Notification.Name("DialupSoundsDidChange")
+
+    /// A transparent window's shadow follows its painted shape; recompute it once the skin has drawn.
+    private func refreshShadow() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.window?.invalidateShadow() }
+    }
 
     /// Certificate summary for the padlock dialog.
     private func securityInfo() -> [String: Any]? {
@@ -330,6 +327,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         switch cmd {
         case "ready":
             chromeReady = true
+            refreshShadow()
             lastWindowState = windowState
             return [
                 "apiVersion": ChromeBridge.apiVersion,

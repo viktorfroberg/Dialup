@@ -391,3 +391,7 @@ body, body.inactive { border: 0; }
 .tab-new { margin: 2px 0 2px 4px; }
 :root { --icon-wayback: url(../img/aqua-wayback.svg); }
 #btn-wayback .label { display: none; }
+
+/* Window shape: Aqua windows have gently rounded top corners */
+body { border-radius: 6px 6px 0 0; overflow: hidden; }
+#chrome { border-radius: 6px 6px 0 0; background: var(--metal); }

@@ -16,7 +16,7 @@ final class BrowserLayoutView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
-        layer?.backgroundColor = NSColor.white.cgColor
+        layer?.backgroundColor = NSColor.clear.cgColor // window corners are drawn by the skin
         addSubview(scanlineView)
     }
 

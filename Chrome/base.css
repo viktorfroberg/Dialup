@@ -833,3 +833,11 @@ body.muted .ico-sound { background-image: url(img/sound-off.svg); }
 .skin-cards { flex-wrap: wrap; }
 .skin-card { width: 165px; }
 .wizard-cards .wizard-card { min-width: 0; }
+
+/* ---------- Window shape (the window is transparent; the skin draws its corners) ---------- */
+#chrome { background: transparent; }
+.rebar { background-color: var(--face); }
+body { border-radius: 8px 8px 0 0; }            /* XP: rounded top corners, square bottom */
+body.fullscreen, body.zoomed { border-radius: 0; }
+/* Throbber: sits on the toolbar face instead of a white patch */
+#band-menu .throbber { background: url(img/throbber.svg) center / 20px no-repeat; margin: 0 -4px 0 0; }

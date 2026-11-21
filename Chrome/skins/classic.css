@@ -557,3 +557,6 @@ body.inactive .dialog-titlebar { background: var(--titlebar-bg-inactive); color:
 
 .about-banner { background: linear-gradient(90deg, #0a246a, #a6caf0); color: #fff; }
 .about-name { font: bold 22px var(--font); color: #fff; text-shadow: 1px 1px 0 #000; }
+
+/* Window shape: square corners */
+body { border-radius: 0; }
