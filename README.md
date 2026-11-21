@@ -73,7 +73,7 @@ The whole browser UI is plain HTML and CSS, with no build step. A skin is one CS
 
 **[Download Dialup for macOS](https://github.com/viktorfroberg/Dialup/releases/latest/download/Dialup.zip)** (macOS 15.4 or later, Apple silicon and Intel). Unzip it and drag Dialup.app to Applications. All versions are on the [Releases page](https://github.com/viktorfroberg/Dialup/releases).
 
-Dialup is ad-hoc signed, not notarized by Apple, so macOS blocks it the first time. Try to open it once, then go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** (or run `xattr -dr com.apple.quarantine /Applications/Dialup.app`).
+Dialup is ad-hoc signed, not notarized by Apple, so macOS blocks it the first time. Try to open it once, then go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** Or run `xattr -dr com.apple.quarantine ~/Downloads/Dialup.app` in Terminal before you move the app to Applications. Inside Applications, macOS only lets the command work if Terminal has the App Management permission.
 
 ## Build & run
 
