@@ -879,3 +879,10 @@ body.fullscreen, body.zoomed { border-radius: 0; }
 .looks-preview { width: 210px; }
 .looks-preview canvas { display: block; margin: 0 auto; border: 1px solid #808080; image-rendering: pixelated; background: #fff; }
 .looks-preview canvas + .preview-caption { margin-bottom: 8px; }
+
+/* Skin cards: always three in a row (a fixed grid), so switching skins doesn't re-wrap them
+   and make the dialog jump. The previews scale to the column width. */
+.skin-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex-wrap: nowrap; }
+.skin-cards .skin-card { width: auto; min-width: 0; }
+.skin-card .mini-window { width: 100%; box-sizing: border-box; }
+.skin-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
