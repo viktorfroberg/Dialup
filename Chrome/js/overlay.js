@@ -69,6 +69,14 @@ export function showMenu(items, x, y) {
     };
     shield.addEventListener('mousedown', (e) => { e.preventDefault(); close(null); });
 
+    // Some skins (Aqua) blink the chosen item before the menu closes.
+    const pick = (row, id) => {
+      const delay = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--menu-pick-delay')) || 0;
+      if (!delay) { close(id); return; }
+      row.classList.add('picked');
+      setTimeout(() => close(id), delay);
+    };
+
     const trim = (level) => { while (menus.length > level) menus.pop().remove(); };
     const rows = (menu) => [...menu.querySelectorAll(':scope > .menu-item:not(.disabled)')];
     const setActive = (menu, row) => {
@@ -104,7 +112,7 @@ export function showMenu(items, x, y) {
         });
         row.addEventListener('mouseup', () => {
           if (item.enabled === false || item.items) return;
-          close(item.id);
+          pick(row, item.id);
         });
         menu.append(row);
       }
@@ -133,7 +141,7 @@ export function showMenu(items, x, y) {
       else if (e.key === 'Enter' && active) {
         stop();
         if (active._item.items) { const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
-        else close(active._item.id);
+        else pick(active, active._item.id);
       }
     }
     const keys = { onKey };
@@ -159,7 +167,8 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
   const closeBtn = el('button', 'cap cap-close');
   closeBtn.title = 'Close';
   bar.append(el('span', 'dialog-title', title), el('span', 'dialog-caps'));
-  bar.lastChild.append(closeBtn);
+  // Mac-style skins show all three gumdrops on dialogs, with minimize/zoom greyed out.
+  bar.lastChild.append(closeBtn, el('span', 'cap dialog-cap-extra'), el('span', 'cap dialog-cap-extra'));
 
   const content = el('div', 'dialog-body');
   if (body) content.append(body);
@@ -188,6 +197,15 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
 
   dialog.append(bar, content, footer);
   backdrop.append(dialog);
+  // Clicking outside a modal dialog: the title bar flashes and the system dings.
+  backdrop.addEventListener('mousedown', (e) => {
+    if (e.target !== backdrop) return;
+    e.preventDefault();
+    dialog.classList.remove('flash');
+    void dialog.offsetWidth; // restart the animation
+    dialog.classList.add('flash');
+    host.call('sound', { name: 'ding' });
+  });
   layer.append(backdrop);
 
   // Centre, then allow dragging by the title bar (inside the browser window).

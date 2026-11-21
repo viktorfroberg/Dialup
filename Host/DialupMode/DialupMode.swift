@@ -119,6 +119,12 @@ final class DialupMode {
                 UserDefaults.standard.set(data, forKey: Self.defaultsKey)
             }
             NotificationCenter.default.post(name: Self.didChange, object: self)
+            // The dial-in moment: a modem handshake for dial-up speeds, silence for broadband.
+            if settings.enabled && !oldValue.enabled && [.modem56k, .isdn].contains(settings.connection) {
+                SoundEffects.shared.play(.modem)
+            } else if !settings.enabled && oldValue.enabled {
+                SoundEffects.shared.stopModem()
+            }
         }
     }
 
@@ -282,6 +288,10 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
             + '::-webkit-scrollbar-track{background:#f3f1ec!important}'
             + '::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#cad8fc,#bccdfa 45%,#aec2f8)!important;border:1px solid #93abe9!important;border-radius:3px!important;box-shadow:inset 1px 1px 0 #eef3ff!important}'
             + '::-webkit-scrollbar-thumb:horizontal{background:linear-gradient(#cad8fc,#bccdfa 45%,#aec2f8)!important}'
+            + '::-webkit-scrollbar-thumb:vertical{background:repeating-linear-gradient(#eef3ff 0 1px,#8faaee 1px 2px) center/8px 8px no-repeat,linear-gradient(90deg,#cad8fc,#bccdfa 45%,#aec2f8)!important}'
+            + '::-webkit-scrollbar-thumb:vertical:hover{background:repeating-linear-gradient(#f4f8ff 0 1px,#8faaee 1px 2px) center/8px 8px no-repeat,linear-gradient(90deg,#d6e7ff,#c9daff 45%,#b9cdfb)!important}'
+            + '::-webkit-scrollbar-thumb:vertical:active{background:repeating-linear-gradient(#e2eaff 0 1px,#7b98e0 1px 2px) center/8px 8px no-repeat,linear-gradient(90deg,#b7c9f6,#a9bdf2 45%,#9ab0ee)!important}'
+            + '::-webkit-scrollbar-track{box-shadow:inset 1px 0 2px rgba(0,0,0,.08)!important}'
             + '::-webkit-scrollbar-button:single-button{display:block!important;width:17px!important;height:17px!important;background-color:#cad8fc!important;border:1px solid #93abe9!important;border-radius:3px!important;background-repeat:no-repeat!important;background-position:center!important}'
             + `::-webkit-scrollbar-button:single-button:vertical:decrement{background-image:${svgArrow('M0 6 4 2 8 6z')}!important}`
             + `::-webkit-scrollbar-button:single-button:vertical:increment{background-image:${svgArrow('M0 2 4 6 8 2z')}!important}`
@@ -293,7 +303,12 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
             + '::-webkit-scrollbar-track:horizontal{background:linear-gradient(#cfcfcf,#f2f2f2 40%,#fbfbfb)!important}'
             + '::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#3f84ea,#a6d4ff 30%,#5ea6ff 55%,#2f74e0)!important;border:1px solid #2a5fa8!important;border-radius:8px!important}'
             + '::-webkit-scrollbar-thumb:horizontal{background:linear-gradient(#3f84ea,#a6d4ff 30%,#5ea6ff 55%,#2f74e0)!important}'
-            + '::-webkit-scrollbar-button{display:none!important}'
+            + '::-webkit-scrollbar-button:start{display:none!important}'
+            + '::-webkit-scrollbar-button:end{display:block!important;width:15px!important;height:15px!important;background:linear-gradient(90deg,#e8e8e8,#fafafa)!important;border:1px solid #b0b0b0!important;background-repeat:no-repeat!important;background-position:center!important}'
+            + `::-webkit-scrollbar-button:vertical:end:decrement{background-image:${svgArrow('M0 6 4 2 8 6z')},linear-gradient(90deg,#e8e8e8,#fafafa)!important}`
+            + `::-webkit-scrollbar-button:vertical:end:increment{background-image:${svgArrow('M0 2 4 6 8 2z')},linear-gradient(90deg,#e8e8e8,#fafafa)!important}`
+            + `::-webkit-scrollbar-button:horizontal:end:decrement{background-image:${svgArrow('M6 0 2 4 6 8z')},linear-gradient(#e8e8e8,#fafafa)!important}`
+            + `::-webkit-scrollbar-button:horizontal:end:increment{background-image:${svgArrow('M2 0 6 4 2 8z')},linear-gradient(#e8e8e8,#fafafa)!important}`
             + '::-webkit-scrollbar-corner{background:#ececec!important}',
         };
         const CSS_RETRO = (skin) => '*{scrollbar-color:auto!important;scrollbar-width:auto!important;text-shadow:none!important}'

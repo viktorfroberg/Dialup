@@ -14,36 +14,52 @@
       <i class="ico app-icon"></i>
       <span id="window-title">Dialup</span>
       <div class="caption-buttons">
-        <button class="cap cap-min" id="cap-min" title="Minimize"></button>
-        <button class="cap cap-max" id="cap-max" title="Maximize"></button>
-        <button class="cap cap-close" id="cap-close" title="Close"></button>
+        <button class="cap cap-min" id="cap-min" data-tip="Minimize"></button>
+        <button class="cap cap-max" id="cap-max" data-tip="Maximize"></button>
+        <button class="cap cap-close" id="cap-close" data-tip="Close"></button>
       </div>
     </div>
+
     <div class="rebar">
+      <!-- Menu bar band (Windows-style skins; Mac-style skins use the real macOS menu bar) -->
+      <div class="band" id="band-menu">
+        <div class="gripper"></div>
+        <nav class="menubar" id="menubar">
+          <button class="menu-title" data-menu="file">File</button>
+          <button class="menu-title" data-menu="edit">Edit</button>
+          <button class="menu-title" data-menu="view">View</button>
+          <button class="menu-title" data-menu="favorites">Favorites</button>
+          <button class="menu-title" data-menu="tools">Tools</button>
+          <button class="menu-title" data-menu="help">Help</button>
+        </nav>
+        <div class="spacer"></div>
+        <div class="throbber" id="throbber" data-tip="Dialup"></div>
+      </div>
+
       <!-- Standard Buttons band -->
       <div class="band" id="band-buttons">
         <div class="gripper"></div>
         <div class="buttons">
           <span class="split">
-            <button class="tb has-label" id="btn-back" title="Back" disabled><i class="ico ico-back"></i><span class="label">Back</span></button>
-            <button class="tb drop" id="drop-back" title="Recent pages" disabled></button>
+            <button class="tb has-label" id="btn-back" data-tip="Back (hold for history)" disabled><i class="ico ico-back"></i><span class="label">Back</span></button>
+            <button class="tb drop" id="drop-back" data-tip="Recent pages" disabled></button>
           </span>
           <span class="split">
-            <button class="tb" id="btn-forward" title="Forward" disabled><i class="ico ico-forward"></i></button>
-            <button class="tb drop" id="drop-forward" title="Recent pages" disabled></button>
+            <button class="tb" id="btn-forward" data-tip="Forward (hold for history)" disabled><i class="ico ico-forward"></i></button>
+            <button class="tb drop" id="drop-forward" data-tip="Recent pages" disabled></button>
           </span>
-          <button class="tb" id="btn-stop" title="Stop" disabled><i class="ico ico-stop"></i></button>
-          <button class="tb" id="btn-reload" title="Refresh"><i class="ico ico-reload"></i></button>
-          <button class="tb" id="btn-home" title="Home"><i class="ico ico-home"></i></button>
+          <button class="tb" id="btn-stop" data-tip="Stop" disabled><i class="ico ico-stop"></i></button>
+          <button class="tb" id="btn-reload" data-tip="Refresh"><i class="ico ico-reload"></i></button>
+          <button class="tb" id="btn-home" data-tip="Home"><i class="ico ico-home"></i></button>
           <span class="tb-sep"></span>
+          <button class="tb has-label" id="btn-favorites" data-tip="Favorites"><i class="ico ico-favorites"></i><span class="label">Favorites</span></button>
           <span class="split" id="dialup-mode">
-            <button class="tb has-label toggle" id="btn-dialup-mode" title="Dial-up Mode: browse like it's 1999 (⇧⌘D)"><i class="ico ico-dialup-mode"></i><span class="label">Dial-up</span></button>
-            <button class="tb drop" id="drop-dialup-mode" title="Dial-up Mode settings"></button>
+            <button class="tb has-label toggle" id="btn-dialup-mode" data-tip="Dial-up Mode: browse like it's 1999 (⇧⌘D)"><i class="ico ico-dialup-mode"></i><span class="label">Dial-up</span></button>
+            <button class="tb drop" id="drop-dialup-mode" data-tip="Dial-up Mode settings"></button>
           </span>
         </div>
-        <div class="spacer"></div>
-        <div class="throbber" id="throbber" title="Dialup"></div>
       </div>
+
       <!-- Address band -->
       <div class="band" id="band-address">
         <div class="gripper"></div>
@@ -51,8 +67,18 @@
         <div class="address-box">
           <i class="ico ico-page"></i>
           <input id="address" type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
+          <button class="addr-drop" id="addr-drop" tabindex="-1" data-tip="Show recent addresses"></button>
         </div>
-        <button class="tb go" id="btn-go" title="Go to the address in the Address bar"><i class="ico ico-go"></i><span class="label">Go</span></button>
+        <button class="tb go" id="btn-go" data-tip="Go to the address in the Address bar"><i class="ico ico-go"></i><span class="label">Go</span></button>
+        <div class="search-box" id="search-box">
+          <input id="search-field" type="search" spellcheck="false" autocomplete="off" placeholder="Search">
+        </div>
+        <button class="links-chevron" id="links-chevron" data-tip="Links">Links <b>»</b></button>
+      </div>
+
+      <!-- Bookmarks bar (Mac-style skins) -->
+      <div class="band" id="band-links">
+        <div class="links-bar" id="links-bar"></div>
       </div>
     </div>
   </header>
@@ -62,11 +88,16 @@
   <footer id="statusbar">
     <div class="cell grow"><i class="ico ico-page-sm"></i><span id="status-text">Done</span></div>
     <div class="cell progress"><div id="progress-bar"></div></div>
+    <div class="cell spare"></div>
+    <div class="cell spare"></div>
+    <div class="cell icon-cell" id="cell-secure" data-tip="Secure connection. Double-click for details." hidden><i class="ico ico-lock"></i></div>
+    <div class="cell icon-cell" id="cell-sound" data-tip="Sounds on. Click to mute."><i class="ico ico-sound"></i></div>
     <div class="cell zone"><i class="ico ico-zone"></i><span>Internet</span></div>
     <div class="cell sizer"></div>
   </footer>
 
   <!-- Menus and dialogs render here; the host raises the chrome above the page while it's in use. -->
   <div id="overlay"></div>
+  <div id="tooltip" role="tooltip"></div>
 </body>
 </html>

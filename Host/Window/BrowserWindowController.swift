@@ -69,6 +69,9 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         observers.append(NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.preferencesDidChange() }
         })
+        observers.append(NotificationCenter.default.addObserver(forName: Self.soundsDidChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.emit("sounds", ["enabled": SoundEffects.shared.isEnabled]) }
+        })
         observers.append(NotificationCenter.default.addObserver(forName: DialupMode.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.dialupModeDidChange() }
         })
@@ -147,6 +150,21 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         if tab.isShowingStartPage { tab.webView.reload() }
     }
 
+    static let soundsDidChange = Notification.Name("DialupSoundsDidChange")
+
+    /// Certificate summary for the padlock dialog.
+    private func securityInfo() -> [String: Any]? {
+        let webView = tab.webView
+        guard let url = webView.url, url.scheme == "https" else { return nil }
+        var info: [String: Any] = ["host": url.host ?? "", "secure": webView.hasOnlySecureContent]
+        if let trust = webView.serverTrust,
+           let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate] {
+            if let leaf = chain.first { info["subject"] = SecCertificateCopySubjectSummary(leaf) as String? ?? "" }
+            if chain.count > 1 { info["issuer"] = SecCertificateCopySubjectSummary(chain[1]) as String? ?? "" }
+        }
+        return info
+    }
+
     // MARK: Overlay (retro menus and dialogs)
 
     private var responderBeforeOverlay: NSResponder?
@@ -192,7 +210,49 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
                 "window": lastWindowState,
                 "dialupMode": DialupMode.shared.settings.dictionary,
                 "prefs": preferencesPayload,
+                "sounds": SoundEffects.shared.isEnabled,
             ]
+        case "menuAction":
+            // Items in the chrome's own menu bar. Allowlisted selectors only, sent after the
+            // overlay has closed, so they reach the page (or whatever had focus before).
+            let allowed: [String: Selector] = [
+                "newWindow": #selector(AppDelegate.newWindow(_:)),
+                "performClose": #selector(NSWindow.performClose(_:)),
+                "cut": #selector(NSText.cut(_:)),
+                "copy": #selector(NSText.copy(_:)),
+                "paste": #selector(NSText.paste(_:)),
+                "selectAll": #selector(NSText.selectAll(_:)),
+                "toggleFullScreen": #selector(NSWindow.toggleFullScreen(_:)),
+            ]
+            if let name = args["action"] as? String, let selector = allowed[name] {
+                NSApp.sendAction(selector, to: nil, from: nil)
+            }
+        case "search":
+            if let query = args["query"] as? String, !query.isEmpty,
+               let encoded = query.addingPercentEncoding(withAllowedCharacters: .alphanumerics),
+               let url = URL(string: PreferencesStore.shared.preferences.searchTemplate.replacingOccurrences(of: "%s", with: encoded)) {
+                SoundEffects.shared.play(.click)
+                webView.load(URLRequest(url: url))
+                focusPage()
+            }
+        case "securityInfo": return securityInfo()
+        case "sound":
+            if let name = args["name"] as? String, let sound = SoundEffects.Sound(rawValue: name), sound != .modem {
+                SoundEffects.shared.play(sound)
+            }
+        case "soundSet":
+            SoundEffects.shared.isEnabled = args["enabled"] as? Bool ?? true
+            NotificationCenter.default.post(name: Self.soundsDidChange, object: nil)
+        case "addFavorite":
+            if let url = args["url"] as? String {
+                var prefs = PreferencesStore.shared.preferences
+                let title = (args["title"] as? String) ?? url
+                if prefs.quickLinks.count < 12, !prefs.quickLinks.contains(where: { $0.url == url }) {
+                    prefs.quickLinks.append(QuickLink(title: title, url: url))
+                    prefs.sanitize()
+                    PreferencesStore.shared.preferences = prefs
+                }
+            }
         case "prefsGet": return preferencesPayload
         case "prefsSet":
             PreferencesStore.shared.preferences = PreferencesStore.shared.preferences.merging(args)
@@ -221,6 +281,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             layoutView.insets = NSEdgeInsets(top: n("top"), left: n("left"), bottom: n("bottom"), right: n("right"))
         case "navigate":
             let prefs = PreferencesStore.shared.preferences
+            SoundEffects.shared.play(.click)
             if let input = args["input"] as? String,
                let url = ["about:home", "about:start"].contains(input.trimmingCharacters(in: .whitespaces).lowercased())
                    ? Preferences.startURL

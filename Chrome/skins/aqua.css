@@ -210,3 +210,165 @@ body.inactive .cap, body.inactive .cap-close { opacity: 1; background: radial-gr
 .wizard-option { border-color: #c4c4c4; border-radius: 7px; background: rgba(255, 255, 255, .5); }
 .wizard-option::before { border-color: #6f6f6f; background: var(--aqua-white); }
 .wizard-option:has(input:checked)::before { background: radial-gradient(circle, #10204a 0 2.5px, transparent 3px), var(--aqua-blue); border-color: #2a5fa8; }
+
+/* ======================================================================
+   Authenticity pass (Aqua / Safari 1). One-row metal toolbar, charcoal glyphs,
+   bookmarks bar, search field, no Windows idioms.
+   ====================================================================== */
+
+:root {
+  --icon-back: url(../img/aqua-back.svg);
+  --icon-forward: url(../img/aqua-forward.svg);
+  --icon-stop: url(../img/aqua-stop.svg);
+  --icon-reload: url(../img/aqua-reload.svg);
+  --icon-home: url(../img/aqua-home.svg);
+  --icon-favorites: url(../img/aqua-favorites.svg);
+  --metal: url(../img/brushed.svg) center top / 800px 240px, linear-gradient(#e2e2e2, #c4c4c4 40%, #b0b0b0);
+  --titlebar-height: 22px;
+  --menu-pick-delay: 110ms;
+  --tip-delay: 900ms;
+}
+
+/* No XP frame */
+body, body.inactive { border: 0; }
+#titlebar { margin: 0; border-radius: 0; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); font: 13px var(--font); }
+#chrome { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6); border-bottom: 1px solid #6f6f6f; }
+
+/* One row: buttons + address + search; bookmarks bar underneath */
+#band-menu { display: none; } /* the real macOS menu bar is the menu */
+.rebar { display: flex; flex-wrap: wrap; align-items: center; }
+#band-buttons { order: 1; min-height: 34px; padding-right: 2px; }
+#band-address { order: 2; flex: 1; min-width: 260px; padding-left: 4px; }
+#band-links { order: 3; flex-basis: 100%; display: flex; min-height: 22px; padding: 0 10px 3px; }
+.band-label, #btn-go, #drop-back, #drop-forward, #btn-back .label, #btn-favorites .label,
+.addr-drop, .links-chevron, #statusbar .zone, #statusbar .spare, .ico-page-sm, .ico-page { display: none; }
+
+.buttons .tb {
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid #6b6b6b;
+  border-radius: 4px;
+  background: linear-gradient(#f4f4f4, #cfcfcf 50%, #bdbdbd 50%, #dedede);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .7), inset 0 1px 0 #fff;
+}
+.buttons .tb:hover:not(:disabled) { background: linear-gradient(#f4f4f4, #cfcfcf 50%, #bdbdbd 50%, #dedede); border-color: #555; }
+.buttons .tb:active:not(:disabled) { background: linear-gradient(#a8a8a8, #8e8e8e 50%, #7e7e7e 50%, #a0a0a0); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35); }
+.buttons .tb .ico { width: 18px; height: 18px; }
+.tb.toggle.on { background: linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6); border-color: #2a5fa8; }
+.tb:disabled .ico { filter: opacity(.4); }
+.buttons { gap: 7px; }
+.buttons .split { gap: 0; }
+.buttons .tb.drop { width: 14px; }
+.tb-sep { display: none; }
+
+/* Address field: Safari-style glossy blue progress */
+.address-box {
+  background:
+    linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6) 0 0 / var(--load-progress, 0%) 100% no-repeat,
+    #fff;
+}
+.address-box input { padding-left: 2px; }
+
+/* Rounded search field */
+.search-box { display: block; width: 170px; margin-left: 8px; flex: none; }
+.search-box input {
+  width: 100%;
+  height: 22px;
+  padding: 0 8px 0 22px;
+  border: 1px solid #8e8e8e;
+  border-radius: 11px;
+  background: #fff url(../img/aqua-search.svg) 6px center / 12px no-repeat;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25), 0 1px 0 rgba(255, 255, 255, .5);
+  font: 12px var(--font);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+/* Bookmarks bar */
+.links-bar { display: flex; gap: 2px; align-items: center; overflow: hidden; }
+.links-bar button {
+  height: 18px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font: 11px var(--font);
+  color: #1a1a1a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+  white-space: nowrap;
+}
+.links-bar button:hover { background: rgba(0, 0, 0, .14); }
+.links-bar button:active { background: rgba(0, 0, 0, .3); color: #fff; text-shadow: none; }
+
+/* Gumdrops: 14px with a bottom glow */
+.caption-buttons { gap: 6px; }
+.cap, .cap-close { width: 14px; height: 14px; }
+.cap-close { background: radial-gradient(circle at 50% 85%, rgba(255,255,255,.6), transparent 50%), radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ff8a80, #e0362a 55%, #9a1b12); }
+.cap-min   { background: radial-gradient(circle at 50% 85%, rgba(255,255,255,.6), transparent 50%), radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ffe08a, #f5b21c 55%, #9a6a05); }
+.cap-max   { background: radial-gradient(circle at 50% 85%, rgba(255,255,255,.6), transparent 50%), radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #9ff08a, #3cbd2a 55%, #17661a); }
+
+/* Dialogs: all three gumdrops (two greyed), Mac button order, no Apply */
+.dialog-cap-extra { display: inline-block; opacity: 1; background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.9) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #eee, #bdbdbd 55%, #8a8a8a) !important; }
+.dialog-caps { display: flex; gap: 6px; }
+.dialog-caps .cap { width: 14px; height: 14px; }
+.dialog-buttons .btn[data-value=apply] { display: none; }
+.dialog-buttons .btn.primary { order: 3; }
+.dialog.flash .dialog-titlebar { animation: title-flash-aqua .14s steps(1) 6; }
+@keyframes title-flash-aqua { 50% { color: #9a9a9a; } }
+.btn { height: 20px; border-radius: 10px; background: linear-gradient(#ffffff, #f0f0f0 50%, #dcdcdc 50%, #f6f6f6); }
+.btn.primary { background: linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6); animation: aqua-pulse 1s ease-in-out infinite alternate; }
+@keyframes aqua-pulse { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+
+/* Options as a preferences toolbar (big icons + labels) instead of tabs */
+.settings .tabs {
+  justify-content: flex-start;
+  gap: 2px;
+  margin: -10px -10px 12px;
+  padding: 6px 10px 5px;
+  background: repeating-linear-gradient(#f2f2f2 0 2px, #e4e4e4 2px 4px);
+  border-bottom: 1px solid #a8a8a8;
+}
+.settings .tab, .settings .tab:first-child, .settings .tab:last-child {
+  height: auto;
+  min-width: 70px;
+  padding: 4px 8px 3px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font: 11px var(--font);
+}
+.settings .tab::before { content: ""; width: 32px; height: 32px; background: center / contain no-repeat var(--tab-icon); }
+.settings .tab.selected { background: rgba(0, 0, 0, .12); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); border: 0; color: #000; }
+.settings .tab[data-tab=general] { --tab-icon: url(../img/icon-user.svg); }
+.settings .tab[data-tab=startpage] { --tab-icon: url(../img/favorites.svg); }
+.settings .tab[data-tab=appearance] { --tab-icon: url(../img/crt.svg); }
+.settings .tab[data-tab=dialup] { --tab-icon: url(../img/zone.svg); }
+.settings .tab[data-tab=privacy] { --tab-icon: url(../img/lock.svg); }
+.settings .tab-panels { border: 0; background: transparent; padding: 0 4px; border-radius: 0; }
+.dialog-body:has(.settings) { padding-top: 10px; }
+
+/* Menus: pinstripes, Aqua blue selection, no fade-in (Aqua blinks the chosen item instead) */
+.menu {
+  background: repeating-linear-gradient(rgba(255, 255, 255, .95) 0 2px, rgba(243, 243, 243, .95) 2px 4px);
+  font-size: 14px;
+  animation: none;
+}
+.menu-item { height: 18px; padding: 0 20px 0 0; }
+.menu-item.active:not(.disabled) { background: linear-gradient(#5b93ea, #1f5fd6); }
+.menu-item.picked { animation: menu-blink 110ms steps(1); }
+@keyframes menu-blink { 50% { background: none; color: var(--text); } }
+
+/* Tooltips: pale yellow, soft shadow */
+#tooltip { background: #ffffc7; border: 1px solid #a8a87a; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); font: 11px var(--font); padding: 2px 5px; }
+
+/* Selection: Aqua uses a blue ring rather than XP's dotted rectangle */
+.skin-card input:checked + .mini-window, .option-card:has(input:checked), .wizard-card:has(input:checked) { outline: 3px solid rgba(63, 140, 245, .6); outline-offset: -1px; border-radius: 6px; }
+.option-card:has(input:checked) .option-title::before, .wizard-card:has(input:checked) .wizard-card-title::before { color: #2a6fe6; }
+
+/* Wizard header band on pinstripes */
+.wizard-header { background: rgba(255, 255, 255, .6); border-bottom-color: #c4c4c4; box-shadow: none; }
+.wizard.interior .wizard-main { background: transparent; }

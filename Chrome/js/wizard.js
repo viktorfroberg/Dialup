@@ -91,6 +91,23 @@ export async function openWizard() {
   let step = 0;
   const render = () => {
     page.innerHTML = steps[step]();
+    // Classic wizard layout: the watermark banner on the first and last page only; interior pages
+    // get a white header band (title + subtitle + icon) above the content.
+    const interior = step > 0 && step < steps.length - 1;
+    root.classList.toggle('interior', interior);
+    if (interior) {
+      const header = document.createElement('div');
+      header.className = 'wizard-header';
+      const text = document.createElement('div');
+      text.append(page.querySelector('h1'), page.querySelector('p'));
+      const icon = document.createElement('div');
+      icon.className = 'wizard-header-icon';
+      header.append(text, icon);
+      const content = document.createElement('div');
+      content.className = 'wizard-content';
+      content.append(...page.childNodes);
+      page.replaceChildren(header, content);
+    }
     back.disabled = step === 0;
     next.textContent = step === steps.length - 1 ? 'Finish' : 'Next >';
     for (const input of page.querySelectorAll('input[type=radio]')) {

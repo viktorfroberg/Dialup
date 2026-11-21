@@ -86,6 +86,10 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     // MARK: Navigation
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+        if navigationAction.targetFrame?.isMainFrame == true,
+           [.linkActivated, .formSubmitted, .backForward].contains(navigationAction.navigationType) {
+            SoundEffects.shared.play(.click) // the era's navigation "tick"
+        }
         if navigationAction.request.url == StartPageSchemeHandler.customizeURL {
             // Only the start page itself, navigating its own main frame, may open settings.
             if Self.isTrustedCustomize(sourceProtocol: navigationAction.sourceFrame.securityOrigin.protocol,
@@ -117,6 +121,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
         guard !Self.isBenign(nsError) else { return }
         statusText = nsError.localizedDescription
         onChange?()
+        SoundEffects.shared.play(.error)
         if let failingURL = nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL {
             webView.loadSimulatedRequest(URLRequest(url: failingURL),
                                          responseHTML: ErrorPage.html(url: failingURL, message: nsError.localizedDescription))

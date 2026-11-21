@@ -49,6 +49,8 @@ build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp
    ✅ Skins: Luna (Windows 2001, default) and Aqua (Mac 2003) in `Chrome/skins/` · ✅ Retro start page (`Start/`)
    ✅ First-run Setup Wizard (Help → Setup Wizard…) · ✅ Page touches: classic scrollbars, light mode,
       square corners (safe, on) + no shadows / no animations / underlined links (opt-in)
+   ✅ Authenticity pass: Luna menu bar/frame/throbber/Links, Aqua Safari-style toolbar + bookmarks bar + search,
+      retro dropdowns/tooltips/menus, padlock + certificate dialog, original synthesized sounds, portal start page
    Next for dial-up mode: modem/click sounds, optional real network throttling, 800×600 window
 1. Tabs, session restore, multiple windows
 2. Skins (`Skins/<id>/skin.json + skin.css`)
