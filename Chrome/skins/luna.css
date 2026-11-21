@@ -1,2 +1,155 @@
-/* Luna: Windows-2001-style skin. base.css already looks like this, so nothing to override.
-   Copy aqua.css to start your own skin; every variable and class it touches is fair game. */
+/*
+ * Luna: a Windows-2001-style skin (the default). Blue rounded title bar inside a 4px blue frame,
+ * beige toolbars with soft hover buttons, orange-topped tabs, green checkmarks.
+ * Copy this file (or aqua.css) to start your own skin; base.css lists every variable and class.
+ */
+
+@layer skin {
+
+:root {
+  --font: Tahoma, Verdana, "Lucida Grande", sans-serif;
+  --font-size: 11px;
+  --text: #000;
+  --text-disabled: #a0a0a0;
+
+  --face: #ece9d8;
+  --face-light: #fff;
+  --face-shadow: #aca899;
+  --face-dark: #716f64;
+
+  --frame: #0831d9;
+  --frame-inactive: #7a96df;
+  --frame-width: 4px;
+  --window-radius: 8px;
+
+  --titlebar-height: 30px;
+  --titlebar-bg: linear-gradient(#3d8af7 0%, #1b62e0 8%, #0a4fd0 40%, #0b47c2 88%, #0839a3 100%);
+  --titlebar-bg-inactive: linear-gradient(#a6c1f5 0%, #8bacee 10%, #7c9fe6 90%, #7193d9 100%);
+  --titlebar-text: #fff;
+  --titlebar-text-inactive: #dfe7f8;
+  --titlebar-font: bold 13px "Trebuchet MS", Tahoma, sans-serif;
+  --titlebar-text-shadow: 1px 1px 0 #0f1089;
+  --cap-bg: linear-gradient(135deg, #5d95ff, #1b55db 60%, #2f6cf0);
+  --cap-close-bg: linear-gradient(135deg, #f19a7c, #d9431c 55%, #e85c35);
+
+  --rebar-bg: linear-gradient(#fbfaf6, #ece9d8 60%, #e3dfcb);
+  --band-divider: #fff;
+  --band-divider-shadow: #c5c2b2;
+  --button-hover-bg: linear-gradient(#fff, #f1efe6 50%, #e4e0d0);
+  --button-hover-border: #c3bfb0;
+  --button-active-bg: linear-gradient(#ddd9c6, #ebe8da);
+
+  --field-bg: #fff;
+  --field-border: #7f9db9;
+
+  --status-bg: #ece9d8;
+  --progress-fill: repeating-linear-gradient(90deg, #2fb32f 0 7px, transparent 7px 9px);
+
+  --menu-bg: #fff;
+  --menu-border: #aca899;
+  --menu-hover-bg: #316ac5;
+  --menu-hover-text: #fff;
+}
+
+/* ---------- Caption buttons: blue squares with white glyphs, red close ---------- */
+
+.cap {
+  border: 1px solid #fff;
+  border-radius: 3px;
+  box-shadow: inset -1px -1px 1px rgba(0, 0, 0, .25), inset 1px 1px 1px rgba(255, 255, 255, .35);
+}
+body.inactive .cap { opacity: .75; }
+
+.cap::before, .cap::after { content: ""; position: absolute; background: #fff; }
+.cap-min::before { left: 5px; bottom: 5px; width: 7px; height: 3px; }
+.cap-max::before { left: 4px; top: 4px; width: 11px; height: 11px; background: transparent; border: 1px solid #fff; border-top-width: 3px; box-sizing: border-box; }
+body.zoomed .cap-max::before { left: 6px; top: 3px; width: 9px; height: 8px; }
+body.zoomed .cap-max::after { left: 3px; top: 7px; width: 9px; height: 8px; background: var(--cap-bg); border: 1px solid #fff; border-top-width: 3px; box-sizing: border-box; }
+.cap-close::before, .cap-close::after { left: 4px; top: 8.5px; width: 11px; height: 2px; }
+.cap-close::before { transform: rotate(45deg); }
+.cap-close::after { transform: rotate(-45deg); }
+
+/* ---------- Toolbars ---------- */
+
+.band-label, .links-chevron { color: #444; }
+
+/* The address combo box's blue drop button */
+.addr-drop {
+  margin-right: -2px;
+  border: 1px solid #b4c8f6;
+  border-radius: 2px;
+  background: linear-gradient(#c6d6fd, #a9c0f5);
+}
+.addr-drop::after { content: ""; position: absolute; left: 4px; top: 6px; border: 4px solid transparent; border-top-color: #4d6185; border-bottom: 0; }
+.addr-drop:hover { filter: brightness(1.06); }
+
+/* ---------- Tab strip (Firefox 1.0 on XP) ---------- */
+
+#tabstrip { border-bottom-color: #919b9c; }
+.tab-item {
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(#fdfdfb, #e3e1d6);
+  color: #333;
+}
+.tab-item:hover { box-shadow: inset 0 2px 0 #f8b636; }
+.tab-item.active { border-bottom-color: #fcfcfe; background: #fcfcfe; box-shadow: inset 0 2px 0 #e68b2c; color: #000; }
+.tab-close { color: #555; }
+.tab-close:hover { background: #e3321c; border-color: #8a1407; color: #fff; }
+.tab-new:hover { background-color: transparent; background-image: var(--icon-tab-new), var(--button-hover-bg); background-size: 16px, auto; }
+
+/* ---------- Menus: fade in ---------- */
+
+.menu:not(.combo-list) { animation: menu-in 150ms ease-out; }
+@keyframes menu-in { from { opacity: 0; } }
+
+/* ---------- Dialogs: blue frame, rounded top ---------- */
+
+.dialog {
+  border: 3px solid var(--frame);
+  border-top: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: inset 1px 0 #166aee, inset -1px 0 #001ea0;
+}
+.dialog-titlebar { margin: 0 -3px; border-radius: 8px 8px 0 0; }
+
+.btn {
+  background: linear-gradient(#fff, #f3f2ec 60%, #e4e1d3);
+  border: 1px solid #003c74;
+  border-radius: 3px;
+}
+.btn:hover:not(:disabled) { box-shadow: inset 0 0 0 2px #f8b636; }
+.btn:active:not(:disabled) { background: linear-gradient(#e4e1d3, #f3f2ec); }
+.btn.primary { box-shadow: inset 0 0 0 2px #91b4ef; }
+.btn:disabled { border-color: #c9c7ba; }
+
+.field:disabled { background: #f4f3ee; }
+select.field { border-radius: 0; background: #fff url(../img/select-arrow.svg) right 1px center / 17px 17px no-repeat; }
+
+/* Checkboxes and radios: navy box, light gradient, green mark, orange hover */
+.dialog input[type=checkbox], .dialog input[type=radio] { border-color: #1c5180; background: linear-gradient(135deg, #dcdcd7, #fff); }
+.dialog input[type=checkbox]:checked::after { border-color: #21a121; }
+.dialog input[type=radio]:checked::after { background: radial-gradient(circle at 35% 35%, #8fe08f, #21a121); }
+.dialog input:hover:not(:disabled) { box-shadow: inset 0 0 0 1px #f8b636; }
+
+/* Property-sheet tabs: white, orange line on the selected one */
+.tab {
+  background: linear-gradient(#fff, #ecebe5);
+  border: 1px solid #919b9c;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+}
+.tab:hover { box-shadow: inset 0 2px 0 #f8b636; }
+.tab.selected { background: #fcfcfe; box-shadow: inset 0 2px 0 #e68b2c; }
+.tab-panels { border: 1px solid #919b9c; background: #fcfcfe; }
+
+.settings fieldset { border-color: #d0d0bf; border-radius: 4px; }
+.settings legend { color: #0046d5; }
+.wizard-card:has(input:checked) .wizard-card-title::before { color: #21a121; }
+
+/* ---------- Wizard ---------- */
+
+.wizard-option::before { border-color: #1c5180; }
+.wizard-option:has(input:checked)::before { color: #21a121; }
+
+}

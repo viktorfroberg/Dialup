@@ -19,12 +19,13 @@
     </div>
 
     <form id="search" name="f">
+      <!-- The current tab is bold text, the others are links (start.js swaps them) -->
       <table class="tabs" cellpadding="0" cellspacing="0"><tr>
-        <td><a href="#" data-tab="web" class="on">Web</a></td>
-        <td><a href="#" data-tab="images">Images</a></td>
-        <td><a href="#" data-tab="news">News</a></td>
-        <td><a href="#" data-tab="wikipedia">Wikipedia</a></td>
-        <td><a href="#" data-tab="archive">Archive</a></td>
+        <td data-tab="web"><b class="on">Web</b></td>
+        <td data-tab="images"><a href="#images">Images</a></td>
+        <td data-tab="news"><a href="#news">News</a></td>
+        <td data-tab="wikipedia"><a href="#wikipedia">Wikipedia</a></td>
+        <td data-tab="archive"><a href="#archive">Archive</a></td>
       </tr></table>
 
       <table class="box" cellpadding="0" cellspacing="0"><tr>
@@ -42,7 +43,7 @@
       </tr></table>
     </form>
 
-    <p class="hint" id="hint">Searching the Web with <b id="engine">DuckDuckGo</b></p>
+    <p class="hint" id="hint">Searching the Web with DuckDuckGo</p>
 
     <p class="greeting" id="greeting"></p>
     <p class="favorites" id="favorites" hidden></p>
@@ -55,7 +56,8 @@
 
     <p class="footer">
       <a href="portal.html">Portal</a> - <a href="dialup-start://home/customize">Customize</a> - <a href="https://web.archive.org/">Time Travel</a> - <a href="https://www.spacejam.com/1996/">Best of the Old Web</a>
-      <br><br><span class="copy">&copy;2004&ndash;2026 Dialup</span>
+      <br><br><a href="dialup-start://home/customize" class="make-home">Make Dialup Your Homepage!</a>
+      <br><br><span class="copy">&copy;2004 Dialup</span>
     </p>
   </center>
 </body>

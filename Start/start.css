@@ -19,16 +19,16 @@ a:active { color: #ff0000; }
 }
 .tagline { margin-top: 6px; font-size: 13px; color: #666; }
 
-/* Tabs above the box: the current one is bold black, the rest are links */
+/* Tabs above the box: the current one is bold black text (not a link), the rest are links */
 .tabs { margin: 0 auto 4px; }
 .tabs td { padding: 0 9px; font-size: 13px; }
-.tabs a.on { color: #000; font-weight: bold; text-decoration: none; cursor: default; }
+.tabs .on { color: #000; }
 
 .box { margin: 0 auto; }
 .box td { vertical-align: top; text-align: center; }
 .box-side { width: 110px; }
 .side-links { text-align: left !important; font-size: 11px; padding: 2px 0 0 6px; line-height: 1.5; }
-#q { width: 420px; font-size: 17px; padding: 2px 3px; margin-bottom: 8px; }
+#q { font: 13px Arial, Helvetica, sans-serif; padding: 1px 2px; margin-bottom: 8px; }
 .btn { font: 13px Arial, sans-serif; margin: 0 3px; padding: 2px 8px; }
 
 .hint { margin: 14px 0 0; font-size: 11px; color: #666; }
@@ -41,6 +41,7 @@ a:active { color: #ff0000; }
 .extras b { color: #333; }
 
 .footer { margin: 40px 0 16px; font-size: 12px; }
+.make-home { font-size: 11px; }
 .copy { color: #666; font-size: 11px; }
 
 /* ---------- The form buttons follow the skin (like real OS buttons did) ---------- */
@@ -69,7 +70,7 @@ a:active { color: #ff0000; }
   box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
 }
 .skin-classic .btn:active { border-color: #404040 #fff #fff #404040; box-shadow: inset 1px 1px 0 #808080; }
-.skin-classic #q { border: 2px solid; border-color: #808080 #fff #fff #808080; box-shadow: inset 1px 1px 0 #404040; }
+.skin-classic #q { border: 2px solid; border-color: #808080 #d4d0c8 #d4d0c8 #808080; box-shadow: inset 1px 1px 0 #404040; }
 .skin-classic .wordmark { color: #000080; text-shadow: 2px 2px 0 #c0c0c0; }
 
 @media (max-width: 720px) { .box-side { display: none; } #q { width: 90vw; } }

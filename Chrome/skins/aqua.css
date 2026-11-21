@@ -1,276 +1,159 @@
 /*
- * Aqua: a 2003-Mac-style skin. Brushed metal, glossy red/yellow/green window buttons on the
- * left, centered title, capsule buttons, pinstriped dialogs, and the page loading progress
- * drawn inside the address field.
+ * Aqua: a 2003-Mac-style skin (think Safari 1 on Panther). Brushed metal, glossy red/yellow/green
+ * window buttons on the left, a centred title, one toolbar row with capsule buttons and a
+ * search field, a bookmarks bar, pinstriped dialogs, and the page loading progress drawn
+ * inside the address field. The real macOS menu bar replaces the in-window one.
  */
+
+@layer skin {
+
 :root {
   --font: "Lucida Grande", "Helvetica Neue", sans-serif;
   --font-size: 11.5px;
   --text: #111;
   --text-disabled: #9a9a9a;
+
   --face: #e6e6e6;
   --face-light: #fff;
   --face-shadow: #9a9a9a;
   --face-dark: #6e6e6e;
-  --band-divider: transparent;
-  --band-divider-shadow: transparent;
-  --field-border: #8e8e8e;
-  --titlebar-height: 24px;
+
+  --frame-width: 0px;
+  --window-radius: 6px;
+
+  --titlebar-height: 22px;
+  --titlebar-bg: transparent;
+  --titlebar-bg-inactive: transparent;
   --titlebar-text: #1a1a1a;
   --titlebar-text-inactive: #8a8a8a;
-  --metal: url(../img/brushed.svg) center top / 800px 240px, linear-gradient(#d9d9d9, #bdbdbd);
-  --aqua-blue: linear-gradient(#cfe6ff 0%, #79b4ff 48%, #3f8cf5 52%, #8ec6ff 100%);
-  --aqua-white: linear-gradient(#ffffff 0%, #f1f1f1 48%, #dcdcdc 52%, #f7f7f7 100%);
+  --titlebar-font: 13px var(--font);
+  --titlebar-text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
+
+  --band-divider: transparent;
+  --band-divider-shadow: transparent;
+  --button-hover-bg: rgba(0, 0, 0, .1);
+  --button-hover-border: transparent;
+  --field-border: #8e8e8e;
   --menu-bg: rgba(250, 250, 250, .97);
-  --menu-hover-bg: linear-gradient(#6aa8ff, #2a6fe6);
-  --dialog-frame: #8a8a8a;
-}
+  --menu-hover-bg: linear-gradient(#5b93ea, #1f5fd6);
 
-/* ---------- Metal window frame ---------- */
-
-#chrome { background: var(--metal); }
-#titlebar, body.inactive #titlebar { background: transparent; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); }
-#titlebar { padding: 0 8px; font: 13px var(--font); color: var(--titlebar-text); }
-body.inactive #titlebar { color: var(--titlebar-text-inactive); }
-#titlebar .app-icon { display: none; }
-#window-title { text-align: center; padding-right: 54px; } /* balance the buttons on the left */
-
-/* Gumdrop buttons, left side, close–minimize–zoom */
-.caption-buttons { order: -1; gap: 7px; }
-.cap-close { order: 1; }
-.cap-min { order: 2; }
-.cap-max { order: 3; }
-.cap, .cap-close {
-  width: 13px;
-  height: 13px;
-  border: 0;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .45), 0 1px 1px rgba(255, 255, 255, .5);
-}
-.cap-close { background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ff8a80, #e0362a 55%, #9a1b12); }
-.cap-min   { background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ffe08a, #f5b21c 55%, #9a6a05); }
-.cap-max   { background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #9ff08a, #3cbd2a 55%, #17661a); }
-body.inactive .cap, body.inactive .cap-close { opacity: 1; background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.9) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #eee, #bdbdbd 55%, #8a8a8a); }
-.cap::before, .cap::after, body.zoomed .cap-max::before, body.zoomed .cap-max::after { content: none; }
-.caption-buttons:hover .cap::before {
-  content: "";
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  font: bold 10px/13px "Lucida Grande", sans-serif;
-  color: rgba(70, 0, 0, .75);
-  background: none; border: 0; width: auto; height: auto; transform: none;
-}
-.caption-buttons:hover .cap-close::before { content: "×"; }
-.caption-buttons:hover .cap-min::before { content: "−"; color: rgba(90, 50, 0, .75); }
-.caption-buttons:hover .cap-max::before { content: "+"; color: rgba(0, 60, 0, .75); }
-
-/* ---------- Toolbars ---------- */
-
-.rebar { background: transparent; border-bottom: 0; }
-.band { border: 0; padding: 3px 8px; min-height: 30px; }
-.gripper { display: none; }
-.band-label { color: #333; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); }
-
-.tb {
-  height: 24px;
-  border: 1px solid #7d7d7d;
-  border-radius: 5px;
-  background: var(--aqua-white);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .5);
-}
-.tb:hover:not(:disabled) { background: var(--aqua-white); border-color: #5a5a5a; }
-.tb:active:not(:disabled) { background: linear-gradient(#bdbdbd, #e2e2e2); border-color: #5a5a5a; }
-.tb:disabled { opacity: .65; }
-.tb .ico { width: 18px; height: 18px; }
-.tb.toggle.on { background: var(--aqua-blue); border-color: #2a5fa8; box-shadow: none; }
-.split .tb.drop { border-left: 0; }
-.buttons { gap: 6px; }
-.tb-sep { background: rgba(0, 0, 0, .18); box-shadow: 1px 0 0 rgba(255, 255, 255, .4); height: 20px; }
-
-.throbber { border-left: 0; transform: scale(.85); }
-
-/* Address field with Safari-style blue loading fill */
-.address-box {
-  height: 22px;
-  border: 1px solid #8e8e8e;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25), 0 1px 0 rgba(255, 255, 255, .5);
-  background:
-    linear-gradient(90deg, rgba(110, 170, 255, .45) 0 var(--load-progress, 0%), transparent var(--load-progress, 0%)),
-    #fff;
-  transition: background .2s;
-}
-.address-box input { font: 12px var(--font); }
-.tb.go { height: 22px; }
-
-#viewport { border-top: 1px solid #5f5f5f; }
-
-/* ---------- Status bar on metal ---------- */
-
-#statusbar { background: var(--metal); border-top: 1px solid #8a8a8a; height: 20px; padding: 2px 4px; }
-#statusbar .cell { border: 0; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
-#statusbar .progress { display: none; }
-
-/* ---------- Menus ---------- */
-
-.menu {
-  padding: 4px 0;
-  border: 0;
-  border-radius: 0 0 6px 6px;
-  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 8px 18px rgba(0, 0, 0, .35);
-  font: 13px var(--font);
-}
-.menu-item { height: 20px; }
-.menu-sep { margin: 5px 0; background: #dcdcdc; }
-
-/* ---------- Dialogs: pinstripes, gumdrop close, capsule buttons, Aqua tabs ---------- */
-
-.dialog {
-  border: 1px solid #8a8a8a;
-  border-radius: 7px;
-  overflow: hidden;
-  background: repeating-linear-gradient(#f6f6f6 0 2px, #ececec 2px 4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
-}
-.dialog-titlebar {
-  margin: 0;
-  height: 24px;
-  border-radius: 0;
-  background: repeating-linear-gradient(#f2f2f2 0 2px, #e2e2e2 2px 4px);
-  border-bottom: 1px solid #a8a8a8;
-  color: #1a1a1a;
-  font: 13px var(--font);
-  text-shadow: 0 1px 0 #fff;
-}
-.dialog-caps { order: -1; margin-right: 8px; }
-.dialog-caps .cap { width: 13px; height: 13px; }
-.dialog-title { text-align: center; padding-right: 20px; }
-.dialog-buttons { padding: 10px 14px 14px; gap: 10px; }
-
-.btn {
-  height: 21px;
-  min-width: 70px;
-  padding: 0 14px;
-  border: 1px solid #7a7a7a;
-  border-radius: 11px;
-  background: var(--aqua-white);
-  font: 12.5px var(--font);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, .15);
-}
-.btn:hover:not(:disabled) { box-shadow: 0 1px 1px rgba(0, 0, 0, .15); border-color: #555; }
-.btn:active:not(:disabled) { background: linear-gradient(#c5c5c5, #e8e8e8); }
-.btn.primary { background: var(--aqua-blue); border-color: #2a5fa8; animation: aqua-pulse 1.4s ease-in-out infinite alternate; }
-@keyframes aqua-pulse { from { filter: brightness(1); } to { filter: brightness(1.12) saturate(1.1); } }
-.btn.small, .btn.tiny { height: 19px; font-size: 11px; }
-
-.field { border: 1px solid #8e8e8e; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2); font: 12px var(--font); }
-
-.tabs { justify-content: center; gap: 0; margin-bottom: -11px; }
-.tab {
-  height: 21px;
-  margin: 0;
-  padding: 0 14px;
-  border: 1px solid #7a7a7a;
-  border-left-width: 0;
-  border-radius: 0;
-  background: var(--aqua-white);
-  font: 12px var(--font);
-  box-shadow: none;
-}
-.tab:first-child { border-left-width: 1px; border-radius: 11px 0 0 11px; }
-.tab:last-child { border-radius: 0 11px 11px 0; }
-.tab:hover { box-shadow: none; filter: brightness(.97); }
-.tab.selected { height: 21px; margin: 0; background: var(--aqua-blue); color: #000; box-shadow: none; border-color: #2a5fa8; }
-.tab-panels { border: 1px solid #b4b4b4; border-radius: 6px; background: rgba(255, 255, 255, .45); padding: 20px 14px 10px; }
-
-.settings fieldset { border-color: #c4c4c4; border-radius: 6px; background: rgba(255, 255, 255, .35); }
-.settings legend { color: #111; font-weight: bold; }
-.skin-card input:checked + .mini-window, .option-card:has(input:checked) { border-color: #3f8cf5; background: rgba(63, 140, 245, .15); }
-
-/* Aqua checkboxes and radios: glossy, blue when on */
-.dialog input[type=checkbox], .dialog input[type=radio] {
-  width: 14px;
-  height: 14px;
-  border: 1px solid #6f6f6f;
-  border-radius: 3px;
-  background: var(--aqua-white);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .15);
-}
-.dialog input[type=radio] { border-radius: 50%; }
-.dialog input:checked { background: var(--aqua-blue); border-color: #2a5fa8; }
-.dialog input[type=checkbox]:checked::after { border-color: #10204a; left: 4px; top: 1px; }
-.dialog input[type=radio]:checked::after { inset: 4px; background: #10204a; }
-.dialog input:hover:not(:disabled) { box-shadow: inset 0 1px 1px rgba(0, 0, 0, .15); }
-
-/* Wizard on Aqua */
-.wizard-banner { background: linear-gradient(160deg, #3f8cf5, #9fd0ff 60%, #e8f3ff); }
-.wizard-main { background: transparent; }
-.wizard-footer { border-top: 1px solid #c4c4c4; box-shadow: none; }
-.wizard-card:has(input:checked), .wizard-option:has(input:checked) { border-color: #3f8cf5; background: rgba(63, 140, 245, .15); }
-.wizard-option { border-color: #c4c4c4; border-radius: 7px; background: rgba(255, 255, 255, .5); }
-.wizard-option::before { border-color: #6f6f6f; background: var(--aqua-white); }
-.wizard-option:has(input:checked)::before { background: radial-gradient(circle, #10204a 0 2.5px, transparent 3px), var(--aqua-blue); border-color: #2a5fa8; }
-
-/* ======================================================================
-   Authenticity pass (Aqua / Safari 1). One-row metal toolbar, charcoal glyphs,
-   bookmarks bar, search field, no Windows idioms.
-   ====================================================================== */
-
-:root {
   --icon-back: url(../img/aqua-back.svg);
   --icon-forward: url(../img/aqua-forward.svg);
   --icon-stop: url(../img/aqua-stop.svg);
   --icon-reload: url(../img/aqua-reload.svg);
   --icon-home: url(../img/aqua-home.svg);
   --icon-favorites: url(../img/aqua-favorites.svg);
-  --metal: url(../img/brushed.svg) center top / 800px 240px, linear-gradient(#e2e2e2, #c4c4c4 40%, #b0b0b0);
-  --titlebar-height: 22px;
-  --menu-pick-delay: 110ms;
+  --icon-wayback: url(../img/aqua-wayback.svg);
+
+  --menu-pick-delay: 110ms;   /* Aqua blinks the chosen menu item */
   --tip-delay: 900ms;
+
+  /* Aqua's own paints */
+  --metal: url(../img/brushed.svg) center top / 800px 240px, linear-gradient(#e2e2e2, #c4c4c4 40%, #b0b0b0);
+  --pinstripes: repeating-linear-gradient(#f6f6f6 0 2px, #ececec 2px 4px);
+  --aqua-blue: linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6);       /* glossy capsules */
+  --aqua-white: linear-gradient(#ffffff, #f0f0f0 50%, #dcdcdc 50%, #f6f6f6);
+  --aqua-blue-soft: linear-gradient(#cfe6ff 0%, #79b4ff 48%, #3f8cf5 52%, #8ec6ff 100%);   /* small controls */
+  --aqua-white-soft: linear-gradient(#ffffff 0%, #f1f1f1 48%, #dcdcdc 52%, #f7f7f7 100%);
+  --aqua-grey: linear-gradient(#f4f4f4, #cfcfcf 50%, #bdbdbd 50%, #dedede);
+  --aqua-pressed: linear-gradient(#a8a8a8, #8e8e8e 50%, #7e7e7e 50%, #a0a0a0);
+  --gumdrop-shine: radial-gradient(circle at 50% 85%, rgba(255, 255, 255, .6), transparent 50%),
+                   radial-gradient(circle at 50% 28%, rgba(255, 255, 255, .95) 0 18%, transparent 46%);
+  --gumdrop-off: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, .9) 0 18%, transparent 46%),
+                 radial-gradient(circle at 50% 70%, #eee, #bdbdbd 55%, #8a8a8a);
 }
 
-/* No XP frame */
-body, body.inactive { border: 0; }
-#titlebar { margin: 0; border-radius: 0; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); font: 13px var(--font); }
-#chrome { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6); border-bottom: 1px solid #6f6f6f; }
+/* ======================================================================
+   Metal window: rounded top corners, centred title, gumdrops on the left
+   ====================================================================== */
 
-/* One row: buttons + address + search; bookmarks bar underneath */
-#band-menu { display: none; } /* the real macOS menu bar is the menu */
-.rebar { display: flex; flex-wrap: wrap; align-items: center; }
+body { overflow: hidden; }
+#chrome {
+  background: var(--metal);
+  border-radius: 6px 6px 0 0;
+  border-bottom: 1px solid #6f6f6f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+#titlebar { margin: 0; padding: 0 8px; border-radius: 0; }
+body.inactive #titlebar { text-shadow: var(--titlebar-text-shadow); }
+#titlebar .app-icon { display: none; }
+#window-title { text-align: center; padding-right: 54px; }   /* balance the buttons on the left */
+
+/* Gumdrop buttons: close, minimize, zoom; glyphs appear on hover */
+.caption-buttons { order: -1; gap: 6px; }
+.cap-close { order: 1; }
+.cap-min { order: 2; }
+.cap-max { order: 3; }
+.cap {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .45), 0 1px 1px rgba(255, 255, 255, .5);
+}
+.cap-close { background: var(--gumdrop-shine), radial-gradient(circle at 50% 70%, #ff8a80, #e0362a 55%, #9a1b12); }
+.cap-min   { background: var(--gumdrop-shine), radial-gradient(circle at 50% 70%, #ffe08a, #f5b21c 55%, #9a6a05); }
+.cap-max   { background: var(--gumdrop-shine), radial-gradient(circle at 50% 70%, #9ff08a, #3cbd2a 55%, #17661a); }
+body.inactive .cap { background: var(--gumdrop-off); }
+.caption-buttons:hover .cap::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: bold 10px/13px "Lucida Grande", sans-serif;
+  color: rgba(70, 0, 0, .75);
+}
+.caption-buttons:hover .cap-close::before { content: "×"; }
+.caption-buttons:hover .cap-min::before { content: "−"; color: rgba(90, 50, 0, .75); }
+.caption-buttons:hover .cap-max::before { content: "+"; color: rgba(0, 60, 0, .75); }
+
+/* ======================================================================
+   One toolbar row: buttons + address + search; bookmarks bar underneath
+   ====================================================================== */
+
+.rebar { display: flex; flex-wrap: wrap; align-items: center; background: transparent; border-bottom: 0; }
+.band { min-height: 30px; padding: 3px 8px; border: 0; }
+#band-menu { display: none; }   /* the real macOS menu bar is the menu */
 #band-buttons { order: 1; min-height: 34px; padding-right: 2px; }
 #band-address { order: 2; flex: 1; min-width: 260px; padding-left: 4px; }
 #band-links { order: 3; flex-basis: 100%; display: flex; min-height: 22px; padding: 0 10px 3px; }
-.band-label, #btn-go, #drop-back, #drop-forward, #btn-back .label, #btn-favorites .label,
-.addr-drop, .links-chevron, #statusbar .zone, #statusbar .spare, .ico-page-sm, .ico-page { display: none; }
+.gripper, .tb-sep, .band-label, #btn-go, #drop-back, #drop-forward, .addr-drop, .links-chevron,
+#btn-back .label, #btn-favorites .label, #btn-wayback .label, #btn-dialup-mode .label,
+.ico-page, .ico-page-sm, #statusbar .zone, #statusbar .spare { display: none; }
 
-.buttons .tb {
+/* Capsule toolbar buttons with charcoal glyphs */
+.buttons { gap: 7px; }
+.tb {
   height: 24px;
   padding: 0 7px;
   border: 1px solid #6b6b6b;
   border-radius: 4px;
-  background: linear-gradient(#f4f4f4, #cfcfcf 50%, #bdbdbd 50%, #dedede);
+  background: var(--aqua-grey);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .7), inset 0 1px 0 #fff;
 }
-.buttons .tb:hover:not(:disabled) { background: linear-gradient(#f4f4f4, #cfcfcf 50%, #bdbdbd 50%, #dedede); border-color: #555; }
-.buttons .tb:active:not(:disabled) { background: linear-gradient(#a8a8a8, #8e8e8e 50%, #7e7e7e 50%, #a0a0a0); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35); }
-.buttons .tb .ico { width: 18px; height: 18px; }
-.tb.toggle.on { background: linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6); border-color: #2a5fa8; }
+.tb:hover:not(:disabled) { background: var(--aqua-grey); border-color: #555; }
+.tb:active:not(:disabled) { background: var(--aqua-pressed); border-color: #555; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35); }
+.tb.toggle.on { background: var(--aqua-blue); border-color: #2a5fa8; }
+.tb:disabled { opacity: .65; }
 .tb:disabled .ico { filter: opacity(.4); }
-.buttons { gap: 7px; }
-.buttons .split { gap: 0; }
-.buttons .tb.drop { width: 14px; }
-.tb-sep { display: none; }
+.tb .ico, .buttons .tb .ico { width: 18px; height: 18px; }
 
-/* Address field: Safari-style glossy blue progress */
+/* Split button (Dial-up): one capsule, the arrow joined on the right */
+#dialup-mode .tb:first-child { border-radius: 4px 0 0 4px; }
+#dialup-mode .tb.drop { width: 14px; border-left: 0; border-radius: 0 4px 4px 0; }
+
+/* Address field: Safari-style glossy blue progress fill */
 .address-box {
-  background:
-    linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6) 0 0 / var(--load-progress, 0%) 100% no-repeat,
-    #fff;
+  height: 22px;
+  border: 1px solid #8e8e8e;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25), 0 1px 0 rgba(255, 255, 255, .5);
+  background: var(--aqua-blue) 0 0 / var(--load-progress, 0%) 100% no-repeat, #fff;
+  transition: background .2s;
 }
-.address-box input { padding-left: 2px; }
+.address-box input { padding-left: 2px; font: 12px var(--font); }
 
 /* Rounded search field */
-.search-box { display: block; width: 170px; margin-left: 8px; flex: none; }
+.search-box { display: block; flex: none; width: 170px; margin-left: 8px; }
 .search-box input {
   width: 100%;
   height: 22px;
@@ -300,26 +183,133 @@ body, body.inactive { border: 0; }
 .links-bar button:hover { background: rgba(0, 0, 0, .14); }
 .links-bar button:active { background: rgba(0, 0, 0, .3); color: #fff; text-shadow: none; }
 
-/* Gumdrops: 14px with a bottom glow */
-.caption-buttons { gap: 6px; }
-.cap, .cap-close { width: 14px; height: 14px; }
-.cap-close { background: radial-gradient(circle at 50% 85%, rgba(255,255,255,.6), transparent 50%), radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ff8a80, #e0362a 55%, #9a1b12); }
-.cap-min   { background: radial-gradient(circle at 50% 85%, rgba(255,255,255,.6), transparent 50%), radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ffe08a, #f5b21c 55%, #9a6a05); }
-.cap-max   { background: radial-gradient(circle at 50% 85%, rgba(255,255,255,.6), transparent 50%), radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #9ff08a, #3cbd2a 55%, #17661a); }
+/* ======================================================================
+   Tabs: metal tabs hanging under the toolbar
+   ====================================================================== */
 
-/* Dialogs: all three gumdrops (two greyed), Mac button order, no Apply */
-.dialog-cap-extra { display: inline-block; opacity: 1; background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.9) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #eee, #bdbdbd 55%, #8a8a8a) !important; }
-.dialog-caps { display: flex; gap: 6px; }
+#tabstrip { align-items: stretch; gap: 0; padding: 0 8px; background: linear-gradient(#bdbdbd, #a9a9a9); border-bottom: 1px solid #6f6f6f; }
+.tabs-list { align-items: stretch; gap: 0; }
+.tab-item {
+  justify-content: center;
+  height: 22px;
+  margin: 0;
+  border-left: 1px solid #8a8a8a;
+  background: linear-gradient(#c9c9c9, #b4b4b4);
+  font: 11px var(--font);
+  color: #2a2a2a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+}
+.tab-item:last-child { border-right: 1px solid #8a8a8a; }
+.tab-item.active { height: 22px; background: linear-gradient(#e8e8e8, #d2d2d2); color: #000; }
+.tab-item:hover { filter: brightness(1.04); }
+.tab-icon { display: none; }
+.tab-close { order: -1; opacity: 0; color: #555; }
+.tab-item:hover .tab-close { opacity: .8; }
+.tab-close:hover { border-color: transparent; border-radius: 50%; background: #8a8a8a; color: #fff; }
+.tab-new { align-self: center; margin: 2px 0 2px 4px; border-radius: 4px; }
+
+/* ======================================================================
+   Status bar on metal
+   ====================================================================== */
+
+#viewport { border-top: 1px solid #5f5f5f; }
+#statusbar { height: 20px; padding: 2px 4px; background: var(--metal); border-top: 1px solid #8a8a8a; }
+#statusbar .cell { border: 0; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+#statusbar .progress { display: none; }   /* the address field shows progress */
+
+/* ======================================================================
+   Menus: pinstripes, Aqua blue selection, rounded bottom, no fade (the picked item blinks)
+   ====================================================================== */
+
+.menu {
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0 0 6px 6px;
+  background: repeating-linear-gradient(rgba(255, 255, 255, .95) 0 2px, rgba(243, 243, 243, .95) 2px 4px);
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 8px 18px rgba(0, 0, 0, .35);
+  font: 14px var(--font);
+}
+.menu-item { height: 18px; padding: 0 20px 0 0; }
+.menu-item.picked { animation: menu-blink 110ms steps(1); }
+@keyframes menu-blink { 50% { background: none; color: var(--text); } }
+.menu-sep { margin: 5px 0; background: #dcdcdc; }
+.menu.combo-list { padding: 0; border: 1px solid #000; box-shadow: none; }
+.menu.combo-list .menu-item { height: 18px; padding: 0 6px 0 0; }
+
+#tooltip { padding: 2px 5px; background: #ffffc7; border: 1px solid #a8a87a; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); font: 11px var(--font); }
+
+/* ======================================================================
+   Dialogs: pinstripes, three gumdrops (two greyed), capsule buttons, Mac button order
+   ====================================================================== */
+
+.dialog {
+  overflow: hidden;
+  border: 1px solid #8a8a8a;
+  border-radius: 7px;
+  background: var(--pinstripes);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+}
+.dialog-titlebar {
+  height: 24px;
+  background: repeating-linear-gradient(#f2f2f2 0 2px, #e2e2e2 2px 4px);
+  border-bottom: 1px solid #a8a8a8;
+  text-shadow: 0 1px 0 #fff;
+}
+.dialog-title { text-align: center; padding-right: 20px; }
+.dialog-caps { order: -1; display: flex; gap: 6px; margin-right: 8px; }
 .dialog-caps .cap { width: 14px; height: 14px; }
-.dialog-buttons .btn[data-value=apply] { display: none; }
-.dialog-buttons .btn.primary { order: 3; }
+.dialog-caps .dialog-cap-extra { display: inline-block; background: var(--gumdrop-off); }
 .dialog.flash .dialog-titlebar { animation: title-flash-aqua .14s steps(1) 6; }
 @keyframes title-flash-aqua { 50% { color: #9a9a9a; } }
-.btn { height: 20px; border-radius: 10px; background: linear-gradient(#ffffff, #f0f0f0 50%, #dcdcdc 50%, #f6f6f6); }
-.btn.primary { background: linear-gradient(#bcd9fa, #74acef 50%, #5796e8 50%, #9ac6f6); animation: aqua-pulse 1s ease-in-out infinite alternate; }
-@keyframes aqua-pulse { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+.dialog-buttons { gap: 10px; padding: 10px 14px 14px; }
+.dialog-buttons .btn[data-value=apply] { display: none; }
+.dialog-buttons .btn.primary { order: 3; }
 
-/* Options as a preferences toolbar (big icons + labels) instead of tabs */
+.btn {
+  min-width: 70px;
+  height: 20px;
+  padding: 0 14px;
+  border: 1px solid #7a7a7a;
+  border-radius: 10px;
+  background: var(--aqua-white);
+  font: 12.5px var(--font);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .15);
+}
+.btn:hover:not(:disabled) { border-color: #555; }
+.btn:active:not(:disabled) { background: linear-gradient(#c5c5c5, #e8e8e8); }
+.btn.primary { background: var(--aqua-blue); border-color: #2a5fa8; animation: aqua-pulse 1s ease-in-out infinite alternate; }
+@keyframes aqua-pulse { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+.btn:disabled { border-color: #c9c7ba; }
+.btn.small, .btn.tiny { min-width: 0; height: 19px; font-size: 11px; }
+.btn.tiny { padding: 0; }
+
+.field { border: 1px solid #8e8e8e; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2); font: 12px var(--font); }
+.field:disabled { background: #ececec; color: #9a9a9a; }
+
+/* Popup buttons: a rounded white capsule with a blue double-chevron end cap */
+select.field {
+  padding: 0 24px 0 8px;
+  border: 1px solid #7a7a7a;
+  border-radius: 5px;
+  background: url(../img/aqua-popup.svg) right center / 18px 100% no-repeat, var(--aqua-white);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .15);
+}
+
+/* Checkboxes and radios: glossy, blue when on */
+.dialog input[type=checkbox], .dialog input[type=radio] {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #6f6f6f;
+  border-radius: 3px;
+  background: var(--aqua-white-soft);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .15);
+}
+.dialog input[type=radio] { border-radius: 50%; }
+.dialog input:checked { background: var(--aqua-blue-soft); border-color: #2a5fa8; }
+.dialog input[type=checkbox]:checked::after { left: 4px; top: 1px; border-color: #10204a; }
+.dialog input[type=radio]:checked::after { inset: 4px; background: #10204a; }
+
+/* Options: a preferences toolbar (big icons + labels) instead of tabs */
 .settings .tabs {
   justify-content: flex-start;
   gap: 2px;
@@ -328,70 +318,57 @@ body, body.inactive { border: 0; }
   background: repeating-linear-gradient(#f2f2f2 0 2px, #e4e4e4 2px 4px);
   border-bottom: 1px solid #a8a8a8;
 }
-.settings .tab, .settings .tab:first-child, .settings .tab:last-child {
-  height: auto;
-  min-width: 70px;
-  padding: 4px 8px 3px;
-  border: 0;
-  border-radius: 5px;
-  background: none;
+.settings .tab {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  min-width: 70px;
+  height: auto;
+  margin: 0;
+  padding: 4px 8px 3px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
   font: 11px var(--font);
 }
+.settings .tab:hover { filter: brightness(.97); }
 .settings .tab::before { content: ""; width: 32px; height: 32px; background: center / contain no-repeat var(--tab-icon); }
-.settings .tab.selected { background: rgba(0, 0, 0, .12); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); border: 0; color: #000; }
-.settings .tab[data-tab=general] { --tab-icon: url(../img/tango/user.svg); }
-.settings .tab[data-tab=startpage] { --tab-icon: url(../img/tango/favorites.svg); }
+.settings .tab.selected { background: rgba(0, 0, 0, .12); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); color: #000; }
+.settings .tab[data-tab=general]    { --tab-icon: url(../img/tango/user.svg); }
+.settings .tab[data-tab=startpage]  { --tab-icon: url(../img/tango/favorites.svg); }
 .settings .tab[data-tab=appearance] { --tab-icon: url(../img/tango/appearance.svg); }
-.settings .tab[data-tab=dialup] { --tab-icon: url(../img/tango/dialup.svg); }
-.settings .tab[data-tab=privacy] { --tab-icon: url(../img/tango/privacy.svg); }
-.settings .tab-panels { border: 0; background: transparent; padding: 0 4px; border-radius: 0; }
+.settings .tab[data-tab=dialup]     { --tab-icon: url(../img/tango/dialup.svg); }
+.settings .tab[data-tab=privacy]    { --tab-icon: url(../img/tango/privacy.svg); }
+.settings .tab-panels { padding: 0 4px; border: 0; border-radius: 0; background: transparent; }
 .dialog-body:has(.settings) { padding-top: 10px; }
 
-/* Menus: pinstripes, Aqua blue selection, no fade-in (Aqua blinks the chosen item instead) */
-.menu {
-  background: repeating-linear-gradient(rgba(255, 255, 255, .95) 0 2px, rgba(243, 243, 243, .95) 2px 4px);
-  font-size: 14px;
-  animation: none;
+.settings fieldset { border-color: #c4c4c4; border-radius: 6px; background: rgba(255, 255, 255, .35); }
+.settings legend { color: #111; font-weight: bold; }
+
+/* Selection: a blue ring rather than XP's dotted rectangle */
+.skin-card input:checked + .mini-window,
+.wizard-card:has(input:checked) {
+  border-color: #3f8cf5;
+  border-radius: 6px;
+  background: rgba(63, 140, 245, .15);
+  outline: 3px solid rgba(63, 140, 245, .6);
+  outline-offset: -1px;
 }
-.menu-item { height: 18px; padding: 0 20px 0 0; }
-.menu-item.active:not(.disabled) { background: linear-gradient(#5b93ea, #1f5fd6); }
-.menu-item.picked { animation: menu-blink 110ms steps(1); }
-@keyframes menu-blink { 50% { background: none; color: var(--text); } }
+.wizard-card:has(input:checked) .wizard-card-title::before { color: #2a6fe6; }
 
-/* Tooltips: pale yellow, soft shadow */
-#tooltip { background: #ffffc7; border: 1px solid #a8a87a; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); font: 11px var(--font); padding: 2px 5px; }
+/* ======================================================================
+   Wizard: white panel on pinstripes, separate Go Back / Continue capsules
+   ====================================================================== */
 
-/* Selection: Aqua uses a blue ring rather than XP's dotted rectangle */
-.skin-card input:checked + .mini-window, .option-card:has(input:checked), .wizard-card:has(input:checked) { outline: 3px solid rgba(63, 140, 245, .6); outline-offset: -1px; border-radius: 6px; }
-.option-card:has(input:checked) .option-title::before, .wizard-card:has(input:checked) .wizard-card-title::before { color: #2a6fe6; }
-
-/* Wizard header band on pinstripes */
+.wizard-banner { background: linear-gradient(160deg, #3f8cf5, #9fd0ff 60%, #e8f3ff); }
+.wizard-main, .wizard.interior .wizard-main { background: rgba(255, 255, 255, .9); }
 .wizard-header { background: rgba(255, 255, 255, .6); border-bottom-color: #c4c4c4; box-shadow: none; }
-.wizard.interior .wizard-main { background: transparent; }
+.wizard-footer { gap: 10px; border-top: 1px solid #c4c4c4; box-shadow: none; }
+.wizard-footer [data-nav=back] { margin-right: 0; }
+.wizard-option { border-color: #c4c4c4; border-radius: 7px; background: rgba(255, 255, 255, .5); }
+.wizard-option:has(input:checked) { border-color: #3f8cf5; background: rgba(63, 140, 245, .15); outline: 0; }
+.wizard-option::before { border-color: #6f6f6f; background: var(--aqua-white-soft); }
+.wizard-option:has(input:checked)::before { border-color: #2a5fa8; background: radial-gradient(circle, #10204a 0 2.5px, transparent 3px), var(--aqua-blue-soft); }
 
-/* Tabs on Aqua: metal tabs hanging under the toolbar */
-#tabstrip { background: linear-gradient(#bdbdbd, #a9a9a9); border-bottom: 1px solid #6f6f6f; padding: 0 8px; gap: 0; align-items: stretch; }
-.tabs-list { gap: 0; align-items: stretch; }
-.tab-item, .tab-item.active {
-  height: 22px; margin: 0; border: 0; border-left: 1px solid #8a8a8a; border-radius: 0;
-  background: linear-gradient(#c9c9c9, #b4b4b4); box-shadow: none; justify-content: center;
-  font: 11px var(--font); color: #2a2a2a; text-shadow: 0 1px 0 rgba(255,255,255,.5);
 }
-.tab-item:last-child { border-right: 1px solid #8a8a8a; }
-.tab-item.active { background: linear-gradient(#e8e8e8, #d2d2d2); color: #000; }
-.tab-item:hover { box-shadow: none; filter: brightness(1.04); }
-.tab-icon { display: none; }
-.tab-close { order: -1; opacity: 0; }
-.tab-item:hover .tab-close { opacity: .8; }
-.tab-close:hover { background: #8a8a8a; border-color: transparent; border-radius: 50%; }
-.tab-new { margin: 2px 0 2px 4px; }
-:root { --icon-wayback: url(../img/aqua-wayback.svg); }
-#btn-wayback .label { display: none; }
-
-/* Window shape: Aqua windows have gently rounded top corners */
-body { border-radius: 6px 6px 0 0; overflow: hidden; }
-#chrome { border-radius: 6px 6px 0 0; background: var(--metal); }

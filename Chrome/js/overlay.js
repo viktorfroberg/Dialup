@@ -5,6 +5,7 @@
 //   .dialog .dialog-titlebar .dialog-body .dialog-buttons .btn .tabs .tab .tab-panel
 
 import { host } from './host.js';
+import { el, uniqueId } from './dom.js';
 
 const layer = document.getElementById('overlay');
 let openCount = 0;
@@ -38,13 +39,6 @@ function release() {
   }
 }
 
-const el = (tag, cls, text) => {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
-  if (text != null) node.textContent = text;
-  return node;
-};
-
 /**
  * Shows a menu at (x, y) in window coordinates.
  * items: [{ id, title, enabled?, checked?, radio?, separator?, items? }]  (items = submenu)
@@ -59,6 +53,8 @@ export function showMenu(items, x, y, options = {}) {
     const shield = el('div', 'menu-shield');
     layer.append(shield);
     const menus = [];
+    const itemOf = new WeakMap();   // menu row → its item
+    const returnFocus = document.activeElement;
     let done = false;
 
     const close = (value) => {
@@ -68,6 +64,7 @@ export function showMenu(items, x, y, options = {}) {
       shield.remove();
       menus.forEach((m) => m.remove());
       release();
+      returnFocus?.focus?.({ preventScroll: true });
       resolve(value ?? null);
     };
     shield.addEventListener('mousedown', (e) => {
@@ -101,16 +98,23 @@ export function showMenu(items, x, y, options = {}) {
       setTimeout(() => close(id), delay);
     };
 
-    const trim = (level) => { while (menus.length > level) menus.pop().remove(); };
+    // The deepest open menu has keyboard focus; its active row is announced via aria-activedescendant.
+    const focusTop = () => menus[menus.length - 1]?.focus({ preventScroll: true });
+    const trim = (level) => {
+      while (menus.length > level) menus.pop().remove();
+      focusTop();
+    };
     const rows = (menu) => [...menu.querySelectorAll(':scope > .menu-item:not(.disabled)')];
     const setActive = (menu, row) => {
       menu.querySelectorAll(':scope > .active').forEach((r) => r.classList.remove('active'));
       if (row) row.classList.add('active');
+      if (row) menu.setAttribute('aria-activedescendant', row.id);
+      else menu.removeAttribute('aria-activedescendant');
     };
 
     function openSub(row, level) {
       const r = row.getBoundingClientRect();
-      const sub = build(row._item.items, level + 1);
+      const sub = build(itemOf.get(row).items, level + 1);
       const w = sub.offsetWidth;
       const left = r.right + w - 2 > innerWidth ? r.left - w + 2 : r.right - 2;
       place(sub, left, r.top - 3);
@@ -121,14 +125,24 @@ export function showMenu(items, x, y, options = {}) {
       trim(level);
       const menu = el('div', 'menu');
       menu.setAttribute('role', 'menu');
+      menu.tabIndex = -1;
       if (level === 0 && options.className) menu.classList.add(options.className);
       if (level === 0 && options.minWidth) menu.style.minWidth = `${options.minWidth}px`;
       for (const item of list) {
-        if (item.separator) { menu.append(el('div', 'menu-sep')); continue; }
+        if (item.separator) {
+          const sep = el('div', 'menu-sep');
+          sep.setAttribute('role', 'separator');
+          menu.append(sep);
+          continue;
+        }
         const row = el('div', 'menu-item');
-        row._item = item;
-        if (item.enabled === false) row.classList.add('disabled');
-        if (item.items) row.classList.add('has-sub');
+        row.id = uniqueId('menu-item');
+        itemOf.set(row, item);
+        const checkable = item.radio || 'checked' in item;
+        row.setAttribute('role', item.radio ? 'menuitemradio' : checkable ? 'menuitemcheckbox' : 'menuitem');
+        if (checkable) row.setAttribute('aria-checked', String(!!item.checked));
+        if (item.enabled === false) { row.classList.add('disabled'); row.setAttribute('aria-disabled', 'true'); }
+        if (item.items) { row.classList.add('has-sub'); row.setAttribute('aria-haspopup', 'menu'); }
         if (item.checked) row.classList.add(item.radio ? 'radio' : 'checked');
         row.append(el('span', 'menu-check'), el('span', 'menu-label', item.title), el('span', 'menu-arrow'));
         row.addEventListener('mouseenter', () => {
@@ -144,6 +158,7 @@ export function showMenu(items, x, y, options = {}) {
       }
       layer.append(menu);
       menus.push(menu);
+      focusTop();
       return menu;
     }
 
@@ -160,16 +175,18 @@ export function showMenu(items, x, y, options = {}) {
       const index = list.indexOf(active);
       const stop = () => { e.preventDefault(); e.stopPropagation(); };
       if (e.key === 'Escape') { stop(); if (menus.length > 1) trim(menus.length - 1); else close(null); }
+      else if (e.key === 'Tab') { stop(); close(null); }
       else if (e.key === 'ArrowDown') { stop(); setActive(menu, list[(index + 1) % list.length]); }
       else if (e.key === 'ArrowUp') { stop(); setActive(menu, list[(index - 1 + list.length) % list.length]); }
-      else if (e.key === 'ArrowRight' && active?._item.items) { stop(); const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
+      else if (e.key === 'ArrowRight' && active && itemOf.get(active).items) { stop(); const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
       else if (e.key === 'ArrowLeft' && menus.length > 1) { stop(); trim(menus.length - 1); }
       else if (e.key === 'ArrowRight' && options.siblings) { stop(); switchBy(1); }
       else if (e.key === 'ArrowLeft' && options.siblings) { stop(); switchBy(-1); }
-      else if (e.key === 'Enter' && active) {
+      else if ((e.key === 'Enter' || e.key === ' ') && active) {
         stop();
-        if (active._item.items) { const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
-        else pick(active, active._item.id);
+        const item = itemOf.get(active);
+        if (item.items) { const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
+        else pick(active, item.id);
       }
     }
     const keys = { onKey };
@@ -192,13 +209,19 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
   const dialog = el('div', 'dialog');
   dialog.style.width = `${width}px`;
   dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
 
   const bar = el('div', 'dialog-titlebar');
+  const titleEl = el('span', 'dialog-title', title);
+  titleEl.id = uniqueId('dialog-title');
+  dialog.setAttribute('aria-labelledby', titleEl.id);
   const closeBtn = el('button', 'cap cap-close');
   closeBtn.title = 'Close';
-  bar.append(el('span', 'dialog-title', title), el('span', 'dialog-caps'));
+  closeBtn.setAttribute('aria-label', 'Close');
+  bar.append(titleEl, el('span', 'dialog-caps'));
   // Mac-style skins show all three gumdrops on dialogs, with minimize/zoom greyed out.
-  bar.lastChild.append(closeBtn, el('span', 'cap dialog-cap-extra'), el('span', 'cap dialog-cap-extra'));
+  const extraCap = () => { const cap = el('span', 'cap dialog-cap-extra'); cap.setAttribute('aria-hidden', 'true'); return cap; };
+  bar.lastChild.append(closeBtn, extraCap(), extraCap());
 
   const content = el('div', 'dialog-body');
   if (body) content.append(body);

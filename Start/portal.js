@@ -311,10 +311,10 @@
   const TIPS = [
     'Press ⌘L to jump to the Address bar.',
     'Dial-up Mode (⇧⌘D) makes pictures trickle in like it\'s 1999.',
-    'You can change your home page and search engine in Settings (⌘,).',
+    'You can change your home page and search engine in Dialup Options (⌘,).',
     'Click the little ▾ next to Back to jump several pages at once.',
     'A 56k modem actually topped out at about 53,333 bits per second.',
-    'Switch between the Aqua and Luna looks under Settings → Appearance.',
+    'Switch between the Aqua, Luna and Classic looks under Dialup Options → Appearance.',
     'Add your own favorite sites with "Customize this page".',
     'Your guestbook, poll vote and hit counter are saved only on this computer.',
   ];

@@ -26,16 +26,16 @@
       <!-- Menu bar band (Windows-style skins; Mac-style skins use the real macOS menu bar) -->
       <div class="band" id="band-menu">
         <div class="gripper"></div>
-        <nav class="menubar" id="menubar">
-          <button class="menu-title" data-menu="file">File</button>
-          <button class="menu-title" data-menu="edit">Edit</button>
-          <button class="menu-title" data-menu="view">View</button>
-          <button class="menu-title" data-menu="favorites">Favorites</button>
-          <button class="menu-title" data-menu="tools">Tools</button>
-          <button class="menu-title" data-menu="help">Help</button>
+        <nav class="menubar" id="menubar" role="menubar" aria-label="Menu bar">
+          <button class="menu-title" data-menu="file" role="menuitem" aria-haspopup="menu" aria-expanded="false">File</button>
+          <button class="menu-title" data-menu="edit" role="menuitem" aria-haspopup="menu" aria-expanded="false">Edit</button>
+          <button class="menu-title" data-menu="view" role="menuitem" aria-haspopup="menu" aria-expanded="false">View</button>
+          <button class="menu-title" data-menu="favorites" role="menuitem" aria-haspopup="menu" aria-expanded="false">Favorites</button>
+          <button class="menu-title" data-menu="tools" role="menuitem" aria-haspopup="menu" aria-expanded="false">Tools</button>
+          <button class="menu-title" data-menu="help" role="menuitem" aria-haspopup="menu" aria-expanded="false">Help</button>
         </nav>
         <div class="spacer"></div>
-        <div class="throbber" id="throbber" data-tip="Dialup"></div>
+        <div class="throbber" id="throbber" data-tip="Dialup" aria-hidden="true"></div>
       </div>
 
       <!-- Standard Buttons band -->
@@ -44,21 +44,21 @@
         <div class="buttons">
           <span class="split">
             <button class="tb has-label" id="btn-back" data-tip="Back (hold for history)" disabled><i class="ico ico-back"></i><span class="label">Back</span></button>
-            <button class="tb drop" id="drop-back" data-tip="Recent pages" disabled></button>
+            <button class="tb drop" id="drop-back" data-tip="Recent pages" aria-haspopup="menu" disabled></button>
           </span>
           <span class="split">
             <button class="tb" id="btn-forward" data-tip="Forward (hold for history)" disabled><i class="ico ico-forward"></i></button>
-            <button class="tb drop" id="drop-forward" data-tip="Recent pages" disabled></button>
+            <button class="tb drop" id="drop-forward" data-tip="Recent pages" aria-haspopup="menu" disabled></button>
           </span>
           <button class="tb" id="btn-stop" data-tip="Stop" disabled><i class="ico ico-stop"></i></button>
           <button class="tb" id="btn-reload" data-tip="Refresh"><i class="ico ico-reload"></i></button>
           <button class="tb" id="btn-home" data-tip="Home"><i class="ico ico-home"></i></button>
           <span class="tb-sep"></span>
-          <button class="tb has-label" id="btn-favorites" data-tip="Favorites"><i class="ico ico-favorites"></i><span class="label">Favorites</span></button>
-          <button class="tb has-label" id="btn-wayback" data-tip="Wayback: see this page as it looked years ago"><i class="ico ico-wayback"></i><span class="label">Wayback</span></button>
+          <button class="tb has-label" id="btn-favorites" data-tip="Favorites" aria-haspopup="menu"><i class="ico ico-favorites"></i><span class="label">Favorites</span></button>
+          <button class="tb has-label" id="btn-wayback" data-tip="Wayback: see this page as it looked years ago" aria-haspopup="menu"><i class="ico ico-wayback"></i><span class="label">Wayback</span></button>
           <span class="split" id="dialup-mode">
-            <button class="tb has-label toggle" id="btn-dialup-mode" data-tip="Dial-up Mode: browse like it's 1999 (⇧⌘D)"><i class="ico ico-dialup-mode"></i><span class="label">Dial-up</span></button>
-            <button class="tb drop" id="drop-dialup-mode" data-tip="Dial-up Mode settings"></button>
+            <button class="tb has-label toggle" id="btn-dialup-mode" data-tip="Dial-up Mode: browse like it's 1999 (⇧⌘D)" aria-pressed="false"><i class="ico ico-dialup-mode"></i><span class="label">Dial-up</span></button>
+            <button class="tb drop" id="drop-dialup-mode" data-tip="Dial-up Mode settings" aria-haspopup="menu"></button>
           </span>
         </div>
       </div>
@@ -70,22 +70,22 @@
         <div class="address-box">
           <i class="ico ico-page"></i>
           <input id="address" type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
-          <button class="addr-drop" id="addr-drop" tabindex="-1" data-tip="Show recent addresses"></button>
+          <button class="addr-drop" id="addr-drop" tabindex="-1" data-tip="Show recent addresses" aria-haspopup="listbox"></button>
         </div>
         <button class="tb go" id="btn-go" data-tip="Go to the address in the Address bar"><i class="ico ico-go"></i><span class="label">Go</span></button>
         <div class="search-box" id="search-box">
-          <input id="search-field" type="search" spellcheck="false" autocomplete="off" placeholder="Search">
+          <input id="search-field" type="search" spellcheck="false" autocomplete="off" placeholder="Search" aria-label="Search the Web">
         </div>
-        <button class="links-chevron" id="links-chevron" data-tip="Links">Links <b>»</b></button>
+        <button class="links-chevron" id="links-chevron" data-tip="Links" aria-haspopup="menu">Links <b>»</b></button>
       </div>
 
       <!-- Bookmarks bar (Mac-style skins) -->
       <div class="band" id="band-links">
-        <div class="links-bar" id="links-bar"></div>
+        <nav class="links-bar" id="links-bar" aria-label="Bookmarks"></nav>
       </div>
     </div>
 
-    <!-- Tab strip (shown with 2+ tabs, when tabs are turned on) -->
+    <!-- Tab strip (shown with 2+ tabs, when tabs are turned on); the new-tab button follows the last tab -->
     <div id="tabstrip" hidden>
       <div class="tabs-list" id="tabs-list"></div>
       <button class="tab-new" id="tab-new" data-tip="New Tab (⌘T)"></button>
@@ -99,8 +99,8 @@
     <div class="cell progress"><div id="progress-bar"></div></div>
     <div class="cell spare"></div>
     <div class="cell spare"></div>
-    <div class="cell icon-cell" id="cell-secure" data-tip="Secure connection. Double-click for details." hidden><i class="ico ico-lock"></i></div>
-    <div class="cell icon-cell" id="cell-sound" data-tip="Sounds on. Click to mute."><i class="ico ico-sound"></i></div>
+    <button class="cell icon-cell" id="cell-secure" data-tip="Secure connection. Double-click for details." hidden><i class="ico ico-lock"></i></button>
+    <button class="cell icon-cell" id="cell-sound" data-tip="Sounds on. Click to mute."><i class="ico ico-sound"></i></button>
     <div class="cell zone"><i class="ico ico-zone"></i><span>Internet</span></div>
     <div class="cell sizer"></div>
   </footer>

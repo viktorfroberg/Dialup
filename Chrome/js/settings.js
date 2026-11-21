@@ -3,13 +3,15 @@
 
 import { host, onEvent } from './host.js';
 import { openDialog, confirmBox } from './overlay.js';
+import { applySkin, miniWindow } from './skin.js';
+import { el, html } from './dom.js';
 
 const SAMPLE = 'img/sample.svg';
 const PICTURE_BYTES = 40 * 1024; // "a typical 40 KB photo"
 
 let current = null;  // the open dialog, so ⌘, twice doesn't stack dialogs
 
-// After importing bookmarks, pull the new favourites into an open Settings dialog.
+// After importing bookmarks, pull the new favorites into an open Dialup Options dialog.
 onEvent('bookmarksImported', ({ added, found }) => current?.onImported?.(added, found));
 let opening = false; // set before the first await, so a quick second ⌘, is ignored
 let pendingTab = null;
@@ -46,32 +48,28 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
     ['privacy', 'Privacy', privacyTab],
   ];
 
-  const root = document.createElement('div');
-  root.className = 'settings';
-  const strip = document.createElement('div');
-  strip.className = 'tabs';
-  const panels = document.createElement('div');
-  panels.className = 'tab-panels';
+  const root = el('div', 'settings');
+  const strip = el('div', 'tabs');
+  strip.setAttribute('role', 'tablist');
+  const panels = el('div', 'tab-panels');
   root.append(strip, panels);
 
   // Live preview: picking a skin restyles the whole browser right away; Cancel puts back
   // whatever was last saved (OK/Apply keep it).
-  const previewSkin = (id) => {
-    if (!id || document.body.dataset.skin === id) return;
-    document.body.dataset.skin = id;
-    document.getElementById('skin-css').href = `skins/${id}.css`;
-  };
-  const ctx = { draft, catalog, getCurrentUrl, previewSkin };
+  const ctx = { draft, catalog, getCurrentUrl, previewSkin: applySkin };
   const byId = {};
   for (const [id, label, build] of tabs) {
-    const tab = document.createElement('button');
-    tab.className = 'tab';
+    const tab = el('button', 'tab', label);
     tab.dataset.tab = id; // skins can give tabs icons (Aqua shows a preferences toolbar)
-    tab.textContent = label;
+    tab.id = `settings-tab-${id}`;
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-controls', `settings-panel-${id}`);
     tab.addEventListener('click', () => select(id));
     strip.append(tab);
-    const panel = document.createElement('div');
-    panel.className = 'tab-panel';
+    const panel = el('div', 'tab-panel');
+    panel.id = `settings-panel-${id}`;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', tab.id);
     panel.append(build(ctx));
     panels.append(panel);
     byId[id] = { tab, panel, build };
@@ -80,6 +78,7 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
   function select(id) {
     for (const [key, { tab, panel }] of Object.entries(byId)) {
       tab.classList.toggle('selected', key === id);
+      tab.setAttribute('aria-selected', String(key === id));
       panel.hidden = key !== id;
     }
   }
@@ -109,7 +108,7 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
     onButton: async (value) => {
       if (value === 'apply') { await apply(); return false; }
       if (value === 'ok') await apply();
-      else previewSkin(baseline.prefs.skin); // Cancel / close box: undo the live preview
+      else applySkin(baseline.prefs.skin); // Cancel / close box: undo the live preview
       current = null;
       return true;
     },
@@ -129,16 +128,6 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
 }
 
 // ---------- helpers ----------
-
-function html(strings, ...values) {
-  const t = document.createElement('template');
-  t.innerHTML = String.raw({ raw: strings }, ...values.map(escape)).trim();
-  return t.content;
-}
-
-function escape(v) {
-  return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
 
 /** Two-way bind inputs with data-bind="prefs.key" / "dialup.key" to the draft. */
 function bind(root, draft, onChange) {
@@ -176,7 +165,7 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
         <div class="big-icon icon-home"></div>
         <div class="grow">
           <p class="hint">The page that opens with new windows and when you click Home.</p>
-          <label class="choice"><input type="radio" name="home" value="start"> Dialup Start Page <span class="hint">(search, favorite sites, visitor counter)</span></label>
+          <label class="choice"><input type="radio" name="home" value="start"> Dialup Start Page <span class="hint">(search, your Favorites, Site of the Day)</span></label>
           <label class="choice"><input type="radio" name="home" value="url"> This page:</label>
           <div class="indent row">
             <input type="text" class="field grow" id="home-url" spellcheck="false" placeholder="https://www.example.com/">
@@ -201,9 +190,7 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
         <div class="big-icon icon-search"></div>
         <div class="grow">
           <label class="row">Search the Web with:
-            <select data-bind="prefs.searchEngine" class="field">
-              ${''}
-            </select>
+            <select data-bind="prefs.searchEngine" class="field"></select>
           </label>
           <p class="hint">Used when you type words (not an address) in the Address bar, and on the Start Page.</p>
         </div>
@@ -219,7 +206,7 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
         </div>
       </div>
     </fieldset>`;
-  const root = document.createElement('div');
+  const root = el('div');
   root.append(frag);
 
   const select = root.querySelector('select');
@@ -252,7 +239,7 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
 // ---------- Start Page ----------
 
 function startPageTab({ draft, catalog }) {
-  const root = document.createElement('div');
+  const root = el('div');
   root.append(html`
     <fieldset>
       <legend>My Favorite Sites</legend>
@@ -273,8 +260,7 @@ function startPageTab({ draft, catalog }) {
   const render = () => {
     rowsEl.replaceChildren();
     draft.prefs.quickLinks.forEach((link, i) => {
-      const row = document.createElement('div');
-      row.className = 'link-row';
+      const row = el('div', 'link-row');
       row.append(html`
         <input type="text" class="field" value="${link.title}" placeholder="Name">
         <input type="text" class="field" value="${link.url}" placeholder="https://" spellcheck="false">
@@ -307,7 +293,7 @@ function startPageTab({ draft, catalog }) {
 // ---------- Appearance ----------
 
 function appearanceTab({ draft, catalog, previewSkin }) {
-  const root = document.createElement('div');
+  const root = el('div');
   root.append(html`
     <fieldset>
       <legend>Skin</legend>
@@ -317,15 +303,10 @@ function appearanceTab({ draft, catalog, previewSkin }) {
     <p class="hint">Want to make your own? Skins are plain CSS files in <code>Chrome/skins/</code>.</p>`);
   const cards = root.querySelector('.skin-cards');
   for (const skin of catalog.skins) {
-    const card = document.createElement('label');
-    card.className = `skin-card skin-${skin.id}`;
+    const card = el('label', `skin-card skin-${skin.id}`);
     card.append(html`
       <input type="radio" name="skin" value="${skin.id}" data-bind="prefs.skin">
-      <div class="mini-window">
-        <div class="mini-titlebar"><i></i><i></i><i></i><span>Dialup</span></div>
-        <div class="mini-toolbar"><b></b><b></b><b></b><em></em></div>
-        <div class="mini-page"><s></s><s></s><s></s></div>
-      </div>
+      ${miniWindow}
       <div class="skin-name">${skin.name}</div>`);
     cards.append(card);
   }
@@ -338,8 +319,7 @@ function appearanceTab({ draft, catalog, previewSkin }) {
 function dialupTab({ draft, catalog }) {
   const SPEEDS = catalog.connectionSpeeds || { modem56k: 53333, isdn: 128000, dsl: 512000, off: 0 };
   const PICTURE_CAP_MS = catalog.pictureCapMs || 2500;
-  const root = document.createElement('div');
-  root.className = 'dialup-tab';
+  const root = el('div', 'dialup-tab');
   root.append(html`
     <label class="choice big"><input type="checkbox" data-bind="dialup.enabled"> <b>Use Dial-up Mode</b> <span class="hint">browse like it's 1999 (⇧⌘D)</span></label>
     <div class="row presets">
@@ -366,10 +346,10 @@ function dialupTab({ draft, catalog }) {
     </fieldset>
 
     <fieldset>
-      <legend>Colours and pixels</legend>
+      <legend>Colors and pixels</legend>
       <div class="split-row">
         <div class="grow">
-          <div class="opt-group"><div class="opt-heading">Colours</div><div id="colour-list"></div></div>
+          <div class="opt-group"><div class="opt-heading">Colors</div><div id="color-list"></div></div>
           <div class="opt-group"><div class="opt-heading">Pixels</div><div id="pixel-list"></div></div>
         </div>
         <div class="preview-box looks-preview">
@@ -416,11 +396,11 @@ function dialupTab({ draft, catalog }) {
       </div>
     </fieldset>`);
 
-  const colourOptions = [
-    ['millions', 'Millions', 'Modern colours. Recommended.'],
+  const colorOptions = [
+    ['millions', 'Millions', 'Modern colors. Recommended.'],
     ['gifImages', '256 for pictures', 'Pictures look like old GIFs. Text stays sharp.'],
-    ['thousands', 'Thousands', 'Hard mode: the whole page in 16-bit colour.', true],
-    ['websafe', '256 web-safe', 'Hard mode: the whole page in 216 colours.', true],
+    ['thousands', 'Thousands', 'Hard mode: the whole page in 16-bit color.', true],
+    ['websafe', '256 web-safe', 'Hard mode: the whole page in 216 colors.', true],
     ['websafeDither', '256 dithered', 'Hard mode: dotted, like a 1996 monitor.', true],
   ];
   const pixelOptions = [
@@ -433,16 +413,13 @@ function dialupTab({ draft, catalog }) {
   // combination, plus a 4x close-up where banding, dithering and blocky pixels are obvious.
   const radios = (container, key, options) => {
     for (const [value, title, text, hard] of options) {
-      const row = document.createElement('label');
-      row.className = 'choice opt-choice';
-      row.append(html`<input type="radio" name="${key}" value="${value}" data-bind="dialup.${key}"> <span class="opt-title"></span> <span class="hint"></span>`);
-      row.querySelector('.opt-title').textContent = title;
-      if (hard) row.querySelector('.opt-title').insertAdjacentHTML('beforeend', ' <span class="hard-badge">HARD</span>');
-      row.querySelector('.hint').textContent = text;
+      const row = el('label', 'choice opt-choice');
+      row.append(html`<input type="radio" name="${key}" value="${value}" data-bind="dialup.${key}"> <span class="opt-title">${title}</span> <span class="hint">${text}</span>`);
+      if (hard) row.querySelector('.opt-title').append(html` <span class="hard-badge">HARD</span>`);
       container.append(row);
     }
   };
-  radios(root.querySelector('#colour-list'), 'colors', colourOptions);
+  radios(root.querySelector('#color-list'), 'colors', colorOptions);
   radios(root.querySelector('#pixel-list'), 'resolution', pixelOptions);
 
   const full = root.querySelector('#look-full');
@@ -512,12 +489,12 @@ function dialupTab({ draft, catalog }) {
 // ---------- Privacy ----------
 
 function privacyTab({ draft }) {
-  const root = document.createElement('div');
+  const root = el('div');
   root.append(html`
     <fieldset>
       <legend>Ads and trackers</legend>
       <div class="icon-row">
-        <div class="big-icon icon-shield"></div>
+        <div class="big-icon icon-blocked"></div>
         <div class="grow">
           <label class="choice"><input type="checkbox" data-bind="prefs.blockAds"> Block ads and trackers</label>
           <p class="hint">Stops common ad and tracking networks from loading. Takes effect on the next page you open. Some sites show their own ads, which may stay.</p>

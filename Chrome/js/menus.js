@@ -3,6 +3,7 @@
 
 import { host } from './host.js';
 import { showMenu, openDialog } from './overlay.js';
+import { el, html, isWeb } from './dom.js';
 
 let ctx = null;
 
@@ -13,6 +14,11 @@ export function initMenus(context) {
   ctx = context;
   for (const title of document.querySelectorAll('.menu-title')) {
     title.addEventListener('mousedown', (e) => { e.preventDefault(); openMenu(title); });
+    title.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'ArrowDown') return;
+      e.preventDefault();
+      openMenu(title, { viaKeyboard: true });
+    });
   }
   document.getElementById('btn-favorites').addEventListener('click', (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -31,29 +37,29 @@ export function initMenus(context) {
 export function renderLinksBar(links = []) {
   const bar = document.getElementById('links-bar');
   bar.replaceChildren(...links.map((link) => {
-    const b = document.createElement('button');
-    b.textContent = link.title;
+    const b = el('button', null, link.title);
     b.dataset.tip = link.url;
     b.addEventListener('click', () => host.call('navigate', { input: link.url }));
     return b;
   }));
 }
 
-async function openMenu(title) {
+async function openMenu(title, { viaKeyboard = false } = {}) {
   const titles = [...document.querySelectorAll('.menu-title')];
-  const siblings = titles.map((el) => ({ id: el.dataset.menu, el }));
+  const siblings = titles.map((node) => ({ id: node.dataset.menu, el: node }));
   let current = title;
-  let viaKeyboard = false;
   // Like Windows: while a menu is open, hovering another title (or ←/→) switches menus.
   while (current) {
     const items = menus[current.dataset.menu]?.();
     if (!items) return;
     const r = current.getBoundingClientRect();
     current.classList.add('open');
+    current.setAttribute('aria-expanded', 'true');
     const picked = await showMenu(items, r.left, r.bottom, { siblings, current: current.dataset.menu, keyboardStart: viaKeyboard });
     current.classList.remove('open');
+    current.setAttribute('aria-expanded', 'false');
     if (picked && typeof picked === 'object' && picked.switchTo) {
-      current = titles.find((el) => el.dataset.menu === picked.switchTo);
+      current = titles.find((node) => node.dataset.menu === picked.switchTo);
       viaKeyboard = !!picked.viaKeyboard;
       continue;
     }
@@ -96,7 +102,7 @@ const menus = {
     { id: 'settings:general', title: 'Dialup Options…' },
     { id: 'wizard', title: 'Setup Wizard…' },
     { separator: true },
-    { id: 'wayback', title: 'Wayback Machine', enabled: /^https?:/.test(ctx.getTab().url || '') },
+    { id: 'wayback', title: 'Wayback Machine', enabled: isWeb(ctx.getTab().url) },
     { id: 'settings:privacy', title: 'Delete Browsing History…' },
     { id: 'sounds', title: 'Sounds', checked: ctx.getSounds() },
   ],
@@ -110,7 +116,7 @@ const menus = {
 function favoritesItems() {
   const links = ctx.getPrefs().quickLinks || [];
   return [
-    { id: 'fav:add', title: 'Add to Favorites…', enabled: /^https?:/.test(ctx.getTab().url || '') },
+    { id: 'fav:add', title: 'Add to Favorites…', enabled: isWeb(ctx.getTab().url) },
     { id: 'settings:startpage', title: 'Organize Favorites…' },
     { separator: true },
     ...(links.length ? links.map((l, i) => ({ id: `fav:${i}`, title: l.title })) : [{ title: '(Empty)', enabled: false }]),
@@ -148,18 +154,16 @@ function run(id) {
 }
 
 function addFavorite(tab) {
-  const body = document.createElement('div');
-  body.className = 'settings';
-  body.innerHTML = `
+  const body = el('div', 'settings');
+  body.append(html`
     <div class="icon-row">
-      <div class="big-icon" style="background-image:url(img/tango/favorites.svg)"></div>
+      <div class="big-icon icon-favorite"></div>
       <div class="grow">
         <p>Dialup will add this page to your Favorites and your Start Page.</p>
-        <label class="row">Name: <input type="text" class="field grow" id="fav-name"></label>
+        <label class="row">Name: <input type="text" class="field grow" value="${tab.title || tab.url}"></label>
       </div>
-    </div>`;
-  const input = body.querySelector('#fav-name');
-  input.value = tab.title || tab.url;
+    </div>`);
+  const input = body.querySelector('input');
   openDialog({
     title: 'Add Favorite',
     width: 420,
@@ -170,14 +174,13 @@ function addFavorite(tab) {
 }
 
 function aboutDialog() {
-  const body = document.createElement('div');
-  body.className = 'about';
-  body.innerHTML = `
+  const body = el('div', 'about');
+  body.append(html`
     <div class="about-banner"><div class="about-logo"></div><div><div class="about-name">Dialup</div><div class="about-tag">Version 1.0 (2003 Edition, built in 2026)</div></div></div>
     <div class="about-text">
       <p>Cipher Strength: 128-bit<br>Product ID: 55555-OEM-0001337-56K<br>Update Versions: SP1; dial-up</p>
       <p>Based on modern WebKit, wearing a 2003 outfit.<br>Icons from the Tango Icon Library (public domain). No modems were harmed.</p>
       <p class="hint">Warning: this computer program is protected by nostalgia.</p>
-    </div>`;
+    </div>`);
   openDialog({ title: 'About Dialup', width: 400, body, buttons: [{ label: 'OK', value: 'ok', primary: true }] });
 }

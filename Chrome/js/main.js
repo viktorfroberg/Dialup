@@ -5,6 +5,8 @@ import { openWizard } from './wizard.js';
 import { initMenus, renderLinksBar } from './menus.js';
 import './tooltips.js';
 import { renderTabs } from './tabs.js';
+import { applySkin } from './skin.js';
+import { html, markup, isWeb } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
 const address = $('address');
@@ -63,7 +65,7 @@ onEvent('tab', (state) => {
   const started = state.loading && !tab.loading;
   tab = state;
   lastUrl = state.url;
-  if (navigated && /^https?:/.test(state.url)) {
+  if (navigated && isWeb(state.url)) {
     const i = recentAddresses.indexOf(state.url);
     if (i >= 0) recentAddresses.splice(i, 1);
     recentAddresses.unshift(state.url);
@@ -161,7 +163,7 @@ $('addr-drop').addEventListener('mousedown', async (e) => {
 // Wayback: see this page as the Wayback Machine saw it in a given year.
 $('btn-wayback').addEventListener('click', async (e) => {
   const r = e.currentTarget.getBoundingClientRect();
-  const ok = /^https?:/.test(tab.url || '');
+  const ok = isWeb(tab.url);
   const years = [1996, 1998, 2000, 2001, 2003, 2005, 2008, 2010, 2015];
   const picked = await showMenu(ok ? [
     { title: 'Show this page as it was in…', enabled: false },
@@ -183,20 +185,28 @@ $('search-field').addEventListener('keydown', (e) => {
 });
 
 // Status bar: padlock (certificate details) and sound toggle
-$('cell-secure').addEventListener('dblclick', async () => {
+const certRow = (key, value) => markup`<tr><td>${key}:</td><td>${value || '—'}</td></tr>`;
+async function showCertificate() {
   const info = await host.call('securityInfo');
   if (!info) return;
+  const rows = [['Issued to', info.subject], ['Issued by', info.issuer], ['Web site', info.host],
+    ['Encryption', info.secure ? 'High (128-bit or better)' : 'Mixed content on this page']];
   const body = document.createElement('div');
   body.className = 'settings';
-  const rows = [['Issued to', info.subject], ['Issued by', info.issuer], ['Web site', info.host], ['Encryption', info.secure ? 'High (128-bit or better)' : 'Mixed content on this page']];
-  body.innerHTML = `<div class="icon-row"><div class="big-icon" style="background-image:url(img/tango/lock.svg)"></div><div class="grow"><p><b>Certificate Information</b></p><table class="cert-table"></table><p class="hint">This certificate is intended to guarantee the identity of a remote computer.</p></div></div>`;
-  const table = body.querySelector('table');
-  for (const [k, v] of rows) {
-    const tr = table.insertRow();
-    tr.insertCell().textContent = `${k}:`;
-    tr.insertCell().textContent = v || '—';
-  }
+  body.append(html`
+    <div class="icon-row">
+      <div class="big-icon icon-lock"></div>
+      <div class="grow">
+        <p><b>Certificate Information</b></p>
+        <table class="cert-table">${rows.map(([k, v]) => certRow(k, v))}</table>
+        <p class="hint">This certificate is intended to guarantee the identity of a remote computer.</p>
+      </div>
+    </div>`);
   openDialog({ title: 'Certificate', width: 420, body, buttons: [{ label: 'OK', value: 'ok', primary: true }] });
+}
+$('cell-secure').addEventListener('dblclick', showCertificate);
+$('cell-secure').addEventListener('keydown', (e) => {   // the keyboard way to "double-click"
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showCertificate(); }
 });
 function renderSounds() {
   document.body.classList.toggle('muted', !soundsOn);
@@ -237,6 +247,7 @@ function renderDialupMode(s, { announce = false } = {}) {
   const turnedOn = announce && s.enabled && !dialupMode.enabled;
   dialupMode = s;
   $('btn-dialup-mode').classList.toggle('on', !!s.enabled);
+  $('btn-dialup-mode').setAttribute('aria-pressed', String(!!s.enabled));
   document.body.classList.toggle('dialup-mode', !!s.enabled);
   if (turnedOn) dialIn(s);
 }
@@ -296,11 +307,7 @@ $('drop-dialup-mode').addEventListener('click', async (e) => {
 function applyPrefs(next = {}) {
   prefs = next;
   renderLinksBar(prefs.quickLinks || []);
-  const skin = prefs.skin || 'luna';
-  if (document.body.dataset.skin !== skin) {
-    document.body.dataset.skin = skin;
-    $('skin-css').href = `skins/${skin}.css`;
-  }
+  applySkin(prefs.skin);
 }
 onEvent('prefs', applyPrefs);
 

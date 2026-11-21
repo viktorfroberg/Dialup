@@ -40,3 +40,21 @@ document.addEventListener('mouseover', (e) => {
 });
 document.addEventListener('mousedown', hide, true);
 document.addEventListener('mouseleave', hide);
+
+// Icon-only buttons get their tooltip as their accessible name. Buttons whose text label a skin
+// may hide (.label) count as icon-only too. Kept in sync when tips change or buttons are added.
+function labelFromTip(node) {
+  if (!(node instanceof HTMLButtonElement) || node.dataset.tip == null) return;
+  if (!node.textContent.trim() || node.querySelector('.label')) node.setAttribute('aria-label', node.dataset.tip);
+}
+document.querySelectorAll('button[data-tip]').forEach(labelFromTip);
+new MutationObserver((records) => {
+  for (const record of records) {
+    if (record.type === 'attributes') labelFromTip(record.target);
+    for (const node of record.addedNodes) {
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+      labelFromTip(node);
+      node.querySelectorAll('button[data-tip]').forEach(labelFromTip);
+    }
+  }
+}).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-tip'] });

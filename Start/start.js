@@ -24,16 +24,31 @@
     archive: { template: 'https://web.archive.org/web/*/%s', label: 'the Wayback Machine (type an address)' },
   };
   let current = 'web';
-  const hint = () => { $('hint').innerHTML = ''; $('hint').append('Searching ', Object.assign(document.createElement('b'), { textContent: current === 'web' ? `the Web with ${engineName}` : tabs[current].label })); };
-  for (const a of document.querySelectorAll('.tabs a')) {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      current = a.dataset.tab;
-      document.querySelectorAll('.tabs a').forEach((t) => t.classList.toggle('on', t === a));
-      hint();
-      $('q').focus();
-    });
-  }
+  const hint = () => {
+    $('hint').textContent = `Searching ${current === 'web' ? `the Web with ${engineName}` : tabs[current].label}`;
+  };
+  // The current tab is plain bold text, the others are links, so "underline all links" can't
+  // make the current one look clickable.
+  const renderTabs = () => {
+    for (const cell of document.querySelectorAll('.tabs td')) {
+      const id = cell.dataset.tab;
+      const label = cell.textContent;
+      const node = document.createElement(id === current ? 'b' : 'a');
+      node.textContent = label;
+      if (id === current) node.className = 'on';
+      else node.href = `#${id}`;
+      cell.replaceChildren(node);
+    }
+  };
+  document.querySelector('.tabs').addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    e.preventDefault();
+    current = link.closest('td').dataset.tab;
+    renderTabs();
+    hint();
+    $('q').focus();
+  });
   hint();
 
   const go = (template, q) => { location.href = template.replace('%s', current === 'archive' ? q : encodeURIComponent(q)); };
@@ -56,14 +71,14 @@
     else location.href = surprises[Math.floor(Math.random() * surprises.length)];
   });
 
-  // Greeting + favourites
+  // Greeting + favorites
   const links = (Array.isArray(cfg.quickLinks) ? cfg.quickLinks : []).filter((l) => l && isWeb(l.url));
   if (typeof cfg.name === 'string' && cfg.name.trim()) {
     const h = new Date().getHours();
     const part = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-    $('greeting').textContent = `${part}, ${cfg.name.trim()}.${links.length ? ' Your favourites:' : ''}`;
+    $('greeting').textContent = `${part}, ${cfg.name.trim()}.${links.length ? ' Your Favorites:' : ''}`;
   } else if (links.length) {
-    $('greeting').textContent = 'Your favourites:';
+    $('greeting').textContent = 'Your Favorites:';
   }
   if (links.length) {
     const favs = $('favorites');
