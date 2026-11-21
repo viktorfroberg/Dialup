@@ -1,40 +1,233 @@
-/* Dialup start page: plain, quiet, classic-web. Default form controls on purpose. */
-body { background-color: #fbfaf7; margin: 8px; }
-a:link, a:visited { color: #1d4e9e; font-size: 17px; text-decoration: none; }
+/* Dialup start page.
+   The idea: one hand-made home page, 760px wide (800x600 safe), sitting on a patterned desktop.
+   Wide windows just show more wallpaper, the way the old web did. */
+
+:root {
+  --ink: #222;
+  --muted: #6b6b6b;
+  --link: #1d4e9e;
+  --accent: #24529f;        /* bars, box titles */
+  --accent-2: #3f74c4;
+  --paper: #fffefa;
+  --band: #eef1f6;          /* top and bottom bands of the sheet */
+  --edge: #8a93a3;
+  --wall: #d5dde8;
+  --wall-dot: #c3cedd;
+}
+body.skin-aqua {
+  --accent: #3a6fc4; --accent-2: #6b9be0; --link: #1f5bc6;
+  --band: #f0f2f5; --edge: #9a9a9a;
+}
+body.skin-classic {
+  --accent: #000080; --accent-2: #1084d0; --link: #00009c;
+  --band: #ecebe6; --edge: #6f6f6f; --paper: #fffffb;
+  --wall: #6f9a9a; --wall-dot: #5e8a8a;
+}
+
+html { background: var(--wall); }
+body {
+  margin: 0;
+  padding: 16px 12px 6vh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  color: var(--ink);
+  font: 13px/1.45 Verdana, Tahoma, sans-serif;
+  /* desktop wallpaper: a soft 4px dot pattern */
+  background-color: var(--wall);
+  background-image: radial-gradient(var(--wall-dot) 1px, transparent 1.2px);
+  background-size: 4px 4px;
+}
+body.skin-aqua {
+  /* brushed pinstripes */
+  background-color: #ececec;
+  background-image: repeating-linear-gradient(#f4f4f4 0 2px, #e7e7e7 2px 4px);
+  background-size: auto;
+}
+
+a:link, a:visited { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; }
-a.tiny { font-size: 15px; }
-a.small, .small { font-size: 13px; color: #555; }
-a.small:link, a.small:visited { color: #1d4e9e; }
-h1 { margin: 0; line-height: 110px; }
-.wordmark { color: #1d4e9e; font: bold 84px Georgia, "Times New Roman", serif; letter-spacing: -1px; }
-.greeting { margin: 0 0 16px; font: italic 15px Georgia, serif; color: #6a6a6a; min-height: 1.2em; }
-.favorites { max-width: 640px; margin: 18px auto 0; font: 15px Georgia, serif; color: #888; line-height: 1.8; }
-.favorites a:link, .favorites a:visited { font-size: 15px; }
-input:focus { outline: none; }
-#q { font-size: 16px; }
 img { image-rendering: pixelated; }
 
-/* A little portal charm under the quiet search page */
-.corner { margin: 28px auto 0; max-width: 620px; width: 100%; }
-.nook { width: 50%; vertical-align: top; text-align: left; padding: 8px 12px 10px; border: 1px solid #d8d4c8; background: #fff; }
+/* ---------- the sheet ---------- */
+.sheet {
+  margin-top: auto;   /* centred on tall windows, top-aligned (never clipped) on short ones */
+  width: 760px;
+  max-width: 100%;
+  border-collapse: separate;
+  background: var(--paper);
+  border: 1px solid var(--edge);
+  box-shadow: 1px 1px 0 #fff inset, 5px 5px 0 rgba(0, 0, 0, .13);
+}
+body.skin-classic .sheet { box-shadow: 1px 1px 0 #fff inset, 5px 5px 0 rgba(0, 0, 0, .28); }
+
+.bar {
+  height: 24px;
+  padding: 0 12px;
+  background: var(--band);
+  border-bottom: 1px solid #d3d8e0;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bar-links { float: right; }
+.led { display: inline-block; width: 6px; height: 6px; margin: 0 5px 1px 0; vertical-align: middle;
+  background: #2bd12b; border: 1px solid #136b13; box-shadow: 0 0 3px #5eea5e; }
+.bar i { font-style: normal; color: #b5b5b5; margin: 0 3px; }
+
+.main { padding: 28px 40px 30px; text-align: center; }
+
+/* ---------- masthead ---------- */
+.masthead { display: inline-flex; align-items: flex-end; gap: 14px; }
+.modem { display: block; margin-bottom: 4px; }
+.wordmark {
+  margin: 0;
+  font: bold 72px/0.9 Georgia, "Times New Roman", serif;
+  letter-spacing: -2px;
+  color: var(--accent);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, .08);
+}
+.greeting {
+  margin: 10px 0 20px;
+  font: italic 16px Georgia, serif;
+  color: var(--muted);
+}
+
+/* ---------- search: the main event ---------- */
+.searchbox { margin: 0 auto; max-width: 560px; text-align: left; }
+.search-label { display: block; margin: 0 0 5px 2px; font-size: 11px; color: var(--muted); }
+.search-label b { color: var(--ink); font-weight: bold; }
+.search-row { display: flex; gap: 8px; }
+#q {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  margin: 0;
+  font: 16px Verdana, Tahoma, sans-serif;
+  color: #000;
+  background: #fff;
+  border: 2px solid;
+  border-color: #7b7b7b #e6e6e6 #e6e6e6 #7b7b7b;   /* sunken */
+  box-shadow: inset 1px 1px 0 #3c3c3c;
+  border-radius: 0;
+}
+#q:focus { outline: 1px dotted var(--accent); outline-offset: 2px; }
+.go {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 32px;
+  padding: 0 18px;
+  margin: 0;
+  font: bold 12px Tahoma, Verdana, sans-serif;
+  color: #000;
+  background: #dcd9d0;
+  border: 2px solid;
+  border-color: #fff #6b6b6b #6b6b6b #fff;          /* raised */
+  box-shadow: 1px 1px 0 #262626;
+  border-radius: 0;
+  cursor: pointer;
+}
+.go:active { border-color: #6b6b6b #fff #fff #6b6b6b; box-shadow: inset 1px 1px 0 #262626; padding: 1px 17px 0 19px; }
+.search-under { margin-top: 7px; text-align: right; font-size: 11px; }
+.search-under a:link, .search-under a:visited { font: italic 13px Georgia, serif; }
+
+/* ---------- favourites ---------- */
+.favorites {
+  margin: 18px auto 0;
+  max-width: 600px;
+  font: 14px/1.9 Georgia, serif;
+  color: #9a9a9a;
+}
+.fav-label { font: 11px Verdana, sans-serif; color: var(--muted); margin-right: 4px; }
+
+/* ---------- the two little boxes ---------- */
+.nooks {
+  width: 100%;
+  margin-top: 24px;
+  border-collapse: separate;
+  text-align: left;
+  table-layout: fixed;
+}
+.nook { width: 50%; vertical-align: top; border: 1px solid var(--accent); background: #fff; }
 .nook-gap { width: 14px; }
-.nook-title { font: bold 12px Verdana, sans-serif; color: #7a5a00; margin-bottom: 4px; letter-spacing: .3px; }
-.nook a:link, .nook a:visited { font: bold 15px Georgia, serif; }
-.nook-text { font: 13px/1.45 Georgia, serif; color: #444; margin-top: 3px; }
-.webring { font: 14px Georgia, serif; color: #777; margin: 4px 0 10px; }
-.webring a:link, .webring a:visited { font-size: 14px; }
-.badges { margin: 0 0 10px; }
-.badge { display: inline-block; width: 88px; height: 31px; margin: 0 2px; padding-top: 4px; box-sizing: border-box; vertical-align: middle;
-  font: 8px/1.2 Verdana, sans-serif; color: #fff !important; text-align: center; border: 1px solid #000;
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,.45), inset -1px -1px 0 rgba(0,0,0,.35); }
+.nook-title {
+  padding: 3px 8px;
+  font: bold 11px Verdana, sans-serif;
+  letter-spacing: .3px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+.glyph { display: inline-block; width: 12px; text-align: center; color: #ffe27a; }
+.nook-body { padding: 8px 10px 10px; }
+.sotd:link, .sotd:visited { font: bold 15px Georgia, serif; }
+.nook-text { margin-top: 2px; font: 13px/1.5 Georgia, serif; color: #444; }
+
+/* ---------- foot band ---------- */
+.foot {
+  padding: 12px 16px 14px;
+  background: var(--band);
+  border-top: 1px solid #d3d8e0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+.webring { margin-bottom: 10px; }
+.webring a { font-weight: bold; }
+.foot-row { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.badges { white-space: nowrap; }
+.badge {
+  display: inline-block; width: 88px; height: 31px; margin: 0 2px;
+  padding-top: 4px; box-sizing: border-box; vertical-align: middle;
+  font: 8px/1.2 Verdana, sans-serif; color: #fff !important; text-align: center;
+  border: 1px solid #000;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.45), inset -1px -1px 0 rgba(0,0,0,.35);
+}
 .badge b { display: block; font-size: 11px; letter-spacing: 1px; }
 a.badge:hover { text-decoration: none; filter: brightness(1.1); }
 .b1 { background: linear-gradient(#3f7fe0, #123d8f); }
 .b2 { background: linear-gradient(#9a9a9a, #3f3f3f); }
 .b3 { background: linear-gradient(#41a741, #145a14); }
 .b4 { background: linear-gradient(#e0612a, #7a2408); }
-.counter { font: bold 12px "Courier New", monospace; letter-spacing: 2px; color: #ff4a3a; background: #1a0000; padding: 0 4px; border: 1px inset #888; }
-@media (max-width: 640px) { .corner, .corner tr, .corner td { display: block; width: auto; } .nook-gap { height: 10px; } }
-a.badge:link, a.badge:visited { font-size: 8px; }
-.nook { width: 48%; }
-.corner { border-collapse: separate; }
+.visits { display: inline-block; text-align: center; line-height: 1.5; }
+.counter {
+  display: inline-block;
+  font: bold 13px "Courier New", monospace; letter-spacing: 3px;
+  color: #ff4a3a; background: #1a0000;
+  padding: 1px 3px 1px 6px;
+  border: 2px solid; border-color: #6b6b6b #fff #fff #6b6b6b;
+}
+
+.colophon {
+  margin: 12px 0 auto;
+  text-align: center;
+  font-size: 10px;
+  color: #59616e;
+}
+body.skin-classic .colophon, body.skin-classic .colophon a { color: #eef4f4; }
+
+/* ---------- narrow windows ---------- */
+@media (max-width: 700px) {
+  .main { padding: 18px 18px 22px; }
+  .wordmark { font-size: 56px; }
+  .modem { width: 72px; height: 54px; }
+  .nooks, .nooks tbody, .nooks tr, .nook { display: block; width: auto; }
+  .nook-gap { display: block; height: 10px; }
+}
+
+/* Aqua: a softer, rounded button to match the Mac skin */
+body.skin-aqua .go {
+  border: 1px solid #7d8ba3; border-radius: 11px; box-shadow: 0 1px 1px rgba(0,0,0,.25);
+  background: linear-gradient(#ffffff, #e2e8f2 50%, #cfd9ea 51%, #eef3fb);
+}
+body.skin-aqua .go:active { background: linear-gradient(#a9c6f1, #6f9fe6 50%, #4f86dc 51%, #9cc0f4); padding: 0 18px; box-shadow: none; }
+
+/* Big, tall screens: the same page, just a touch larger, so it doesn't look lost */
+@media (min-width: 1500px) and (min-height: 860px) {
+  .sheet, .colophon { zoom: 1.15; }
+}

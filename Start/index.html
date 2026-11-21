@@ -2,60 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dialup</title>
   <link rel="stylesheet" href="start.css">
   <script src="config.js"></script>
   <script src="start.js" defer></script>
 </head>
 <body>
-  <div align="right"><a class="tiny" href="portal.html">Portal</a><br></div>
-  <div align="right"><a class="tiny" href="dialup-start://home/customize">Customize</a></div>
+  <!-- One hand-made page, 760 pixels wide, sitting on the desktop. -->
+  <table class="sheet" align="center" cellspacing="0" cellpadding="0">
+    <tr>
+      <td class="bar">
+        <span class="led"></span>Connected &middot; <span id="today"></span>
+        <span class="bar-links"><a href="portal.html">Portal</a> <i>|</i> <a href="dialup-start://home/customize">Customize</a></span>
+      </td>
+    </tr>
+    <tr>
+      <td class="main">
+        <div class="masthead">
+          <img class="modem" src="modem.svg" width="96" height="72" alt="" aria-label="An old modem, blinking its lights.">
+          <h1 class="wordmark">dialup</h1>
+        </div>
+        <p class="greeting" id="greeting">Welcome back to the Web.</p>
 
-  <div align="center">
-    <h1 class="wordmark">dialup</h1>
-    <p class="greeting" id="greeting"></p>
-  </div>
+        <form id="search" class="searchbox" role="search">
+          <label class="search-label" for="q">Search the Web with <b id="engine">DuckDuckGo</b></label>
+          <div class="search-row">
+            <input type="text" id="q" aria-label="Search the Web" autocomplete="off" spellcheck="false" autofocus>
+            <input type="submit" class="go" value="Search">
+          </div>
+          <div class="search-under"><a href="#" id="surprise">surprise me&hellip;</a></div>
+        </form>
 
-  <form id="search">
-    <div align="center">
-      <input type="text" id="q" size="40" aria-label="Search the Web" autofocus>
-      <input type="submit" value="Search">
-    </div>
-    <br>
-    <div align="center"><a class="tiny" href="#" id="surprise">surprise me...</a></div>
-  </form>
+        <p class="favorites" id="favorites" hidden><span class="fav-label">Favourites:</span> </p>
 
-  <div align="center">
-    <p class="favorites" id="favorites"></p>
-
-    <table class="corner" cellspacing="0" cellpadding="0">
-      <tr>
-        <td class="nook">
-          <div class="nook-title">★ Site of the Day</div>
-          <a id="sotd-link" href="#"></a>
-          <div class="nook-text" id="sotd-text"></div>
-        </td>
-        <td class="nook-gap"></td>
-        <td class="nook">
-          <div class="nook-title">Did you know?</div>
-          <div class="nook-text" id="tip"></div>
-        </td>
-      </tr>
-    </table>
-
-    <br>
-    <img src="modem.svg" width="128" height="96" alt="" aria-label="An old modem, blinking its lights.">
-    <br><br>
-
-    <div class="webring">« <a href="https://neocities.org/browse">prev</a> | <a href="#" id="ring-random">random</a> | <a href="https://wiby.me/">next</a> » <span class="small">the Modem Lovers webring</span></div>
-    <div class="badges">
-      <a class="badge b1" href="https://neocities.org/">HOME<b>MADE</b></a>
-      <a class="badge b2" href="https://web.archive.org/">OLD WEB<b>ARCHIVE</b></a>
-      <a class="badge b3" href="https://wiby.me/">SMALL<b>WEB</b></a>
-      <span class="badge b4">800×600<b>FRIENDLY</b></span>
-    </div>
-    <div class="small">You are visitor <span class="counter" id="counter">000000</span> · <span id="powered"></span></div>
-    <div class="small"><a class="small" href="portal.html">Portal</a> | <a class="small" href="dialup-start://home/customize">Customize</a> | <a class="small" href="https://web.archive.org/">Time travel</a></div>
-  </div>
+        <table class="nooks" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="nook">
+              <div class="nook-title"><span class="glyph">&#9733;</span> Site of the Day</div>
+              <div class="nook-body">
+                <a id="sotd-link" class="sotd" href="#"></a>
+                <div class="nook-text" id="sotd-text"></div>
+              </div>
+            </td>
+            <td class="nook-gap"></td>
+            <td class="nook">
+              <div class="nook-title"><span class="glyph">?</span> Did you know?</div>
+              <div class="nook-body">
+                <div class="nook-text" id="tip"></div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td class="foot">
+        <div class="webring">&laquo; <a href="https://neocities.org/browse">prev</a> &middot; <a href="#" id="ring-random">random</a> &middot; <a href="https://wiby.me/">next</a> &raquo; &nbsp;a member of the <em>Modem Lovers</em> webring</div>
+        <div class="foot-row">
+          <span class="badges">
+            <a class="badge b1" href="https://neocities.org/">HOME<b>MADE</b></a><a class="badge b2" href="https://web.archive.org/">OLD WEB<b>ARCHIVE</b></a><a class="badge b3" href="https://wiby.me/">SMALL<b>WEB</b></a><span class="badge b4">800&times;600<b>FRIENDLY</b></span>
+          </span>
+          <span class="visits">You are visitor<br><span class="counter" id="counter">001337</span></span>
+        </div>
+      </td>
+    </tr>
+  </table>
+  <p class="colophon">Best viewed with Dialup at 800&times;600 &middot; <a href="https://web.archive.org/">Time travel</a></p>
 </body>
 </html>
