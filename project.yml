@@ -19,6 +19,9 @@ targets:
       - path: Start
         type: folder
         buildPhase: resources
+      - path: Resources/SkinIcons
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: se.dialup.Dialup

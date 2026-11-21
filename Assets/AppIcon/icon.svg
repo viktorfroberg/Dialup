@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop stop-color="#a0e5f6"/><stop offset=".48" stop-color="#4bb6d7"/><stop offset="1" stop-color="#167d9e"/></linearGradient>
+    <linearGradient id="tileShine" x2=".3" y2="1"><stop stop-color="#fff" stop-opacity=".75"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="case" x1="300" y1="244" x2="670" y2="715" gradientUnits="userSpaceOnUse"><stop stop-color="#fffdf1"/><stop offset=".38" stop-color="#f4e9ce"/><stop offset=".78" stop-color="#deccaa"/><stop offset="1" stop-color="#bca784"/></linearGradient>
+    <linearGradient id="chin" x2="0" y2="1"><stop stop-color="#fff8e2"/><stop offset="1" stop-color="#d8c6a3"/></linearGradient>
+    <linearGradient id="glass" x1="400" y1="300" x2="580" y2="629" gradientUnits="userSpaceOnUse"><stop stop-color="#163f65"/><stop offset=".55" stop-color="#0d6c9d"/><stop offset="1" stop-color="#0b365c"/></linearGradient>
+    <radialGradient id="ocean" cx=".32" cy=".22" r=".85"><stop stop-color="#96edff"/><stop offset=".42" stop-color="#39bee8"/><stop offset=".8" stop-color="#1685c5"/><stop offset="1" stop-color="#115d9e"/></radialGradient>
+    <linearGradient id="land" x2=".5" y2="1"><stop stop-color="#fff8b9"/><stop offset="1" stop-color="#9edcaa"/></linearGradient>
+    <linearGradient id="paper" x2=".2" y2="1"><stop stop-color="#fffef3"/><stop offset="1" stop-color="#cbeaf0"/></linearGradient>
+    <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#ffdb73"/><stop offset="1" stop-color="#ed9a35"/></linearGradient>
+    <linearGradient id="foot" x2="0" y2="1"><stop stop-color="#fff6df"/><stop offset=".48" stop-color="#e5d5b7"/><stop offset=".52" stop-color="#c4b08c"/><stop offset="1" stop-color="#efe1c2"/></linearGradient>
+    <filter id="shadow" x="-.25" y="-.25" width="1.5" height="1.6" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="13"/></filter>
+    <filter id="objectShadow" x="-.2" y="-.2" width="1.4" height="1.5" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="10"/></filter>
+    <clipPath id="screenClip"><rect x="259" y="292" width="506" height="325" rx="37"/></clipPath>
+    <clipPath id="globeClip"><circle cx="476" cy="450" r="126"/></clipPath>
+  </defs>
+  <!-- The silhouette follows the macOS 100 / 824 / 100 icon grid. -->
+  <rect x="108" y="119" width="808" height="806" rx="179" fill="#12445c" opacity=".27" filter="url(#shadow)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+  <rect x="104" y="104" width="816" height="816" rx="181" fill="none" stroke="#e3fbff" stroke-opacity=".55" stroke-width="8"/>
+  <path d="M285 111H739C835 111 910 188 913 282V390C678 480 376 408 111 485V285C111 187 187 111 285 111Z" fill="url(#tileShine)"/>
+  <ellipse cx="520" cy="803" rx="286" ry="39" fill="#124963" opacity=".26" filter="url(#objectShadow)"/>
+  <!-- Coiled telephone lead, tucked behind the monitor. -->
+  <path d="M266 624C220 642 216 705 249 726C274 741 300 720 286 701C271 681 246 707 265 731C283 753 312 732 298 713C284 692 258 720 279 742C300 763 328 744 315 725C301 705 276 731 297 753C317 775 347 752 338 741C330 729 321 743 337 760C355 778 380 773 395 773" fill="none" stroke="#2a5d68" stroke-width="22" stroke-linecap="round" opacity=".4"/>
+  <path d="M266 618C220 636 216 699 249 720C274 735 300 714 286 695C271 675 246 701 265 725C283 747 312 726 298 707C284 686 258 714 279 736C300 757 328 738 315 719C301 699 276 725 297 747C317 769 347 746 338 735C330 723 321 737 337 754C355 772 380 767 395 767" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round"/>
+  <!-- Wide foot and stem retain the CRT silhouette at a glance. -->
+  <path d="M449 665H577L591 760H434Z" fill="url(#case)" stroke="#756e59" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M449 691H578L583 718C541 736 486 735 442 720Z" fill="#8f846b" opacity=".45"/>
+  <path d="M390 747H641C670 747 695 769 699 795L701 810C702 820 692 828 679 828H351C338 828 328 820 330 809L333 794C338 768 362 747 390 747Z" fill="url(#foot)" stroke="#716f5b" stroke-width="8"/>
+  <path d="M365 777C373 763 386 760 405 760H631C651 760 664 765 673 777" fill="none" stroke="#fff9e9" stroke-width="9" stroke-linecap="round"/>
+  <rect x="380" y="794" width="77" height="10" rx="5" fill="#6b756d"/>
+  <circle cx="626" cy="800" r="9" fill="#e99f35" stroke="#a27738" stroke-width="3"/>
+  <circle cx="655" cy="800" r="7" fill="#8ed7b1" stroke="#698f70" stroke-width="3"/>
+  <!-- Cream moulded shell, dark inset, curved blue glass. -->
+  <rect x="211" y="243" width="602" height="452" rx="61" fill="#123e51" opacity=".2" transform="translate(0 15)" filter="url(#objectShadow)"/>
+  <rect x="211" y="237" width="602" height="458" rx="61" fill="url(#case)" stroke="#777660" stroke-width="9"/>
+  <path d="M237 295C237 274 252 258 274 258H750C771 258 787 274 787 295" fill="none" stroke="#fffdf1" stroke-width="12" stroke-linecap="round"/>
+  <rect x="249" y="281" width="526" height="346" rx="47" fill="#827f6d" stroke="#c2b796" stroke-width="5"/>
+  <rect x="259" y="292" width="506" height="325" rx="37" fill="url(#glass)" stroke="#203e4c" stroke-width="7"/>
+  <g clip-path="url(#screenClip)">
+    <ellipse cx="477" cy="591" rx="163" ry="18" fill="#071e43" opacity=".3"/>
+    <circle cx="476" cy="450" r="131" fill="#072d58" opacity=".65"/>
+    <circle cx="476" cy="450" r="126" fill="url(#ocean)"/>
+    <g clip-path="url(#globeClip)">
+      <!-- Invented island shapes: a little world of its own. -->
+      <path d="M376 354L411 338L447 345L464 367L451 389L425 388L415 409L389 417L371 402L353 400V368Z M427 431L455 417L480 433L487 458L470 482L468 512L450 539L432 519L433 489L415 467Z M525 337L561 354L582 380L575 403L552 403L540 424L516 417L500 392L506 371Z M558 467L589 464L611 490L595 521L563 526L550 504Z" fill="url(#land)" stroke="#e9ffde" stroke-opacity=".65" stroke-width="3" stroke-linejoin="round"/>
+      <g fill="none" stroke="#e0fcff" stroke-opacity=".42" stroke-width="3">
+        <ellipse cx="476" cy="450" rx="62" ry="126"/>
+        <path d="M350 450H602M364 393C425 419 528 419 588 393M364 507C425 481 528 481 588 507"/>
+      </g>
+      <ellipse cx="437" cy="365" rx="83" ry="44" fill="#fff" opacity=".18" transform="rotate(-24 437 365)"/>
+    </g>
+    <circle cx="476" cy="450" r="126" fill="none" stroke="#b2f1fb" stroke-width="4"/>
+    <!-- A page resolving in three horizontal picture bands. -->
+    <g transform="rotate(8 639 499)">
+      <rect x="578" y="416" width="141" height="176" rx="15" fill="#082f50" opacity=".35" transform="translate(4 8)"/>
+      <rect x="578" y="409" width="141" height="176" rx="15" fill="url(#paper)" stroke="#214b63" stroke-width="6"/>
+      <path d="M593 409H704Q719 409 719 424V441H578V424Q578 409 593 409Z" fill="url(#gold)"/>
+      <path d="M593 416H701" stroke="#ffe6a4" stroke-width="4" stroke-linecap="round"/>
+      <rect x="596" y="455" width="105" height="30" rx="4" fill="#4ba7c5"/>
+      <path d="M596 485L626 466L649 481L673 459L701 485Z" fill="#d2ecce"/>
+      <path d="M596 501H701M596 517H701" stroke="#7cafbe" stroke-width="8"/>
+      <path d="M596 544H648M596 559H671" stroke="#afcbd0" stroke-width="7"/>
+    </g>
+    <path d="M274 320Q274 306 294 306H730Q750 306 750 325V349C603 325 413 350 274 397Z" fill="#fff" opacity=".12"/>
+  </g>
+  <path d="M256 645H768" stroke="#fff9e5" stroke-width="6" stroke-linecap="round" opacity=".65"/>
+  <rect x="475" y="660" width="73" height="10" rx="5" fill="#a39578"/>
+  <circle cx="752" cy="660" r="12" fill="#697e6f"/>
+  <circle cx="752" cy="658" r="7" fill="#c3f4ba"/>
+  <!-- Four-point connection sparkle, not a brand mark. -->
+  <path d="M778 166C784 198 792 207 822 214C792 221 784 230 778 262C771 230 763 221 733 214C763 207 771 198 778 166Z" fill="#fff9cf" stroke="#318ba8" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M778 191V237M755 214H801" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+</svg>

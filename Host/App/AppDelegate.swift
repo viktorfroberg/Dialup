@@ -17,6 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = MainMenu.build()
+        SkinIcon.apply(PreferencesStore.shared.preferences.skin)
+        NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { SkinIcon.apply(PreferencesStore.shared.preferences.skin) }
+        }
         if !restoreSession() { openWindow() }
         NSApp.activate()
     }

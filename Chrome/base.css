@@ -856,3 +856,6 @@ body.fullscreen, body.zoomed { border-radius: 0; }
 .menu.combo-list .menu-item.disabled .menu-check { background: none; }
 .menu.combo-list .menu-label { padding-right: 0; overflow: hidden; text-overflow: ellipsis; }
 .menu.combo-list .menu-sep { margin: 2px 0; }
+
+/* The Dialup logo (CRT app artwork) in the wizard and About box */
+.wizard-logo, .about-logo { background-image: url(img/dialup-logo.png); }
