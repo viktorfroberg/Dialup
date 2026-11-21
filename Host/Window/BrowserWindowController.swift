@@ -47,6 +47,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
     private(set) var tabs = TabList<Tab>()
     /// Tabs closed in this window, newest last, for ⇧⌘T (Reopen Closed Tab).
     private(set) var closedTabs: [URL] = []
+    /// Files this window finished downloading; the only paths `openDownload` accepts.
+    private(set) var completedDownloads: Set<String> = []
     /// Events are only sent once the chrome has called `ready`.
     private var chromeReady = false
     private var lastWindowState: [String: Bool] = [:]
@@ -157,7 +159,11 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
         }
         tab.onOpenSettings = { [weak self] section in self?.emit("openSettings", ["tab": section]) }
         tab.onCreateWebView = { [weak self] configuration, _ in self?.openPopup(configuration: configuration) }
-        tab.onDownload = { [weak self] info in self?.emit("download", info) }
+        tab.onDownload = { [weak self] info in
+            guard let self else { return }
+            if info["state"] as? String == "done", let path = info["path"] as? String { completedDownloads.insert(path) }
+            emit("download", info)
+        }
         tab.onCloseRequest = { [weak self, weak tab] in
             guard let self, let tab, let index = tabs.index(of: tab) else { return }
             closeTab(at: index)
@@ -246,6 +252,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
             "dialupMode": DialupModeStore.shared.settings.dictionary,
             "prefs": preferencesPayload,
             "sounds": SoundEffects.shared.isEnabled,
+            "version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
         ]
     }
 

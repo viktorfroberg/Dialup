@@ -37,6 +37,8 @@ enum HostCommand {
     case clearData(ClearDataKind)
     case importBookmarks, exportBookmarks
     case addFavorite(title: String, url: String)
+    /// Open or reveal a file this window downloaded (only paths from completed downloads are accepted).
+    case openDownload(path: String, reveal: Bool)
 
     // Sounds
     case sound(SoundEffects.Sound)
@@ -103,6 +105,9 @@ enum HostCommand {
             guard let text = a.nonEmptyString("text") else { throw invalid }
             self = .find(text: text, backwards: a.bool("backwards") ?? false, caseSensitive: a.bool("caseSensitive") ?? false)
         case "securityInfo": self = .securityInfo
+        case "openDownload":
+            guard let path = a.nonEmptyString("path") else { throw invalid }
+            self = .openDownload(path: path, reveal: a.bool("reveal") ?? false)
 
         case "windowClose": self = .windowClose
         case "windowMinimize": self = .windowMinimize

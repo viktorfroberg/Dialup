@@ -70,6 +70,12 @@ extension BrowserWindowController: HostCommandHandling {
         case .addFavorite(let title, let url):
             PreferencesStore.shared.preferences.addFavorites([QuickLink(title: title, url: url)])
 
+        case .openDownload(let path, let reveal):
+            // Never open arbitrary paths from the chrome: only files this window finished downloading.
+            guard completedDownloads.contains(path) else { return nil }
+            let url = URL(fileURLWithPath: path)
+            if reveal { NSWorkspace.shared.activateFileViewerSelecting([url]) } else { NSWorkspace.shared.open(url) }
+
         case .sound(let sound): SoundEffects.shared.play(sound)
         case .soundSet(let enabled): SoundEffects.shared.isEnabled = enabled
         }

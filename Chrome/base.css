@@ -936,3 +936,12 @@ select.field {
 }
 
 }
+
+/* Find and download dialogs */
+@layer base {
+  .find-dialog .row { margin-bottom: 8px; }
+  .find-options { align-items: flex-start; gap: 16px; }
+  .find-direction { margin: 0; padding: 2px 8px 4px; }
+  .find-note { min-height: 1.3em; margin: 4px 0 0; }
+  .download-icon { background-image: url(img/tango/folder.svg); }
+}

@@ -2,8 +2,9 @@ import { host, onEvent } from './host.js';
 import { showMenu, openDialog } from './overlay.js';
 import { openSettings } from './settings.js';
 import { openWizard } from './wizard.js';
-import { initMenus, renderLinksBar } from './menus.js';
+import { initMenus, renderLinksBar, addFavorite } from './menus.js';
 import './tooltips.js';
+import './find.js';
 import { renderTabs } from './tabs.js';
 import { applySkin } from './skin.js';
 import { html, markup, isWeb } from './dom.js';
@@ -314,9 +315,34 @@ onEvent('prefs', applyPrefs);
 const showSettings = (tabId) => openSettings(tabId, { getCurrentUrl: () => tab.url });
 onEvent('openSettings', ({ tab: tabId }) => showSettings(tabId || 'general'));
 onEvent('openWizard', () => openWizard());
+
+// ⌘D (Favorites → Add to Favorites…)
+onEvent('addFavorite', () => { if (isWeb(tab.url)) addFavorite(tab); });
+
+// Downloads: progress is in the status bar (host side); when one finishes, offer to open it.
+onEvent('download', ({ state, name, path }) => {
+  if (state !== 'done' || !path) return;
+  const body = html`<div class="message-box download-box"><div class="message-icon download-icon"></div>
+    <div><p><b>Download complete</b></p><p>Saved <b>${name}</b> to your Downloads folder.</p></div></div>`;
+  openDialog({
+    title: 'Download Complete',
+    width: 400,
+    body,
+    buttons: [
+      { label: 'Open', value: 'open', primary: true },
+      { label: 'Open Folder', value: 'reveal' },
+      { label: 'Close', value: 'close', cancel: true },
+    ],
+    onButton: (value) => {
+      if (value === 'open' || value === 'reveal') host.call('openDownload', { path, reveal: value === 'reveal' });
+    },
+  });
+});
 onEvent('sounds', ({ enabled }) => { soundsOn = !!enabled; renderSounds(); });
 
+let appVersion = '';
 initMenus({
+  getVersion: () => appVersion,
   getTab: () => tab,
   getPrefs: () => prefs,
   getDialup: () => dialupMode,
@@ -359,6 +385,7 @@ if (init?.tab) { tab = init.tab; render(); }
 renderWindowState(init?.window);
 renderDialupMode(init?.dialupMode ?? {});
 renderTabs(init?.tabs);
+appVersion = init?.version || '';
 applyPrefs(init?.prefs);
 soundsOn = init?.sounds !== false;
 renderSounds();

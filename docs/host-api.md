@@ -18,7 +18,7 @@ Arguments marked `?` are optional; the default is given where it matters.
 
 | cmd | args | returns |
 |---|---|---|
-| `ready` | – | `{ apiVersion, tab, tabs, window, dialupMode, prefs, sounds }` (`sounds` is a boolean). Call once at startup; events only flow after this |
+| `ready` | – | `{ apiVersion, tab, tabs, window, dialupMode, prefs, sounds, version }` (`sounds` is a boolean). Call once at startup; events only flow after this |
 | `setInsets` | `{ top?, left?, right?, bottom? }` CSS px, missing sides = 0 | – positions the page view |
 | `navigate` | `{ input }` URL, bare host, `about:home`, or search text | – searches go to the preferred engine |
 | `back` / `forward` / `reload` / `stop` / `home` | – | – |
@@ -47,6 +47,7 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `sound` | `{ name: 'click' \| 'complete' \| 'error' \| 'ding' }` | – plays an original synthesized sound |
 | `soundSet` | `{ enabled? }` default true | – app-wide; broadcast as the `sounds` event |
 | `addFavorite` | `{ url, title? }` title defaults to the URL | – appends to the favorites unless the URL is already there or there are `maxFavorites` |
+| `openDownload` | `{ path, reveal? }` | – opens (or reveals in Finder) a file **this window finished downloading**; any other path is ignored |
 | `popupMenu` | `{ items: [{ id, title, enabled?, checked?, separator?, items? }], x, y }` (`items` = submenu, up to 3 levels) | picked `id` or `null` (native NSMenu, so it never gets clipped) |
 
 ## Events (host → chrome)
