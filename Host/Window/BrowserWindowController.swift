@@ -169,6 +169,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         case "stop": webView.stopLoading()
         case "home": webView.load(URLRequest(url: Self.homeURL))
         case "focusPage": focusPage()
+        case "log":
+            NSLog("Dialup chrome: %@", String((args["message"] as? String ?? "").prefix(2000)))
         case "history":
             let back = (args["direction"] as? String) != "forward"
             let list = back ? webView.backForwardList.backList.reversed() : webView.backForwardList.forwardList

@@ -142,9 +142,10 @@ async function dialIn(s) {
 
 $('btn-dialup-mode').addEventListener('click', () => host.call('dialupModeSet', { enabled: !dialupMode.enabled }));
 $('drop-dialup-mode').addEventListener('click', async (e) => {
+  // Read the anchor before any await: e.currentTarget is null once the event has dispatched.
+  const anchor = e.currentTarget.closest('.split').getBoundingClientRect();
   const s = await host.call('dialupModeGet');
   const radio = (key, value, title) => ({ id: `set:${key}:${value}`, title, checked: s[key] === value });
-  const anchor = e.currentTarget.closest('.split').getBoundingClientRect();
   const picked = await host.call('popupMenu', {
     x: anchor.left,
     y: anchor.bottom + 2,

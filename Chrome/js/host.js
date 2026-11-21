@@ -23,3 +23,10 @@ const native = window.webkit?.messageHandlers?.host;
 export const host = native
   ? { call: (cmd, args = {}) => native.postMessage({ apiVersion: 1, cmd, args }), isMock: false }
   : (await import('./mock-host.js')).createMockHost(window.dialup);
+
+// Surface chrome errors in the app log (Console.app / terminal), so failures aren't silent.
+if (native) {
+  const report = (message) => native.postMessage({ apiVersion: 1, cmd: 'log', args: { message: String(message) } }).catch(() => {});
+  window.addEventListener('error', (e) => report(`${e.message} (${e.filename}:${e.lineno})`));
+  window.addEventListener('unhandledrejection', (e) => report(`Unhandled rejection: ${e.reason?.stack ?? e.reason}`));
+}
