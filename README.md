@@ -88,7 +88,7 @@ xcodebuild -project Dialup.xcodeproj -scheme Dialup -derivedDataPath build test
 
 Or open `Dialup.xcodeproj` in Xcode and press ⌘R.
 
-The app is **ad-hoc signed**, not notarized. If you copy the built app somewhere else or download a build, macOS may refuse to open it the first time. Right-click the app, choose **Open**, then confirm.
+The app is **ad-hoc signed**, not notarized. If you copy the built app somewhere else or download a build, macOS will refuse to open it the first time. Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** (or run `xattr -dr com.apple.quarantine /Applications/Dialup.app`). Building it yourself avoids this.
 
 ## How it works
 
@@ -156,4 +156,4 @@ The skins, sounds and start page are original, drawn or synthesized for Dialup. 
 
 ## License
 
-No license yet — all rights reserved. You're welcome to read the code and try it; a license may come later.
+[MIT](LICENSE). Use it, fork it, reskin it. The Tango icons are public domain.
