@@ -1,10 +1,8 @@
 # Dialup
 
-**A browser from 2003, built in 2026.**
-
 [![CI](https://github.com/viktorfroberg/Dialup/actions/workflows/ci.yml/badge.svg)](https://github.com/viktorfroberg/Dialup/actions/workflows/ci.yml)
 
-Dialup is a hobby macOS browser that looks and feels like the browsers of 2001–2004: the blue Windows XP title bar, the brushed-metal Mac toolbar, the grey 3D bevels of Windows 98. Underneath it's modern WebKit (the engine Safari uses), so today's web works fine. Turn on **Dial-up Mode** and pictures trickle in at modem speed while the status bar counts down "(3 items remaining)".
+Dialup is a macOS browser that looks and feels like the browsers of 2001–2004: the blue Windows XP title bar, the brushed-metal Mac toolbar, the grey 3D bevels of Windows 98. Underneath it's modern WebKit (the engine Safari uses), so today's web works fine. Turn on **Dial-up Mode** and pictures trickle in at modem speed while the status bar counts down "(3 items remaining)".
 
 The whole browser UI is plain HTML and CSS, with no build step. A skin is one CSS file.
 

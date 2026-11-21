@@ -1,6 +1,6 @@
 # Dialup: plan and architecture (kept current)
 
-A hobby macOS browser that looks and feels like 2001–2004 browsers (Windows XP, Mac OS X Aqua, Windows 98/2000 Classic) on modern WebKit. It's meant to be easy to reskin and extend: the whole UI is HTML/CSS, with no build step.
+A macOS browser that looks and feels like 2001–2004 browsers (Windows XP, Mac OS X Aqua, Windows 98/2000 Classic) on modern WebKit. It's meant to be easy to reskin and extend: the whole UI is HTML/CSS, with no build step.
 
 ## Architecture (as built)
 
