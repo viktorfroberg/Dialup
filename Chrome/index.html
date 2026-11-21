@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Kikare</title>
+  <link rel="stylesheet" href="base.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <header id="chrome">
+    <div class="rebar">
+      <!-- Standard Buttons band -->
+      <div class="band" id="band-buttons">
+        <div class="gripper"></div>
+        <div class="buttons">
+          <span class="split">
+            <button class="tb has-label" id="btn-back" title="Back" disabled><i class="ico ico-back"></i><span class="label">Back</span></button>
+            <button class="tb drop" id="drop-back" title="Recent pages" disabled></button>
+          </span>
+          <span class="split">
+            <button class="tb" id="btn-forward" title="Forward" disabled><i class="ico ico-forward"></i></button>
+            <button class="tb drop" id="drop-forward" title="Recent pages" disabled></button>
+          </span>
+          <button class="tb" id="btn-stop" title="Stop" disabled><i class="ico ico-stop"></i></button>
+          <button class="tb" id="btn-reload" title="Refresh"><i class="ico ico-reload"></i></button>
+          <button class="tb" id="btn-home" title="Home"><i class="ico ico-home"></i></button>
+        </div>
+        <div class="spacer"></div>
+        <div class="throbber" id="throbber" title="Kikare"></div>
+      </div>
+      <!-- Address band -->
+      <div class="band" id="band-address">
+        <div class="gripper"></div>
+        <label for="address" class="band-label">Address</label>
+        <div class="address-box">
+          <i class="ico ico-page"></i>
+          <input id="address" type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
+        </div>
+        <button class="tb go" id="btn-go" title="Go to the address in the Address bar"><i class="ico ico-go"></i><span class="label">Go</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="viewport"></main>
+
+  <footer id="statusbar">
+    <div class="cell grow"><i class="ico ico-page-sm"></i><span id="status-text">Done</span></div>
+    <div class="cell progress"><div id="progress-bar"></div></div>
+    <div class="cell zone"><i class="ico ico-zone"></i><span>Internet</span></div>
+    <div class="cell sizer"></div>
+  </footer>
+</body>
+</html>
