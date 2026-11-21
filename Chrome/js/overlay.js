@@ -48,9 +48,10 @@ const el = (tag, cls, text) => {
 /**
  * Shows a menu at (x, y) in window coordinates.
  * items: [{ id, title, enabled?, checked?, radio?, separator?, items? }]  (items = submenu)
+ * options: { minWidth, className } — e.g. the address bar's dropdown is a full-width combo list.
  * Resolves with the picked id, or null.
  */
-export function showMenu(items, x, y) {
+export function showMenu(items, x, y, options = {}) {
   return new Promise((resolve) => {
     acquire();
     const shield = el('div', 'menu-shield');
@@ -97,6 +98,8 @@ export function showMenu(items, x, y) {
       trim(level);
       const menu = el('div', 'menu');
       menu.setAttribute('role', 'menu');
+      if (level === 0 && options.className) menu.classList.add(options.className);
+      if (level === 0 && options.minWidth) menu.style.minWidth = `${options.minWidth}px`;
       for (const item of list) {
         if (item.separator) { menu.append(el('div', 'menu-sep')); continue; }
         const row = el('div', 'menu-item');

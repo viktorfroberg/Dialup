@@ -152,7 +152,9 @@ $('addr-drop').addEventListener('mousedown', async (e) => {
     ...(recentAddresses.length && links.length ? [{ separator: true }] : []),
     ...links.map((l) => ({ id: l.url, title: l.title })),
   ];
-  const picked = await showMenu(items.length ? items : [{ title: '(No recent addresses)', enabled: false }], box.left, box.bottom);
+  // Like IE: a combo list exactly as wide as the address field, directly under it.
+  const picked = await showMenu(items.length ? items : [{ title: '(No recent addresses)', enabled: false }],
+    box.left, box.bottom, { minWidth: box.width, className: 'combo-list' });
   if (picked) host.call('navigate', { input: picked });
 });
 

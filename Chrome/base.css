@@ -841,3 +841,18 @@ body { border-radius: 8px 8px 0 0; }            /* XP: rounded top corners, squa
 body.fullscreen, body.zoomed { border-radius: 0; }
 /* Throbber: sits on the toolbar face instead of a white patch */
 #band-menu .throbber { background: url(img/throbber.svg) center / 20px no-repeat; margin: 0 -4px 0 0; }
+
+/* Address bar dropdown: a combo-box list (full width, page icons, no check column, scrolls) */
+.menu.combo-list {
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid #000;
+  box-shadow: none;
+  animation: none;
+}
+.menu.combo-list .menu-item { height: 18px; padding: 0 6px 0 0; }
+.menu.combo-list .menu-check { width: 22px; background: url(img/page.svg) center / 14px no-repeat; }
+.menu.combo-list .menu-item.disabled .menu-check { background: none; }
+.menu.combo-list .menu-label { padding-right: 0; overflow: hidden; text-overflow: ellipsis; }
+.menu.combo-list .menu-sep { margin: 2px 0; }
