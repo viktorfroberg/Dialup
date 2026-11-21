@@ -10,6 +10,8 @@ The whole browser UI is plain HTML and CSS, with no build step. A skin is one CS
   <img src="docs/screenshots/hero-luna-tabs.png" alt="Dialup in the Luna skin with two tabs open, showing the 1996 Space Jam website" width="860">
 </p>
 
+<p align="center"><img src="docs/screenshots/app-icons.png" alt="Dialup's three app icons: a globe with a gold orbit (Luna), an Aqua-blue rotary phone dial (Aqua), and a comet over a night horizon (Classic)" width="560"><br><sub>The app icon follows your skin: homages to the browser icons of each era, drawn from scratch.</sub></p>
+
 ## Screenshots
 
 <table>
