@@ -28,14 +28,14 @@
   --status-bg: #ece9d8;
   --progress-fill: repeating-linear-gradient(90deg, #2fb32f 0 7px, transparent 7px 9px);
 
-  --icon-back: url(img/back.svg);
-  --icon-forward: url(img/forward.svg);
-  --icon-stop: url(img/stop.svg);
-  --icon-reload: url(img/reload.svg);
-  --icon-home: url(img/home.svg);
-  --icon-go: url(img/go.svg);
-  --icon-page: url(img/page.svg);
-  --icon-zone: url(img/zone.svg);
+  --icon-back: url(img/tango/back.svg);
+  --icon-forward: url(img/tango/forward.svg);
+  --icon-stop: url(img/tango/stop.svg);
+  --icon-reload: url(img/tango/reload.svg);
+  --icon-home: url(img/tango/home.svg);
+  --icon-go: url(img/tango/go.svg);
+  --icon-page: url(img/tango/page.svg);
+  --icon-zone: url(img/tango/globe.svg);
 }
 
 * { box-sizing: border-box; }
@@ -268,8 +268,8 @@ button { font: inherit; color: inherit; }
   --titlebar-text-inactive: #dfe7f8;
   --cap-bg: linear-gradient(135deg, #5d95ff, #1b55db 60%, #2f6cf0);
   --cap-close-bg: linear-gradient(135deg, #f19a7c, #d9431c 55%, #e85c35);
-  --icon-dialup-mode: url(img/crt.svg);
-  --icon-app: url(img/zone.svg);
+  --icon-dialup-mode: url(img/tango/dialup.svg);
+  --icon-app: url(img/tango/globe.svg);
 }
 
 #titlebar {
@@ -463,11 +463,11 @@ select.field { height: 21px; padding: 0 2px; }
 .choice.big { font-size: 1.1em; margin-bottom: 6px; }
 .icon-row { display: flex; gap: 12px; align-items: flex-start; }
 .big-icon { width: 32px; height: 32px; flex: none; background: center / contain no-repeat; }
-.icon-home { background-image: url(img/home.svg); }
-.icon-search { background-image: url(img/icon-search.svg); }
-.icon-user { background-image: url(img/icon-user.svg); }
-.icon-files { background-image: url(img/icon-files.svg); }
-.icon-cookie { background-image: url(img/icon-cookie.svg); }
+.icon-home { background-image: url(img/tango/home.svg); }
+.icon-search { background-image: url(img/tango/search.svg); }
+.icon-user { background-image: url(img/tango/user.svg); }
+.icon-files { background-image: url(img/tango/folder.svg); }
+.icon-cookie { background-image: url(img/tango/privacy.svg); }
 
 .link-table { margin: 4px 0 8px; }
 .link-head, .link-row { display: grid; grid-template-columns: 34% 1fr 24px; gap: 4px; align-items: center; }
@@ -522,7 +522,7 @@ select.field { height: 21px; padding: 0 2px; }
 .font-sample.old { font-family: Verdana, sans-serif; -webkit-font-smoothing: none; }
 
 .message-box { display: flex; gap: 12px; align-items: center; padding: 6px 4px; }
-.message-icon { width: 32px; height: 32px; flex: none; background: url(img/icon-warning.svg) center / contain no-repeat; }
+.message-icon { width: 32px; height: 32px; flex: none; background: url(img/tango/warning.svg) center / contain no-repeat; }
 
 /* Safari-style progress in the address field (used by skins that hide the status bar progress) */
 .address-box { position: relative; }
@@ -580,7 +580,7 @@ select.field { height: 21px; padding: 0 2px; }
   background: linear-gradient(160deg, #0a3fb0 0%, #2f6fe0 45%, #8fbdf8 100%);
   display: flex; flex-direction: column; align-items: center; padding-top: 30px; gap: 8px;
 }
-.wizard-logo { width: 84px; height: 84px; background: url(img/crt.svg) center / contain no-repeat; filter: drop-shadow(2px 3px 2px rgba(0,0,0,.35)); }
+.wizard-logo { width: 84px; height: 84px; background: url(img/tango/dialup.svg) center / contain no-repeat; filter: drop-shadow(2px 3px 2px rgba(0,0,0,.35)); }
 .wizard-brand { font: italic 900 24px "Arial Black", Impact, sans-serif; color: #ffd23a; text-shadow: 2px 2px 0 #0b2466; }
 .wizard-main { padding: 16px 20px 10px; background: #fff; }
 .wizard-page h1 { font: bold 16px var(--font); margin: 0 0 12px; }
@@ -617,7 +617,7 @@ select.field { height: 21px; padding: 0 2px; }
 :root {
   --frame: #0831d9;
   --frame-inactive: #7a96df;
-  --icon-favorites: url(img/favorites.svg);
+  --icon-favorites: url(img/tango/favorites.svg);
   --menu-pick-delay: 0ms;   /* Aqua blinks the chosen menu item */
   --tip-delay: 500ms;
 }
@@ -654,7 +654,7 @@ body.fullscreen { border-width: 0; }
   height: auto;
   margin: -2px -4px -2px 0;
   border-left: 1px solid var(--face-shadow);
-  background: #fff url(img/throbber.svg) center / 20px no-repeat;
+  background: #fff url(img/tango/globe.svg) center / 20px no-repeat;
   transform: none;
 }
 .throbber::before {
@@ -751,9 +751,9 @@ body.fullscreen { border-width: 0; }
 #statusbar .icon-cell { width: 24px; justify-content: center; padding: 0; }
 #statusbar .icon-cell[hidden] { display: none; }
 #cell-sound { cursor: default; }
-.ico-lock { background-image: url(img/lock.svg); width: 14px; height: 14px; }
-.ico-sound { background-image: url(img/sound.svg); width: 14px; height: 14px; }
-body.muted .ico-sound { background-image: url(img/sound-off.svg); }
+.ico-lock { background-image: url(img/tango/lock.svg); width: 14px; height: 14px; }
+.ico-sound { background-image: url(img/tango/sound.svg); width: 14px; height: 14px; }
+body.muted .ico-sound { background-image: url(img/tango/sound-off.svg); }
 #statusbar .sizer {
   background: radial-gradient(circle at 1px 1px, var(--face-shadow) 1px, transparent 1.5px) 0 0 / 4px 4px;
   clip-path: polygon(100% 10%, 100% 100%, 10% 100%);
@@ -775,14 +775,14 @@ body.muted .ico-sound { background-image: url(img/sound-off.svg); }
 .wizard-header { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #aca899; box-shadow: 0 1px 0 #fff; }
 .wizard-header h1 { font: bold var(--font-size) var(--font); margin: 0 0 3px; }
 .wizard-header p { margin: 0 0 0 16px; }
-.wizard-header .wizard-header-icon { width: 40px; height: 40px; margin-left: auto; background: url(img/crt.svg) center / contain no-repeat; }
+.wizard-header .wizard-header-icon { width: 40px; height: 40px; margin-left: auto; background: url(img/tango/dialup.svg) center / contain no-repeat; }
 .wizard.interior .wizard-content { padding: 12px 20px 8px 36px; }
 .wizard-footer [data-nav=back] { margin-right: -6px; }
 .wizard-footer .wizard-cancel { margin-left: 11px; }
 
 /* About + certificate dialogs */
 .about-banner { display: flex; gap: 12px; align-items: center; padding: 12px; margin: -10px -10px 10px; background: linear-gradient(135deg, #0a3fb0, #5d95ff); color: #fff; }
-.about-logo { width: 48px; height: 48px; background: url(img/crt.svg) center / contain no-repeat; }
+.about-logo { width: 48px; height: 48px; background: url(img/tango/dialup.svg) center / contain no-repeat; }
 .about-name { font: italic 900 24px "Arial Black", Impact, sans-serif; color: #ffd23a; text-shadow: 2px 2px 0 #0b2466; }
 .about-tag { font-size: 11px; opacity: .9; }
 .about-text p { margin: 0 0 8px; }
@@ -810,8 +810,8 @@ body.muted .ico-sound { background-image: url(img/sound-off.svg); }
 }
 .tab-item:hover { box-shadow: inset 0 2px 0 #f8b636; }
 .tab-item.active { height: 24px; background: #fcfcfe; border-bottom-color: #fcfcfe; box-shadow: inset 0 2px 0 #e68b2c; color: #000; position: relative; z-index: 1; }
-.tab-icon { width: 14px; height: 14px; flex: none; background: url(img/page.svg) center / contain no-repeat; }
-.tab-item.loading .tab-icon { background-image: url(img/throbber.svg); animation: throb 1s steps(8) infinite; }
+.tab-icon { width: 14px; height: 14px; flex: none; background: url(img/tango/page.svg) center / contain no-repeat; }
+.tab-item.loading .tab-icon { background-image: url(img/tango/globe.svg); animation: throb 1s steps(8) infinite; }
 .tab-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tab-close { width: 14px; height: 14px; padding: 0; flex: none; border: 1px solid transparent; border-radius: 2px; background: none; position: relative; opacity: .65; }
 .tab-close::before, .tab-close::after { content: ""; position: absolute; left: 2px; top: 5.5px; width: 8px; height: 1.5px; background: #555; }
@@ -823,8 +823,8 @@ body.muted .ico-sound { background-image: url(img/sound-off.svg); }
 .tab-new::before, .tab-new::after { content: ""; position: absolute; left: 6px; top: 9px; width: 9px; height: 2px; background: #3a6a2a; }
 .tab-new::after { transform: rotate(90deg); }
 .tab-new:hover { background: var(--button-hover-bg); border-color: var(--button-hover-border); }
-.ico-wayback { background-image: var(--icon-wayback, url(img/wayback.svg)); }
-.icon-tabs { background-image: url(img/page.svg); }
+.ico-wayback { background-image: var(--icon-wayback, url(img/tango/wayback.svg)); }
+.icon-tabs { background-image: url(img/tango/page.svg); }
 /* Classic skin preview card */
 .skin-classic .mini-titlebar { background: linear-gradient(90deg, #0a246a, #a6caf0); color: #fff; flex-direction: row-reverse; border-radius: 0; }
 .skin-classic .mini-titlebar i { background: #d4d0c8; border: 1px solid; border-color: #fff #404040 #404040 #fff; border-radius: 0; }
@@ -840,7 +840,7 @@ body.muted .ico-sound { background-image: url(img/sound-off.svg); }
 body { border-radius: 8px 8px 0 0; }            /* XP: rounded top corners, square bottom */
 body.fullscreen, body.zoomed { border-radius: 0; }
 /* Throbber: sits on the toolbar face instead of a white patch */
-#band-menu .throbber { background: url(img/throbber.svg) center / 20px no-repeat; margin: 0 -4px 0 0; }
+#band-menu .throbber { background: url(img/tango/globe.svg) center / 20px no-repeat; margin: 0 -4px 0 0; }
 
 /* Address bar dropdown: a combo-box list (full width, page icons, no check column, scrolls) */
 .menu.combo-list {
@@ -852,10 +852,10 @@ body.fullscreen, body.zoomed { border-radius: 0; }
   animation: none;
 }
 .menu.combo-list .menu-item { height: 18px; padding: 0 6px 0 0; }
-.menu.combo-list .menu-check { width: 22px; background: url(img/page.svg) center / 14px no-repeat; }
+.menu.combo-list .menu-check { width: 22px; background: url(img/tango/page.svg) center / 14px no-repeat; }
 .menu.combo-list .menu-item.disabled .menu-check { background: none; }
 .menu.combo-list .menu-label { padding-right: 0; overflow: hidden; text-overflow: ellipsis; }
 .menu.combo-list .menu-sep { margin: 2px 0; }
 
 /* The Dialup logo (CRT app artwork) in the wizard and About box */
-.wizard-logo, .about-logo { background-image: url(img/dialup-logo.png); }
+.wizard-logo, .about-logo { background-image: url(img/tango/globe.svg); }

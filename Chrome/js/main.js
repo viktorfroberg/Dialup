@@ -189,7 +189,7 @@ $('cell-secure').addEventListener('dblclick', async () => {
   const body = document.createElement('div');
   body.className = 'settings';
   const rows = [['Issued to', info.subject], ['Issued by', info.issuer], ['Web site', info.host], ['Encryption', info.secure ? 'High (128-bit or better)' : 'Mixed content on this page']];
-  body.innerHTML = `<div class="icon-row"><div class="big-icon" style="background-image:url(img/lock.svg)"></div><div class="grow"><p><b>Certificate Information</b></p><table class="cert-table"></table><p class="hint">This certificate is intended to guarantee the identity of a remote computer.</p></div></div>`;
+  body.innerHTML = `<div class="icon-row"><div class="big-icon" style="background-image:url(img/tango/lock.svg)"></div><div class="grow"><p><b>Certificate Information</b></p><table class="cert-table"></table><p class="hint">This certificate is intended to guarantee the identity of a remote computer.</p></div></div>`;
   const table = body.querySelector('table');
   for (const [k, v] of rows) {
     const tr = table.insertRow();

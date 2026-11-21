@@ -215,7 +215,7 @@ body.zoomed .cap-max::after {
   margin: 1px 2px 1px 4px;
   border: 1px solid;
   border-color: #808080 #fff #fff #808080;
-  background: #d4d0c8 url(../img/throbber.svg) center / 20px no-repeat;
+  background: #d4d0c8 url(../img/tango/globe.svg) center / 20px no-repeat;
 }
 
 /* Coolbar toolbar buttons */

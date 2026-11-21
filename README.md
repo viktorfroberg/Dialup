@@ -10,7 +10,7 @@ The whole browser UI is plain HTML and CSS, with no build step. A skin is one CS
   <img src="docs/screenshots/hero-luna-tabs.png" alt="Dialup in the Luna skin with two tabs open, showing the 1996 Space Jam website" width="860">
 </p>
 
-<p align="center"><img src="docs/screenshots/app-icons.png" alt="Dialup's three app icons: a globe with a gold orbit (Luna), an Aqua-blue rotary phone dial (Aqua), and a comet over a night horizon (Classic)" width="560"><br><sub>The app icon follows your skin: homages to the browser icons of each era, drawn from scratch.</sub></p>
+<p align="center"><img src="docs/screenshots/app-icons.png" alt="Dialup's three app icons: the Tango globe on a sky-blue (Luna), light-grey (Aqua) and navy (Classic) tile" width="560"><br><sub>The app icon follows your skin: the Tango globe on a tile in each skin's colours.</sub></p>
 
 ## Screenshots
 
@@ -147,7 +147,12 @@ See [docs/PLAN.md](docs/PLAN.md) for the full plan and [docs/EXTENDING-PROPOSAL.
 
 ## Originality
 
-All artwork, icons, sounds and the start page in this repository are original, drawn or synthesized for Dialup. The skins are *inspired by* the look of the era. They don't contain any Microsoft or Apple artwork, and Dialup isn't affiliated with or endorsed by Microsoft, Apple, Netscape or anyone else. Windows, Windows XP, Internet Explorer, Mac OS X, Aqua, Safari and other names mentioned are trademarks of their respective owners. Websites in the screenshots belong to their owners.
+The skins, sounds and start page are original, drawn or synthesized for Dialup. Toolbar and settings icons and the globe in the app icon come from the **Tango Icon Library** (public domain), real icons from the era by human artists. The skins are *inspired by* the look of the era. They don't contain any Microsoft or Apple artwork, and Dialup isn't affiliated with or endorsed by Microsoft, Apple, Netscape or anyone else. Windows, Windows XP, Internet Explorer, Mac OS X, Aqua, Safari and other names mentioned are trademarks of their respective owners. Websites in the screenshots belong to their owners.
+
+## Credits
+
+- **Icons:** [Tango Icon Library](http://tango.freedesktop.org/) 0.8.90 by the Tango Desktop Project artists, released into the public domain. Files are in `Chrome/img/tango/`.
+- **Engine:** WebKit, via Apple's WKWebView.
 
 ## License
 

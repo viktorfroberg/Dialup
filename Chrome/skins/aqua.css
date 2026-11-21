@@ -343,11 +343,11 @@ body, body.inactive { border: 0; }
 }
 .settings .tab::before { content: ""; width: 32px; height: 32px; background: center / contain no-repeat var(--tab-icon); }
 .settings .tab.selected { background: rgba(0, 0, 0, .12); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); border: 0; color: #000; }
-.settings .tab[data-tab=general] { --tab-icon: url(../img/icon-user.svg); }
-.settings .tab[data-tab=startpage] { --tab-icon: url(../img/favorites.svg); }
-.settings .tab[data-tab=appearance] { --tab-icon: url(../img/crt.svg); }
-.settings .tab[data-tab=dialup] { --tab-icon: url(../img/zone.svg); }
-.settings .tab[data-tab=privacy] { --tab-icon: url(../img/lock.svg); }
+.settings .tab[data-tab=general] { --tab-icon: url(../img/tango/user.svg); }
+.settings .tab[data-tab=startpage] { --tab-icon: url(../img/tango/favorites.svg); }
+.settings .tab[data-tab=appearance] { --tab-icon: url(../img/tango/appearance.svg); }
+.settings .tab[data-tab=dialup] { --tab-icon: url(../img/tango/dialup.svg); }
+.settings .tab[data-tab=privacy] { --tab-icon: url(../img/tango/privacy.svg); }
 .settings .tab-panels { border: 0; background: transparent; padding: 0 4px; border-radius: 0; }
 .dialog-body:has(.settings) { padding-top: 10px; }
 

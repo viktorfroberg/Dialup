@@ -152,7 +152,7 @@ function addFavorite(tab) {
   body.className = 'settings';
   body.innerHTML = `
     <div class="icon-row">
-      <div class="big-icon" style="background-image:url(img/favorites.svg)"></div>
+      <div class="big-icon" style="background-image:url(img/tango/favorites.svg)"></div>
       <div class="grow">
         <p>Dialup will add this page to your Favorites and your Start Page.</p>
         <label class="row">Name: <input type="text" class="field grow" id="fav-name"></label>
@@ -176,7 +176,7 @@ function aboutDialog() {
     <div class="about-banner"><div class="about-logo"></div><div><div class="about-name">Dialup</div><div class="about-tag">Version 1.0 (2003 Edition, built in 2026)</div></div></div>
     <div class="about-text">
       <p>Cipher Strength: 128-bit<br>Product ID: 55555-OEM-0001337-56K<br>Update Versions: SP1; dial-up</p>
-      <p>Based on modern WebKit, wearing a 2003 outfit.<br>All artwork is original. No modems were harmed.</p>
+      <p>Based on modern WebKit, wearing a 2003 outfit.<br>Icons from the Tango Icon Library (public domain). No modems were harmed.</p>
       <p class="hint">Warning: this computer program is protected by nostalgia.</p>
     </div>`;
   openDialog({ title: 'About Dialup', width: 400, body, buttons: [{ label: 'OK', value: 'ok', primary: true }] });
