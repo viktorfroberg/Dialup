@@ -6,6 +6,8 @@ import WebKit
 final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     let webView: WKWebView
     var onChange: (() -> Void)?
+    /// The start page's "Customize" link asks to open settings at a given tab.
+    var onOpenSettings: ((String) -> Void)?
 
     /// Last error or other message for the status bar; cleared on next navigation.
     private(set) var statusText: String?
@@ -37,7 +39,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     /// Snapshot sent to the chrome as the `tab` event.
     var state: [String: Any] {
         [
-            "url": webView.url?.absoluteString ?? "",
+            "url": Self.displayURL(webView.url),
             "title": webView.title ?? "",
             "loading": webView.isLoading,
             "progress": webView.estimatedProgress,
@@ -48,6 +50,14 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
         ]
     }
 
+    /// The start page shows as "about:home" in the address bar.
+    static func displayURL(_ url: URL?) -> String {
+        guard let url else { return "" }
+        return url.scheme == StartPageSchemeHandler.scheme ? "about:home" : url.absoluteString
+    }
+
+    var isShowingStartPage: Bool { webView.url?.scheme == StartPageSchemeHandler.scheme }
+
     func setItems(remaining: Int, total: Int, url: String) {
         items = total > 0 ? (remaining, total, url) : nil
         onChange?()
@@ -55,10 +65,19 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     var displayTitle: String {
         if let title = webView.title, !title.isEmpty { return title }
+        if isShowingStartPage { return "Start Page" }
         return webView.url?.host ?? "Untitled"
     }
 
     // MARK: Navigation
+
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+        if navigationAction.request.url == StartPageSchemeHandler.customizeURL {
+            onOpenSettings?("startpage")
+            return .cancel
+        }
+        return .allow
+    }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         statusText = nil

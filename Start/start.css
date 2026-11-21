@@ -1,0 +1,129 @@
+/* Dialup start page: an original early-2000s web portal. */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px 12px 40px;
+  font: 13px/1.45 Verdana, Tahoma, sans-serif;
+  color: #102040;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.7), transparent 40%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 2px, transparent 2px 9px),
+    linear-gradient(#5b8fd8, #a9c6ee 55%, #dfe9f8);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+a { color: #0033cc; }
+a:visited { color: #663399; }
+a:hover { color: #cc0000; }
+
+#page {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #fff;
+  border: 2px solid;
+  border-color: #fff #4a6ea8 #4a6ea8 #fff;
+  box-shadow: 4px 4px 0 rgba(10, 30, 80, .35);
+}
+
+#masthead {
+  position: relative;
+  padding: 18px 20px 14px;
+  background: linear-gradient(#173f9c, #2c6ad8 60%, #1b4fb8);
+  border-bottom: 3px solid #f6c02c;
+  color: #fff;
+}
+.logo { font: italic 900 46px/1 "Arial Black", Impact, sans-serif; letter-spacing: -1px; }
+.logo-word {
+  background: linear-gradient(#fff6c8, #ffd23a 45%, #ff8c1a 55%, #ffe58a);
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(2px 2px 0 #0b2466) drop-shadow(0 0 1px #000);
+}
+.logo-tm { font-size: 14px; vertical-align: top; color: #ffd23a; }
+.tagline { margin-top: 4px; font: bold 13px Verdana, sans-serif; color: #dce8ff; text-shadow: 1px 1px 0 #0b2466; }
+.clock {
+  position: absolute; right: 18px; top: 18px;
+  font: bold 12px "Courier New", monospace;
+  background: #0b2466; color: #7dff6a; padding: 3px 7px; border: 1px inset #6d8fd0;
+}
+
+.ticker {
+  display: block;
+  background: #fff8d6;
+  border-bottom: 1px solid #e3cf7a;
+  color: #7a4b00;
+  font: bold 11px Verdana, sans-serif;
+  padding: 4px 0;
+}
+
+.box { margin: 14px; border: 1px solid #8fb0e0; background: #f6f9ff; }
+.box-title {
+  margin: 0;
+  padding: 4px 9px;
+  font: bold 12px Verdana, sans-serif;
+  color: #fff;
+  background: linear-gradient(#5d8fe0, #2f62c4);
+  border-bottom: 1px solid #1f4a9e;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.35);
+}
+.box-body { padding: 8px 12px; }
+.box-body p { margin: 4px 0 8px; }
+.box-foot { padding: 6px 12px 9px; font-size: 11px; }
+
+.search-box form { display: flex; gap: 6px; padding: 12px 12px 4px; }
+#q {
+  flex: 1;
+  font: 15px Verdana, sans-serif;
+  padding: 4px 6px;
+  border: 2px inset #b8c6dc;
+  background: #fff;
+}
+.search-box button {
+  font: bold 13px Verdana, sans-serif;
+  padding: 3px 16px;
+  color: #102040;
+  background: linear-gradient(#fff, #e3e9f4 50%, #c9d4e8);
+  border: 2px outset #d7e0f0;
+  cursor: pointer;
+}
+.search-box button:active { border-style: inset; }
+.powered { padding: 2px 14px 10px; font-size: 10px; color: #6a7a98; }
+
+.columns { display: grid; grid-template-columns: 1fr 1fr; }
+.columns .box { margin-top: 0; }
+@media (max-width: 620px) { .columns { grid-template-columns: 1fr; } }
+
+.links { list-style: none; margin: 0; padding: 8px 12px 2px; }
+.links li { padding: 3px 0 3px 18px; position: relative; }
+.links li::before {
+  content: ""; position: absolute; left: 2px; top: 8px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #bfe0ff, #2a6ad8 70%);
+}
+.tip { font-size: 12px; color: #34445e; }
+
+#footer { padding: 6px 14px 14px; text-align: center; font-size: 11px; color: #4a5a78; border-top: 1px dashed #b8c8e4; }
+.counter { margin: 8px 0; }
+.led {
+  display: inline-block;
+  font: bold 14px "Courier New", monospace;
+  letter-spacing: 3px;
+  color: #ff3b2e; background: #1a0000;
+  padding: 1px 6px; border: 2px inset #777;
+}
+.badges { display: flex; justify-content: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+.badge {
+  width: 88px; height: 31px;
+  display: inline-flex; flex-direction: column; justify-content: center;
+  font: 8px/1.15 Verdana, sans-serif; color: #fff;
+  border: 1px solid #000;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.5), inset -1px -1px 0 rgba(0,0,0,.4);
+}
+.badge b { font-size: 11px; letter-spacing: 1px; }
+.b1 { background: linear-gradient(#2c6ad8, #0b2466); }
+.b2 { background: linear-gradient(#3cae3c, #105a10); }
+.b3 { background: linear-gradient(#9a9a9a, #3a3a3a); }
+.b4 { background: linear-gradient(#e0402a, #7a1408); }
+.small { font-size: 10px; color: #6a7a98; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }

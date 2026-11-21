@@ -4,9 +4,10 @@ import WebKit
 /// One browser window: a chrome web view (the HTML UI) plus the page web view.
 @MainActor
 final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation, WKNavigationDelegate {
-    /// Override with `defaults write se.dialup.Dialup HomePage <url>` (a settings UI comes later).
+    /// Home page from preferences. `-HomePage <url>` on the command line overrides it (debugging).
     static var homeURL: URL {
-        UserDefaults.standard.string(forKey: "HomePage").flatMap(URL.init(string:)) ?? URL(string: "https://www.wikipedia.org/")!
+        UserDefaults.standard.string(forKey: "HomePage").flatMap(URL.init(string:))
+            ?? PreferencesStore.shared.preferences.homeURL
     }
     static let chromeURL = URL(string: "dialup://chrome/index.html")!
 
@@ -24,6 +25,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         let chromeConfig = ChromeConfiguration.make(bridge: bridge, schemeHandler: .bundled())
         chromeView = WKWebView(frame: .zero, configuration: chromeConfig)
         chromeView.isInspectable = true
+        // Transparent, so when menus/dialogs raise the chrome above the page, the page shows through.
+        chromeView.setValue(false, forKey: "drawsBackground")
         tab = Tab(configuration: PageConfiguration.make(hoverHandler: hoverHandler, dialupModePage: dialupModePage))
 
         // A real titled window (so ⌘W/⌘M, Mission Control, Stage Manager and resizing all work),
@@ -61,6 +64,10 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             self.tab.setItems(remaining: remaining, total: total, url: url)
         }
         tab.onChange = { [weak self] in self?.tabDidChange() }
+        tab.onOpenSettings = { [weak self] section in self?.emit("openSettings", ["tab": section]) }
+        NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.preferencesDidChange() }
+        }
         NotificationCenter.default.addObserver(forName: DialupMode.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.dialupModeDidChange() }
         }
@@ -125,6 +132,48 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         emit("dialupMode", settings.dictionary)
     }
 
+    // MARK: Preferences
+
+    private var preferencesPayload: [String: Any] {
+        PreferencesStore.shared.preferences.dictionary.merging(["catalog": Preferences.catalog]) { a, _ in a }
+    }
+
+    private func preferencesDidChange() {
+        emit("prefs", preferencesPayload)
+        if tab.isShowingStartPage { tab.webView.reload() }
+    }
+
+    // MARK: Overlay (retro menus and dialogs)
+
+    private var responderBeforeOverlay: NSResponder?
+
+    /// Menus and dialogs are drawn by the chrome. While one is open, the chrome sits above
+    /// the page (its page area is transparent) and has keyboard focus.
+    private func setOverlay(_ open: Bool) {
+        guard layoutView.chromeOnTop != open, let window else { return }
+        layoutView.chromeOnTop = open
+        if open {
+            responderBeforeOverlay = window.firstResponder
+            window.makeFirstResponder(chromeView)
+        } else {
+            let previous = responderBeforeOverlay
+            responderBeforeOverlay = nil
+            if let view = previous as? NSView, view.window === window, view !== chromeView {
+                window.makeFirstResponder(view)
+            } else {
+                focusPage()
+            }
+        }
+    }
+
+    private func clearData(_ what: String) {
+        let types: Set<String> = switch what {
+        case "cache": [WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache, WKWebsiteDataTypeFetchCache]
+        default: WKWebsiteDataStore.allWebsiteDataTypes()
+        }
+        WKWebsiteDataStore.default().removeData(ofTypes: types, modifiedSince: .distantPast) {}
+    }
+
     // MARK: Host API (called from the chrome via ChromeBridge)
 
     func handle(_ cmd: String, _ args: [String: Any]) -> Any? {
@@ -138,7 +187,13 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
                 "tab": tab.state,
                 "window": lastWindowState,
                 "dialupMode": DialupMode.shared.settings.dictionary,
+                "prefs": preferencesPayload,
             ]
+        case "prefsGet": return preferencesPayload
+        case "prefsSet":
+            PreferencesStore.shared.preferences = PreferencesStore.shared.preferences.merging(args)
+        case "overlay": setOverlay(args["open"] as? Bool ?? false)
+        case "clearData": clearData(args["what"] as? String ?? "cache")
         case "windowClose": window?.performClose(nil)
         case "windowMinimize": window?.performMiniaturize(nil)
         case "windowZoom": window?.performZoom(nil)
@@ -159,7 +214,11 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             func n(_ key: String) -> CGFloat { CGFloat((args[key] as? NSNumber)?.doubleValue ?? 0) }
             layoutView.insets = NSEdgeInsets(top: n("top"), left: n("left"), bottom: n("bottom"), right: n("right"))
         case "navigate":
-            if let input = args["input"] as? String, let url = AddressResolver.resolve(input) {
+            let prefs = PreferencesStore.shared.preferences
+            if let input = args["input"] as? String,
+               let url = ["about:home", "about:start"].contains(input.trimmingCharacters(in: .whitespaces).lowercased())
+                   ? Preferences.startURL
+                   : AddressResolver.resolve(input, searchTemplate: prefs.searchTemplate) {
                 webView.load(URLRequest(url: url))
                 focusPage()
             }
@@ -250,6 +309,10 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     // MARK: Menu actions (native shortcuts)
 
+    @objc func openSettings(_ sender: Any?) {
+        emit("openSettings", ["tab": "general"])
+    }
+
     @objc func openLocation(_ sender: Any?) {
         window?.makeFirstResponder(chromeView)
         emit("focusAddress", [:])
@@ -267,6 +330,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     @objc func reloadChrome(_ sender: Any?) {
         chromeReady = false
+        setOverlay(false)
         chromeView.load(URLRequest(url: Self.chromeURL))
     }
 

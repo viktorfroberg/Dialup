@@ -1,0 +1,203 @@
+/*
+ * Aqua: a 2003-Mac-style skin. Brushed metal, glossy red/yellow/green window buttons on the
+ * left, centered title, capsule buttons, pinstriped dialogs, and the page loading progress
+ * drawn inside the address field.
+ */
+:root {
+  --font: "Lucida Grande", "Helvetica Neue", sans-serif;
+  --font-size: 11.5px;
+  --text: #111;
+  --text-disabled: #9a9a9a;
+  --face: #e6e6e6;
+  --face-light: #fff;
+  --face-shadow: #9a9a9a;
+  --face-dark: #6e6e6e;
+  --band-divider: transparent;
+  --band-divider-shadow: transparent;
+  --field-border: #8e8e8e;
+  --titlebar-height: 24px;
+  --titlebar-text: #1a1a1a;
+  --titlebar-text-inactive: #8a8a8a;
+  --metal: url(../img/brushed.svg) center top / 800px 240px, linear-gradient(#d9d9d9, #bdbdbd);
+  --aqua-blue: linear-gradient(#cfe6ff 0%, #79b4ff 48%, #3f8cf5 52%, #8ec6ff 100%);
+  --aqua-white: linear-gradient(#ffffff 0%, #f1f1f1 48%, #dcdcdc 52%, #f7f7f7 100%);
+  --menu-bg: rgba(250, 250, 250, .97);
+  --menu-hover-bg: linear-gradient(#6aa8ff, #2a6fe6);
+  --dialog-frame: #8a8a8a;
+}
+
+/* ---------- Metal window frame ---------- */
+
+#chrome { background: var(--metal); }
+#titlebar, body.inactive #titlebar { background: transparent; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); }
+#titlebar { padding: 0 8px; font: 13px var(--font); color: var(--titlebar-text); }
+body.inactive #titlebar { color: var(--titlebar-text-inactive); }
+#titlebar .app-icon { display: none; }
+#window-title { text-align: center; padding-right: 54px; } /* balance the buttons on the left */
+
+/* Gumdrop buttons, left side, close–minimize–zoom */
+.caption-buttons { order: -1; gap: 7px; }
+.cap-close { order: 1; }
+.cap-min { order: 2; }
+.cap-max { order: 3; }
+.cap, .cap-close {
+  width: 13px;
+  height: 13px;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .45), 0 1px 1px rgba(255, 255, 255, .5);
+}
+.cap-close { background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ff8a80, #e0362a 55%, #9a1b12); }
+.cap-min   { background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #ffe08a, #f5b21c 55%, #9a6a05); }
+.cap-max   { background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.95) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #9ff08a, #3cbd2a 55%, #17661a); }
+body.inactive .cap, body.inactive .cap-close { opacity: 1; background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.9) 0 18%, transparent 46%), radial-gradient(circle at 50% 70%, #eee, #bdbdbd 55%, #8a8a8a); }
+.cap::before, .cap::after, body.zoomed .cap-max::before, body.zoomed .cap-max::after { content: none; }
+.caption-buttons:hover .cap::before {
+  content: "";
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font: bold 10px/13px "Lucida Grande", sans-serif;
+  color: rgba(70, 0, 0, .75);
+  background: none; border: 0; width: auto; height: auto; transform: none;
+}
+.caption-buttons:hover .cap-close::before { content: "×"; }
+.caption-buttons:hover .cap-min::before { content: "−"; color: rgba(90, 50, 0, .75); }
+.caption-buttons:hover .cap-max::before { content: "+"; color: rgba(0, 60, 0, .75); }
+
+/* ---------- Toolbars ---------- */
+
+.rebar { background: transparent; border-bottom: 0; }
+.band { border: 0; padding: 3px 8px; min-height: 30px; }
+.gripper { display: none; }
+.band-label { color: #333; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); }
+
+.tb {
+  height: 24px;
+  border: 1px solid #7d7d7d;
+  border-radius: 5px;
+  background: var(--aqua-white);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+}
+.tb:hover:not(:disabled) { background: var(--aqua-white); border-color: #5a5a5a; }
+.tb:active:not(:disabled) { background: linear-gradient(#bdbdbd, #e2e2e2); border-color: #5a5a5a; }
+.tb:disabled { opacity: .65; }
+.tb .ico { width: 18px; height: 18px; }
+.tb.toggle.on { background: var(--aqua-blue); border-color: #2a5fa8; box-shadow: none; }
+.split .tb.drop { border-left: 0; }
+.buttons { gap: 6px; }
+.tb-sep { background: rgba(0, 0, 0, .18); box-shadow: 1px 0 0 rgba(255, 255, 255, .4); height: 20px; }
+
+.throbber { border-left: 0; transform: scale(.85); }
+
+/* Address field with Safari-style blue loading fill */
+.address-box {
+  height: 22px;
+  border: 1px solid #8e8e8e;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25), 0 1px 0 rgba(255, 255, 255, .5);
+  background:
+    linear-gradient(90deg, rgba(110, 170, 255, .45) 0 var(--load-progress, 0%), transparent var(--load-progress, 0%)),
+    #fff;
+  transition: background .2s;
+}
+.address-box input { font: 12px var(--font); }
+.tb.go { height: 22px; }
+
+#viewport { border-top: 1px solid #5f5f5f; }
+
+/* ---------- Status bar on metal ---------- */
+
+#statusbar { background: var(--metal); border-top: 1px solid #8a8a8a; height: 20px; padding: 2px 4px; }
+#statusbar .cell { border: 0; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+#statusbar .progress { display: none; }
+
+/* ---------- Menus ---------- */
+
+.menu {
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 8px 18px rgba(0, 0, 0, .35);
+  font: 13px var(--font);
+}
+.menu-item { height: 20px; }
+.menu-sep { margin: 5px 0; background: #dcdcdc; }
+
+/* ---------- Dialogs: pinstripes, gumdrop close, capsule buttons, Aqua tabs ---------- */
+
+.dialog {
+  border: 1px solid #8a8a8a;
+  border-radius: 7px;
+  overflow: hidden;
+  background: repeating-linear-gradient(#f6f6f6 0 2px, #ececec 2px 4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+}
+.dialog-titlebar {
+  margin: 0;
+  height: 24px;
+  border-radius: 0;
+  background: repeating-linear-gradient(#f2f2f2 0 2px, #e2e2e2 2px 4px);
+  border-bottom: 1px solid #a8a8a8;
+  color: #1a1a1a;
+  font: 13px var(--font);
+  text-shadow: 0 1px 0 #fff;
+}
+.dialog-caps { order: -1; margin-right: 8px; }
+.dialog-caps .cap { width: 13px; height: 13px; }
+.dialog-title { text-align: center; padding-right: 20px; }
+.dialog-buttons { padding: 10px 14px 14px; gap: 10px; }
+
+.btn {
+  height: 21px;
+  min-width: 70px;
+  padding: 0 14px;
+  border: 1px solid #7a7a7a;
+  border-radius: 11px;
+  background: var(--aqua-white);
+  font: 12.5px var(--font);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .15);
+}
+.btn:hover:not(:disabled) { box-shadow: 0 1px 1px rgba(0, 0, 0, .15); border-color: #555; }
+.btn:active:not(:disabled) { background: linear-gradient(#c5c5c5, #e8e8e8); }
+.btn.primary { background: var(--aqua-blue); border-color: #2a5fa8; animation: aqua-pulse 1.4s ease-in-out infinite alternate; }
+@keyframes aqua-pulse { from { filter: brightness(1); } to { filter: brightness(1.12) saturate(1.1); } }
+.btn.small, .btn.tiny { height: 19px; font-size: 11px; }
+
+.field { border: 1px solid #8e8e8e; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2); font: 12px var(--font); }
+
+.tabs { justify-content: center; gap: 0; margin-bottom: -11px; }
+.tab {
+  height: 21px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid #7a7a7a;
+  border-left-width: 0;
+  border-radius: 0;
+  background: var(--aqua-white);
+  font: 12px var(--font);
+  box-shadow: none;
+}
+.tab:first-child { border-left-width: 1px; border-radius: 11px 0 0 11px; }
+.tab:last-child { border-radius: 0 11px 11px 0; }
+.tab:hover { box-shadow: none; filter: brightness(.97); }
+.tab.selected { height: 21px; margin: 0; background: var(--aqua-blue); color: #000; box-shadow: none; border-color: #2a5fa8; }
+.tab-panels { border: 1px solid #b4b4b4; border-radius: 6px; background: rgba(255, 255, 255, .45); padding: 20px 14px 10px; }
+
+.settings fieldset { border-color: #c4c4c4; border-radius: 6px; background: rgba(255, 255, 255, .35); }
+.settings legend { color: #111; font-weight: bold; }
+.skin-card input:checked + .mini-window, .option-card:has(input:checked) { border-color: #3f8cf5; background: rgba(63, 140, 245, .15); }
+
+/* Aqua checkboxes and radios: glossy, blue when on */
+.dialog input[type=checkbox], .dialog input[type=radio] {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #6f6f6f;
+  border-radius: 3px;
+  background: var(--aqua-white);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .15);
+}
+.dialog input[type=radio] { border-radius: 50%; }
+.dialog input:checked { background: var(--aqua-blue); border-color: #2a5fa8; }
+.dialog input[type=checkbox]:checked::after { border-color: #10204a; left: 4px; top: 1px; }
+.dialog input[type=radio]:checked::after { inset: 4px; background: #10204a; }
+.dialog input:hover:not(:disabled) { box-shadow: inset 0 1px 1px rgba(0, 0, 0, .15); }

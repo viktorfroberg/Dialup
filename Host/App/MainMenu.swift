@@ -27,6 +27,8 @@ enum MainMenu {
         submenu("Dialup", [
             item("About Dialup", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
             .separator(),
+            item("Settings…", #selector(BrowserWindowController.openSettings(_:)), ","),
+            .separator(),
             item("Hide Dialup", #selector(NSApplication.hide(_:)), "h"),
             item("Hide Others", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
             item("Show All", #selector(NSApplication.unhideAllApplications(_:))),

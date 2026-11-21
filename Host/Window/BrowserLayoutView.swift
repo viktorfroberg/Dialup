@@ -15,6 +15,8 @@ final class BrowserLayoutView: NSView {
 
     override init(frame: NSRect) {
         super.init(frame: frame)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.white.cgColor
         addSubview(scanlineView)
     }
 
@@ -34,6 +36,15 @@ final class BrowserLayoutView: NSView {
             oldValue?.removeFromSuperview()
             if let pageView { addSubview(pageView, positioned: .below, relativeTo: scanlineView) }
             needsLayout = true
+        }
+    }
+
+    /// While a retro menu or dialog is open, the (transparent) chrome is raised above the page.
+    var chromeOnTop = false {
+        didSet {
+            guard chromeOnTop != oldValue, let chromeView, let pageView else { return }
+            // Reorder in place (assigning `subviews` doesn't remove/re-add, so no flicker or focus loss).
+            subviews = chromeOnTop ? [pageView, chromeView, scanlineView] : [chromeView, pageView, scanlineView]
         }
     }
 

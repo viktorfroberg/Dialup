@@ -1,7 +1,8 @@
 import Foundation
 import WebKit
 
-/// Configuration for web pages. Deliberately has NO host bridge and NO dialup:// scheme.
+/// Configuration for web pages. Deliberately has NO host bridge and NO dialup:// scheme
+/// (only the static, bridge-less dialup-start:// start page).
 /// The only addition is a hover-link script in an isolated content world, which page
 /// scripts can't see, so the status bar can show link targets.
 @MainActor
@@ -14,6 +15,7 @@ enum PageConfiguration {
         config.websiteDataStore = .default()
         config.applicationNameForUserAgent = userAgentSuffix
         config.preferences.isElementFullscreenEnabled = true
+        config.setURLSchemeHandler(StartPageSchemeHandler(), forURLScheme: StartPageSchemeHandler.scheme)
 
         let world = WKContentWorld.world(name: "dialup-hover")
         config.userContentController.addUserScript(WKUserScript(

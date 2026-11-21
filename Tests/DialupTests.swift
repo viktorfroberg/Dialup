@@ -78,6 +78,8 @@ final class ConfigurationIsolationTests: XCTestCase {
 
         XCTAssertNotNil(chrome.urlSchemeHandler(forURLScheme: DialupSchemeHandler.scheme))
         XCTAssertNil(page.urlSchemeHandler(forURLScheme: DialupSchemeHandler.scheme))
+        XCTAssertNotNil(page.urlSchemeHandler(forURLScheme: StartPageSchemeHandler.scheme))
+        XCTAssertNil(chrome.urlSchemeHandler(forURLScheme: StartPageSchemeHandler.scheme))
         XCTAssertFalse(chrome.userContentController === page.userContentController)
         XCTAssertFalse(page.userContentController.userScripts.contains { $0.source.contains("messageHandlers.host") })
     }
@@ -137,5 +139,32 @@ final class DialupModeSettingsCompatTests: XCTestCase {
         XCTAssertTrue(s.enabled)
         XCTAssertEqual(s.colors, .websafe)
         XCTAssertFalse(s.includeChrome)
+    }
+}
+
+final class PreferencesTests: XCTestCase {
+    func testSanitizesValues() {
+        let p = Preferences().merging([
+            "skin": "vista", "searchEngine": "altavista", "name": "  Viktor  ",
+            "quickLinks": [["title": "", "url": "example.com"], ["title": "Bad", "url": "javascript:alert(1)"]],
+        ])
+        XCTAssertEqual(p.skin, Preferences().skin)
+        XCTAssertEqual(p.searchEngine, "duckduckgo")
+        XCTAssertEqual(p.name, "Viktor")
+        XCTAssertEqual(p.quickLinks, [QuickLink(title: "example.com", url: "https://example.com")])
+    }
+
+    func testHomePage() {
+        XCTAssertEqual(Preferences().homeURL, Preferences.startURL)
+        XCTAssertEqual(Preferences().merging(["homePage": "example.com"]).homeURL.absoluteString, "https://example.com")
+    }
+
+    @MainActor
+    func testStartConfigIsValidJS() {
+        var p = Preferences()
+        p.name = "</script><b>"
+        let js = StartPageSchemeHandler.configScript(p)
+        XCTAssertTrue(js.hasPrefix("window.DIALUP_START = {"))
+        XCTAssertTrue(js.contains("<\\/script>"))
     }
 }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3a8f"/><stop offset=".45" stop-color="#c2568a"/><stop offset=".75" stop-color="#ff9a4a"/><stop offset="1" stop-color="#ffd66b"/></linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6c0"/><stop offset=".6" stop-color="#ffd23a"/><stop offset="1" stop-color="#ff8c1a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f9a3a"/><stop offset="1" stop-color="#1c4f1a"/></linearGradient>
+    <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fbf4a"/><stop offset="1" stop-color="#2f7a26"/></linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a7fd0"/><stop offset="1" stop-color="#1b3f8a"/></linearGradient>
+  </defs>
+  <rect width="300" height="120" fill="url(#sky)"/>
+  <circle cx="205" cy="62" r="30" fill="url(#sun)"/>
+  <path d="M0 78 Q60 48 120 72 T240 66 T300 70 V120 H0z" fill="url(#hill1)"/>
+  <path d="M0 92 Q80 70 160 88 T300 84 V120 H0z" fill="url(#hill2)"/>
+  <rect y="100" width="300" height="20" fill="url(#water)"/>
+  <g transform="translate(58 70)"><rect width="22" height="16" fill="#f4e2b0"/><path d="M-3 1 11-9 25 1z" fill="#b8321f"/><rect x="9" y="7" width="5" height="9" fill="#7a4a22"/><rect x="2.5" y="4" width="4" height="4" fill="#9fd0ff"/></g>
+  <g fill="#fff" opacity=".85"><ellipse cx="60" cy="24" rx="18" ry="5"/><ellipse cx="74" cy="21" rx="12" ry="5"/><ellipse cx="250" cy="18" rx="14" ry="4"/></g>
+</svg>

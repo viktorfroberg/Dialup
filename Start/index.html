@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dialup Start Page</title>
+  <link rel="stylesheet" href="start.css">
+  <script src="config.js"></script>
+  <script src="start.js" defer></script>
+</head>
+<body>
+  <div id="page">
+    <header id="masthead">
+      <div class="logo"><span class="logo-word">Dialup</span><span class="logo-tm">™</span></div>
+      <div class="tagline">Your on-ramp to the Information Superhighway!</div>
+      <div class="clock" id="clock"></div>
+    </header>
+
+    <marquee class="ticker" scrollamount="4">★ Welcome to the World Wide Web! ★ Tip: press ⌘L to type an address ★ Try Dial-up Mode for that authentic 56k feeling ★</marquee>
+
+    <section class="box search-box">
+      <h2 class="box-title">Search the Web</h2>
+      <form id="search">
+        <input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="Type something and press Search!" autofocus>
+        <button type="submit">Search!</button>
+      </form>
+      <div class="powered" id="powered"></div>
+    </section>
+
+    <div class="columns">
+      <section class="box">
+        <h2 class="box-title" id="greeting">Hello!</h2>
+        <div class="box-body">
+          <p id="date-line"></p>
+          <p class="tip"><b>Did you know?</b> <span id="tip"></span></p>
+        </div>
+      </section>
+
+      <section class="box">
+        <h2 class="box-title">My Favorite Sites</h2>
+        <ul class="links" id="links"></ul>
+        <div class="box-foot"><a href="dialup-start://home/customize">✎ Customize this page</a></div>
+      </section>
+    </div>
+
+    <footer id="footer">
+      <div class="counter">You are visitor number <span id="counter" class="led">000000</span></div>
+      <div class="badges">
+        <span class="badge b1">Best viewed in<br><b>DIALUP</b></span>
+        <span class="badge b2">800 × 600<br><b>OPTIMIZED</b></span>
+        <span class="badge b3">Made on a<br><b>MAC</b></span>
+        <span class="badge b4">NO<br><b>FRAMES</b></span>
+      </div>
+      <div class="small">© 2003–2026 Dialup. All rights reserved. This page is under construction. <span class="blink">🚧</span></div>
+    </footer>
+  </div>
+</body>
+</html>

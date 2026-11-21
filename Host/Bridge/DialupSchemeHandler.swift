@@ -9,9 +9,11 @@ final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
 
     /// area ("chrome", later "skins", "toolbars") → folders searched in order (user folder first).
     private let roots: [String: [URL]]
+    private let acceptedScheme: String
 
-    init(roots: [String: [URL]]) {
+    init(roots: [String: [URL]], scheme: String = DialupSchemeHandler.scheme) {
         self.roots = roots
+        self.acceptedScheme = scheme
     }
 
     static func bundled() -> DialupSchemeHandler {
@@ -42,7 +44,7 @@ final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
 
     /// Maps a dialup:// URL to a file. Refuses anything that escapes its root folder.
     func resolve(_ url: URL) -> URL? {
-        guard url.scheme == Self.scheme, let area = url.host, let bases = roots[area] else { return nil }
+        guard url.scheme == acceptedScheme, let area = url.host, let bases = roots[area] else { return nil }
         let path = (url.path.isEmpty || url.path == "/") ? "/index.html" : url.path
         for base in bases {
             let root = base.standardizedFileURL.path

@@ -14,6 +14,15 @@ export function createMockHost(dialup) {
     1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true },
     2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false },
   };
+  const prefs = {
+    skin: new URLSearchParams(location.search).get('skin') || 'aqua',
+    homePage: 'start', searchEngine: 'duckduckgo', name: '',
+    quickLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
+    catalog: {
+      skins: [{ id: 'aqua', name: 'Aqua (Mac, 2003)' }, { id: 'luna', name: 'Luna (Windows, 2001)' }],
+      searchEngines: [{ id: 'duckduckgo', name: 'DuckDuckGo' }, { id: 'google', name: 'Google' }],
+    },
+  };
   const emit = (event, data) => dialup.receive({ event, data });
   const sync = () => {
     tab.url = history[index];
@@ -61,7 +70,7 @@ export function createMockHost(dialup) {
   };
 
   const commands = {
-    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, dialupMode: { ...dialupMode } }; },
+    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, dialupMode: { ...dialupMode }, prefs: structuredClone(prefs) }; },
     setInsets: () => null,
     navigate: ({ input }) => { if (input?.trim()) go(resolve(input)); return null; },
     back: () => { if (index > 0) { index--; fakeLoad(); } return null; },
@@ -75,6 +84,10 @@ export function createMockHost(dialup) {
       return list.map((url, i) => ({ offset: (i + 1) * (direction === 'forward' ? 1 : -1), title: new URL(url).host, url }));
     },
     goHistory: ({ offset }) => { index = Math.max(0, Math.min(history.length - 1, index + offset)); fakeLoad(); return null; },
+    prefsGet: () => structuredClone(prefs),
+    prefsSet: (patch) => { Object.assign(prefs, patch, { catalog: prefs.catalog }); emit('prefs', structuredClone(prefs)); return null; },
+    overlay: () => null,
+    clearData: () => null,
     windowClose: () => null,
     windowMinimize: () => null,
     windowZoom: () => { win.zoomed = !win.zoomed; emit('windowState', { ...win }); return null; },

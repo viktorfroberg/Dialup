@@ -1,4 +1,6 @@
 import { host, onEvent } from './host.js';
+import { showMenu } from './overlay.js';
+import { openSettings } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
 const address = $('address');
@@ -22,6 +24,7 @@ function render() {
   if (tab.loading) progress = Math.max(5, Math.round(tab.progress * 100));
   else if (itemsRemaining() > 0) progress = Math.round(100 * (tab.items.total - itemsRemaining()) / tab.items.total);
   $('progress-bar').style.width = `${progress}%`;
+  document.documentElement.style.setProperty('--load-progress', progress ? `${progress}%` : '0%');
   if (!addressDirty && address.value !== tab.url) address.value = tab.url;
   $('window-title').textContent = `${tab.title || tab.url || 'Untitled'} - Dialup`;
   renderStatus();
@@ -81,11 +84,7 @@ async function showHistoryMenu(direction, button) {
   const entries = await host.call('history', { direction });
   if (!entries?.length) return;
   const anchor = button.closest('.split').getBoundingClientRect();
-  const picked = await host.call('popupMenu', {
-    items: entries.map((e) => ({ id: String(e.offset), title: e.title || e.url })),
-    x: anchor.left,
-    y: anchor.bottom + 2,
-  });
+  const picked = await showMenu(entries.map((e) => ({ id: String(e.offset), title: e.title || e.url })), anchor.left, anchor.bottom + 1);
   if (picked != null) host.call('goHistory', { offset: Number(picked) });
 }
 $('drop-back').addEventListener('click', (e) => showHistoryMenu('back', e.currentTarget));
@@ -145,50 +144,45 @@ $('drop-dialup-mode').addEventListener('click', async (e) => {
   // Read the anchor before any await: e.currentTarget is null once the event has dispatched.
   const anchor = e.currentTarget.closest('.split').getBoundingClientRect();
   const s = await host.call('dialupModeGet');
-  const radio = (key, value, title) => ({ id: `set:${key}:${value}`, title, checked: s[key] === value });
-  const picked = await host.call('popupMenu', {
-    x: anchor.left,
-    y: anchor.bottom + 2,
-    items: [
-      { id: 'toggle', title: 'Dial-up Mode', checked: s.enabled },
-      { separator: true },
-      { id: 'preset:1998', title: '1998: 56k Modem, Old Fonts, CRT' },
-      { id: 'preset:2003', title: '2003: Broadband' },
-      { separator: true },
-      { title: 'Connection', items: [
-        radio('connection', 'modem56k', '56k Modem'),
-        radio('connection', 'isdn', 'ISDN (128 Kbps)'),
-        radio('connection', 'dsl', 'Broadband (512 Kbps)'),
-        radio('connection', 'off', 'No Slowdown'),
-      ] },
-      { title: 'Colours', items: [
-        radio('colors', 'millions', 'Millions of Colours'),
-        radio('colors', 'gifImages', 'Images in 256 Colours'),
-        { separator: true },
-        { title: 'Hard Mode (whole page, harder to read)', enabled: false },
-        radio('colors', 'thousands', 'Whole Page: Thousands of Colours'),
-        radio('colors', 'websafe', 'Whole Page: 256 Colours'),
-        radio('colors', 'websafeDither', 'Whole Page: 256 Colours, Dithered'),
-      ] },
-      { title: 'Pixels', items: [
-        radio('resolution', 'retina', 'Sharp (Retina)'),
-        { separator: true },
-        { title: 'Hard Mode (harder to read)', enabled: false },
-        radio('resolution', 'classic', 'Classic CRT Pixels'),
-        radio('resolution', 'chunky', 'Chunky Pixels'),
-      ] },
-      { id: 'flip:scanlines', title: 'CRT Scanlines', checked: s.scanlines },
-      { id: 'flip:oldFonts', title: 'Old Fonts (may break some icons)', checked: s.oldFonts },
-      { id: 'flip:includeChrome', title: 'Apply Effects to Toolbars Too', checked: s.includeChrome },
-    ],
-  });
+  const radio = (key, value, title) => ({ id: `set:${key}:${value}`, title, checked: s[key] === value, radio: true });
+  const picked = await showMenu([
+    { id: 'toggle', title: 'Dial-up Mode', checked: s.enabled },
+    { separator: true },
+    { id: 'preset:1998', title: '1998: 56k Modem, Old Fonts, CRT' },
+    { id: 'preset:2003', title: '2003: Broadband' },
+    { separator: true },
+    { title: 'Connection', items: [
+      radio('connection', 'modem56k', '56k Modem'),
+      radio('connection', 'isdn', 'ISDN (128 Kbps)'),
+      radio('connection', 'dsl', 'Broadband (512 Kbps)'),
+      radio('connection', 'off', 'No Slowdown'),
+    ] },
+    { id: 'flip:scanlines', title: 'CRT Scanlines', checked: s.scanlines },
+    { separator: true },
+    { id: 'settings', title: 'Dial-up Mode Settings…' },
+  ], anchor.left, anchor.bottom + 1);
   if (picked == null) return;
   const [kind, key, value] = picked.split(':');
   if (kind === 'toggle') host.call('dialupModeSet', { enabled: !s.enabled });
   else if (kind === 'preset') host.call('dialupModePreset', { id: key });
   else if (kind === 'set') host.call('dialupModeSet', { [key]: value, enabled: true });
   else if (kind === 'flip') host.call('dialupModeSet', { [key]: !s[key], enabled: true });
+  else if (kind === 'settings') showSettings('dialup');
 });
+
+// ---------- Preferences, skins, settings ----------
+
+function applyPrefs(prefs = {}) {
+  const skin = prefs.skin || 'aqua';
+  if (document.body.dataset.skin !== skin) {
+    document.body.dataset.skin = skin;
+    $('skin-css').href = `skins/${skin}.css`;
+  }
+}
+onEvent('prefs', applyPrefs);
+
+const showSettings = (tabId) => openSettings(tabId, { getCurrentUrl: () => tab.url });
+onEvent('openSettings', ({ tab: tabId }) => showSettings(tabId || 'general'));
 
 // ---------- Layout: tell the host where the page goes ----------
 
@@ -221,4 +215,5 @@ const init = await host.call('ready');
 if (init?.tab) { tab = init.tab; render(); }
 renderWindowState(init?.window);
 renderDialupMode(init?.dialupMode ?? {});
+applyPrefs(init?.prefs);
 reportInsets();
