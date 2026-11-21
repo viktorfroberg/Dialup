@@ -1,11 +1,11 @@
 import Foundation
 import WebKit
 
-/// Serves the browser UI from `kikare://<area>/<path>`.
-/// Only the chrome web view has this handler. Pages can't load kikare:// URLs.
+/// Serves the browser UI from `dialup://<area>/<path>`.
+/// Only the chrome web view has this handler. Pages can't load dialup:// URLs.
 @MainActor
-final class KikareSchemeHandler: NSObject, WKURLSchemeHandler {
-    static let scheme = "kikare"
+final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
+    static let scheme = "dialup"
 
     /// area ("chrome", later "skins", "toolbars") → folders searched in order (user folder first).
     private let roots: [String: [URL]]
@@ -14,9 +14,9 @@ final class KikareSchemeHandler: NSObject, WKURLSchemeHandler {
         self.roots = roots
     }
 
-    static func bundled() -> KikareSchemeHandler {
+    static func bundled() -> DialupSchemeHandler {
         let resources = Bundle.main.resourceURL!
-        return KikareSchemeHandler(roots: ["chrome": [resources.appendingPathComponent("Chrome")]])
+        return DialupSchemeHandler(roots: ["chrome": [resources.appendingPathComponent("Chrome")]])
     }
 
     func webView(_ webView: WKWebView, start task: any WKURLSchemeTask) {
@@ -40,7 +40,7 @@ final class KikareSchemeHandler: NSObject, WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, stop task: any WKURLSchemeTask) {}
 
-    /// Maps a kikare:// URL to a file. Refuses anything that escapes its root folder.
+    /// Maps a dialup:// URL to a file. Refuses anything that escapes its root folder.
     func resolve(_ url: URL) -> URL? {
         guard url.scheme == Self.scheme, let area = url.host, let bases = roots[area] else { return nil }
         let path = (url.path.isEmpty || url.path == "/") ? "/index.html" : url.path

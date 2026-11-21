@@ -16,6 +16,7 @@ function render() {
   $('throbber').classList.toggle('busy', tab.loading);
   $('progress-bar').style.width = tab.loading ? `${Math.max(5, Math.round(tab.progress * 100))}%` : '0';
   if (!addressDirty && address.value !== tab.url) address.value = tab.url;
+  $('window-title').textContent = `${tab.title || tab.url || 'Untitled'} - Dialup`;
   renderStatus();
 }
 
@@ -80,6 +81,74 @@ async function showHistoryMenu(direction, button) {
 $('drop-back').addEventListener('click', (e) => showHistoryMenu('back', e.currentTarget));
 $('drop-forward').addEventListener('click', (e) => showHistoryMenu('forward', e.currentTarget));
 
+// ---------- Title bar ----------
+
+function renderWindowState(w = {}) {
+  document.body.classList.toggle('inactive', w.key === false);
+  document.body.classList.toggle('zoomed', !!w.zoomed);
+  document.body.classList.toggle('fullscreen', !!w.fullscreen);
+  $('cap-max').title = w.zoomed ? 'Restore Down' : 'Maximize';
+}
+onEvent('windowState', renderWindowState);
+
+$('titlebar').addEventListener('mousedown', (e) => {
+  if (e.button !== 0 || e.target.closest('button')) return;
+  if (e.detail === 2) host.call('titlebarDoubleClick');
+  else host.call('windowDrag');
+});
+$('cap-min').addEventListener('click', () => host.call('windowMinimize'));
+$('cap-max').addEventListener('click', () => host.call('windowZoom'));
+$('cap-close').addEventListener('click', () => host.call('windowClose'));
+
+// ---------- Extreme mode ----------
+
+let extreme = {};
+function renderExtreme(s) {
+  extreme = s;
+  $('btn-extreme').classList.toggle('on', !!s.enabled);
+  document.body.classList.toggle('extreme', !!s.enabled);
+}
+onEvent('extreme', renderExtreme);
+
+$('btn-extreme').addEventListener('click', () => host.call('extremeSet', { enabled: !extreme.enabled }));
+$('drop-extreme').addEventListener('click', async (e) => {
+  const s = await host.call('extremeGet');
+  const radio = (key, value, title) => ({ id: `set:${key}:${value}`, title, checked: s[key] === value });
+  const anchor = e.currentTarget.closest('.split').getBoundingClientRect();
+  const picked = await host.call('popupMenu', {
+    x: anchor.left,
+    y: anchor.bottom + 2,
+    items: [
+      { id: 'toggle', title: 'Extreme Mode', checked: s.enabled },
+      { separator: true },
+      { id: 'preset:1998', title: '1998: 56k on a 15" CRT' },
+      { id: 'preset:2003', title: '2003: Broadband at 1024×768' },
+      { separator: true },
+      { title: 'Colours', items: [
+        radio('colors', 'millions', 'Millions of Colours (off)'),
+        radio('colors', 'thousands', 'Thousands of Colours (16-bit)'),
+        radio('colors', 'websafe', '256 Colours (web-safe)'),
+        radio('colors', 'websafeDither', '256 Colours, Dithered'),
+      ] },
+      { title: 'Resolution', items: [
+        radio('resolution', 'retina', 'Retina (off)'),
+        radio('resolution', 'classic', 'Classic Pixels'),
+        radio('resolution', 'chunky', 'Chunky Pixels'),
+      ] },
+      { id: 'flip:scanlines', title: 'CRT Scanlines', checked: s.scanlines },
+      { id: 'flip:oldFonts', title: 'Old Fonts (may break some icons)', checked: s.oldFonts },
+      { separator: true },
+      { title: 'Connection Speed (coming soon)', enabled: false },
+    ],
+  });
+  if (picked == null) return;
+  const [kind, key, value] = picked.split(':');
+  if (kind === 'toggle') host.call('extremeSet', { enabled: !s.enabled });
+  else if (kind === 'preset') host.call('extremePreset', { id: key });
+  else if (kind === 'set') host.call('extremeSet', { [key]: value, enabled: true });
+  else if (kind === 'flip') host.call('extremeSet', { [key]: !s[key], enabled: true });
+});
+
 // ---------- Layout: tell the host where the page goes ----------
 
 const viewport = $('viewport');
@@ -109,4 +178,6 @@ document.addEventListener('contextmenu', (e) => {
 
 const init = await host.call('ready');
 if (init?.tab) { tab = init.tab; render(); }
+renderWindowState(init?.window);
+renderExtreme(init?.extreme ?? {});
 reportInsets();

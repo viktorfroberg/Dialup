@@ -1,14 +1,14 @@
 import AppKit
 import WebKit
 
-/// Debug helper: `Kikare.app/Contents/MacOS/Kikare -KikareSnapshot /tmp/out.png [-KikareSnapshotDelay 5]`
+/// Debug helper: `Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp/out.png [-DialupSnapshotDelay 5]`
 /// composites the chrome and page web views into one PNG, so the look can be checked
 /// without Screen Recording permission. It uses WebKit's own snapshot API.
 @MainActor
 enum DebugSnapshot {
     static func scheduleIfRequested(chrome: WKWebView, page: WKWebView, in container: NSView) {
-        guard let path = UserDefaults.standard.string(forKey: "KikareSnapshot") else { return }
-        let delay = UserDefaults.standard.double(forKey: "KikareSnapshotDelay")
+        guard let path = UserDefaults.standard.string(forKey: "DialupSnapshot") else { return }
+        let delay = UserDefaults.standard.double(forKey: "DialupSnapshotDelay")
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(delay > 0 ? delay : 5))
             await write(chrome: chrome, page: page, container: container, to: URL(fileURLWithPath: path))
@@ -17,7 +17,7 @@ enum DebugSnapshot {
 
     private static func write(chrome: WKWebView, page: WKWebView, container: NSView, to url: URL) async {
         guard let chromeImage = try? await chrome.takeSnapshot(configuration: nil) else {
-            NSLog("Kikare snapshot: chrome snapshot failed")
+            NSLog("Dialup snapshot: chrome snapshot failed")
             return
         }
         let pageImage = page.isHidden ? nil : try? await page.takeSnapshot(configuration: nil)
@@ -38,11 +38,23 @@ enum DebugSnapshot {
             pageImage.draw(in: NSRect(x: f.minX, y: size.height - f.maxY, width: f.width, height: f.height))
         }
         NSGraphicsContext.restoreGraphicsState()
+        // Window-level Core Image filters (extreme mode) aren't part of WebKit snapshots,
+        // so apply the same filters here to preview the result.
+        var output = rep
+        let filters = ExtremeRenderer.filters(for: ExtremeMode.shared.settings, backingScale: scale)
+        if !filters.isEmpty, var image = CIImage(bitmapImageRep: rep) {
+            let extent = image.extent
+            for filter in filters {
+                filter.setValue(image, forKey: kCIInputImageKey)
+                image = filter.outputImage?.cropped(to: extent) ?? image
+            }
+            output = NSBitmapImageRep(ciImage: image)
+        }
         do {
-            try rep.representation(using: .png, properties: [:])?.write(to: url)
-            NSLog("Kikare snapshot written to %@", url.path)
+            try output.representation(using: .png, properties: [:])?.write(to: url)
+            NSLog("Dialup snapshot written to %@", url.path)
         } catch {
-            NSLog("Kikare snapshot failed: %@", error.localizedDescription)
+            NSLog("Dialup snapshot failed: %@", error.localizedDescription)
         }
     }
 }

@@ -97,7 +97,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo) async {
         let alert = NSAlert()
-        alert.messageText = frame.securityOrigin.host.isEmpty ? "Kikare" : frame.securityOrigin.host
+        alert.messageText = frame.securityOrigin.host.isEmpty ? "Dialup" : frame.securityOrigin.host
         alert.informativeText = message
         if let window = webView.window { _ = await alert.beginSheetModal(for: window) } else { alert.runModal() }
     }
@@ -105,7 +105,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo) async -> Bool {
         let alert = NSAlert()
-        alert.messageText = frame.securityOrigin.host.isEmpty ? "Kikare" : frame.securityOrigin.host
+        alert.messageText = frame.securityOrigin.host.isEmpty ? "Dialup" : frame.securityOrigin.host
         alert.informativeText = message
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Cancel")

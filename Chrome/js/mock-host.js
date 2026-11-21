@@ -2,13 +2,19 @@
 //   cd Chrome && python3 -m http.server 8000  →  http://localhost:8000/
 // Lets skin and toolbar authors iterate without Xcode.
 
-export function createMockHost(kikare) {
+export function createMockHost(dialup) {
   const history = ['https://www.wikipedia.org/'];
   let index = 0;
   let timer = null;
   const tab = { url: history[0], title: 'Wikipedia', loading: false, progress: 0, canGoBack: false, canGoForward: false, statusText: null };
 
-  const emit = (event, data) => kikare.receive({ event, data });
+  const win = { key: true, zoomed: false, fullscreen: false };
+  const extreme = { enabled: false, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: false };
+  const presets = {
+    1998: { enabled: true, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: true },
+    2003: { enabled: true, colors: 'thousands', resolution: 'classic', scanlines: false, oldFonts: false },
+  };
+  const emit = (event, data) => dialup.receive({ event, data });
   const sync = () => {
     tab.url = history[index];
     tab.title = new URL(tab.url).host;
@@ -55,7 +61,7 @@ export function createMockHost(kikare) {
   };
 
   const commands = {
-    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab } }; },
+    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, extreme: { ...extreme } }; },
     setInsets: () => null,
     navigate: ({ input }) => { if (input?.trim()) go(resolve(input)); return null; },
     back: () => { if (index > 0) { index--; fakeLoad(); } return null; },
@@ -69,8 +75,17 @@ export function createMockHost(kikare) {
       return list.map((url, i) => ({ offset: (i + 1) * (direction === 'forward' ? 1 : -1), title: new URL(url).host, url }));
     },
     goHistory: ({ offset }) => { index = Math.max(0, Math.min(history.length - 1, index + offset)); fakeLoad(); return null; },
+    windowClose: () => null,
+    windowMinimize: () => null,
+    windowZoom: () => { win.zoomed = !win.zoomed; emit('windowState', { ...win }); return null; },
+    windowDrag: () => null,
+    titlebarDoubleClick: () => commands.windowZoom(),
+    extremeGet: () => ({ ...extreme }),
+    extremeSet: (patch) => { Object.assign(extreme, patch); emit('extreme', { ...extreme }); return null; },
+    extremePreset: ({ id }) => { Object.assign(extreme, presets[id] ?? {}); emit('extreme', { ...extreme }); return null; },
     popupMenu: ({ items }) => {
-      const choices = items.filter((i) => !i.separator);
+      const flat = (list) => list.flatMap((i) => (i.items ? flat(i.items) : [i]));
+      const choices = flat(items).filter((i) => !i.separator && i.id);
       const answer = prompt(choices.map((c, n) => `${n + 1}. ${c.title}`).join('\n'), '1');
       return choices[Number(answer) - 1]?.id ?? null;
     },

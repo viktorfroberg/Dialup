@@ -2,7 +2,7 @@ import Foundation
 import WebKit
 
 /// Receives `host.call(cmd, args)` from the chrome UI and replies.
-/// Accepts messages only from the chrome's main frame on the kikare:// origin,
+/// Accepts messages only from the chrome's main frame on the dialup:// origin,
 /// so iframes (later: toolbar plugins) can never call the host directly.
 @MainActor
 final class ChromeBridge: NSObject, WKScriptMessageHandlerWithReply {
@@ -17,7 +17,7 @@ final class ChromeBridge: NSObject, WKScriptMessageHandlerWithReply {
         replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void
     ) {
         guard message.frameInfo.isMainFrame,
-              message.frameInfo.securityOrigin.protocol == KikareSchemeHandler.scheme,
+              message.frameInfo.securityOrigin.protocol == DialupSchemeHandler.scheme,
               let body = message.body as? [String: Any],
               let cmd = body["cmd"] as? String else {
             replyHandler(nil, "rejected message")
@@ -33,14 +33,14 @@ final class ChromeBridge: NSObject, WKScriptMessageHandlerWithReply {
     }
 }
 
-/// Builds the configuration for the chrome web view: kikare:// scheme + host bridge.
+/// Builds the configuration for the chrome web view: dialup:// scheme + host bridge.
 /// Never reuse this for web pages.
 @MainActor
 enum ChromeConfiguration {
-    static func make(bridge: ChromeBridge, schemeHandler: KikareSchemeHandler) -> WKWebViewConfiguration {
+    static func make(bridge: ChromeBridge, schemeHandler: DialupSchemeHandler) -> WKWebViewConfiguration {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
-        config.setURLSchemeHandler(schemeHandler, forURLScheme: KikareSchemeHandler.scheme)
+        config.setURLSchemeHandler(schemeHandler, forURLScheme: DialupSchemeHandler.scheme)
         config.userContentController.addScriptMessageHandler(bridge, contentWorld: .page, name: ChromeBridge.handlerName)
         return config
     }

@@ -2,12 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Kikare</title>
+  <title>Dialup</title>
   <link rel="stylesheet" href="base.css">
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
   <header id="chrome">
+    <!-- Title bar: drawn by the chrome, styled by the skin. Empty areas drag the window. -->
+    <div id="titlebar">
+      <i class="ico app-icon"></i>
+      <span id="window-title">Dialup</span>
+      <div class="caption-buttons">
+        <button class="cap cap-min" id="cap-min" title="Minimize"></button>
+        <button class="cap cap-max" id="cap-max" title="Maximize"></button>
+        <button class="cap cap-close" id="cap-close" title="Close"></button>
+      </div>
+    </div>
     <div class="rebar">
       <!-- Standard Buttons band -->
       <div class="band" id="band-buttons">
@@ -24,9 +34,14 @@
           <button class="tb" id="btn-stop" title="Stop" disabled><i class="ico ico-stop"></i></button>
           <button class="tb" id="btn-reload" title="Refresh"><i class="ico ico-reload"></i></button>
           <button class="tb" id="btn-home" title="Home"><i class="ico ico-home"></i></button>
+          <span class="tb-sep"></span>
+          <span class="split" id="extreme">
+            <button class="tb has-label toggle" id="btn-extreme" title="Extreme Mode: browse like it's 1999 (⇧⌘E)"><i class="ico ico-extreme"></i><span class="label">Extreme</span></button>
+            <button class="tb drop" id="drop-extreme" title="Extreme Mode settings"></button>
+          </span>
         </div>
         <div class="spacer"></div>
-        <div class="throbber" id="throbber" title="Kikare"></div>
+        <div class="throbber" id="throbber" title="Dialup"></div>
       </div>
       <!-- Address band -->
       <div class="band" id="band-address">

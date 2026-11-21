@@ -5,7 +5,7 @@ import WebKit
 @MainActor
 final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation, WKNavigationDelegate {
     static let homeURL = URL(string: "https://www.wikipedia.org/")!
-    static let chromeURL = URL(string: "kikare://chrome/index.html")!
+    static let chromeURL = URL(string: "dialup://chrome/index.html")!
 
     var onClose: (() -> Void)?
 
@@ -22,22 +22,29 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         chromeView.isInspectable = true
         tab = Tab(configuration: PageConfiguration.make(hoverHandler: hoverHandler))
 
+        // A real titled window (so ⌘W/⌘M, Mission Control, Stage Manager and resizing all work),
+        // but the title bar and its buttons are drawn by the HTML chrome.
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 780),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false
         )
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 520, height: 340)
-        window.title = "Kikare"
+        window.title = "Dialup"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        for button: NSWindow.ButtonType in [.closeButton, .miniaturizeButton, .zoomButton] {
+            window.standardWindowButton(button)?.isHidden = true
+        }
         super.init(window: window)
 
         window.contentView = layoutView
         layoutView.chromeView = chromeView
         layoutView.pageView = tab.webView
         window.delegate = self
-        if !window.setFrameUsingName("KikareMain") { window.center() }
-        window.setFrameAutosaveName("KikareMain")
+        if !window.setFrameUsingName("DialupMain") { window.center() }
+        window.setFrameAutosaveName("DialupMain")
 
         bridge.controller = self
         chromeView.navigationDelegate = self
@@ -46,6 +53,10 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             self.emit("hoverLink", ["url": url])
         }
         tab.onChange = { [weak self] in self?.tabDidChange() }
+        NotificationCenter.default.addObserver(forName: ExtremeMode.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.extremeDidChange() }
+        }
+        ExtremeRenderer.apply(ExtremeMode.shared.settings, to: layoutView, page: tab.webView)
 
         chromeView.load(URLRequest(url: Self.chromeURL))
         tab.webView.load(URLRequest(url: Self.homeURL))
@@ -59,6 +70,53 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         onClose?()
     }
 
+    // MARK: Window state → chrome (title bar look)
+
+    private var lastWindowState: [String: Bool] = [:]
+
+    private var windowState: [String: Bool] {
+        guard let window else { return [:] }
+        return [
+            "key": window.isKeyWindow,
+            "zoomed": window.isZoomed,
+            "fullscreen": window.styleMask.contains(.fullScreen),
+        ]
+    }
+
+    private func emitWindowState() {
+        let state = windowState
+        guard state != lastWindowState else { return }
+        lastWindowState = state
+        emit("windowState", state)
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) { emitWindowState() }
+    func windowDidResignKey(_ notification: Notification) { emitWindowState() }
+    func windowDidEnterFullScreen(_ notification: Notification) { emitWindowState() }
+    func windowDidExitFullScreen(_ notification: Notification) { emitWindowState() }
+    func windowDidEndLiveResize(_ notification: Notification) { emitWindowState() }
+    func windowDidResize(_ notification: Notification) {
+        if !(window?.inLiveResize ?? false) { emitWindowState() }
+    }
+    func windowDidChangeBackingProperties(_ notification: Notification) { extremeDidChange() }
+
+    /// Title bar double-click follows the user's macOS setting (Zoom / Minimize / nothing).
+    private func titlebarDoubleClick() {
+        switch UserDefaults.standard.string(forKey: "AppleActionOnDoubleClick") {
+        case "Minimize": window?.performMiniaturize(nil)
+        case "None": break
+        default: window?.performZoom(nil)
+        }
+    }
+
+    // MARK: Extreme mode
+
+    private func extremeDidChange() {
+        let settings = ExtremeMode.shared.settings
+        ExtremeRenderer.apply(settings, to: layoutView, page: tab.webView)
+        emit("extreme", settings.dictionary)
+    }
+
     // MARK: Host API (called from the chrome via ChromeBridge)
 
     func handle(_ cmd: String, _ args: [String: Any]) -> Any? {
@@ -66,7 +124,29 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         switch cmd {
         case "ready":
             chromeReady = true
-            return ["apiVersion": ChromeBridge.apiVersion, "tab": tab.state]
+            lastWindowState = windowState
+            return [
+                "apiVersion": ChromeBridge.apiVersion,
+                "tab": tab.state,
+                "window": lastWindowState,
+                "extreme": ExtremeMode.shared.settings.dictionary,
+            ]
+        case "windowClose": window?.performClose(nil)
+        case "windowMinimize": window?.performMiniaturize(nil)
+        case "windowZoom": window?.performZoom(nil)
+        case "windowDrag":
+            // Same trick Tauri uses: start a native window drag from the current mouse-down.
+            if let event = NSApp.currentEvent, event.type == .leftMouseDown || event.type == .leftMouseDragged {
+                window?.performDrag(with: event)
+            }
+        case "titlebarDoubleClick": titlebarDoubleClick()
+        case "extremeGet": return ExtremeMode.shared.settings.dictionary
+        case "extremeSet":
+            ExtremeMode.shared.settings = ExtremeMode.shared.settings.merging(args)
+        case "extremePreset":
+            if let id = args["id"] as? String, let preset = ExtremeSettings.presets[id] {
+                ExtremeMode.shared.settings = preset
+            }
         case "setInsets":
             func n(_ key: String) -> CGFloat { CGFloat((args[key] as? NSNumber)?.doubleValue ?? 0) }
             layoutView.insets = NSEdgeInsets(top: n("top"), left: n("left"), bottom: n("bottom"), right: n("right"))
@@ -102,23 +182,23 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             let y = (args["y"] as? NSNumber)?.doubleValue ?? 0
             return popupMenu(items, at: NSPoint(x: x, y: y))
         default:
-            NSLog("Kikare: unknown host command %@", cmd)
+            NSLog("Dialup: unknown host command %@", cmd)
         }
         return nil
     }
 
-    /// Sends `{event, data}` to the chrome's `window.kikare.receive`.
+    /// Sends `{event, data}` to the chrome's `window.dialup.receive`.
     func emit(_ event: String, _ data: [String: Any]) {
         guard chromeReady else { return }
         chromeView.callAsyncJavaScript(
-            "window.kikare && window.kikare.receive(msg)",
+            "window.dialup && window.dialup.receive(msg)",
             arguments: ["msg": ["event": event, "data": data]],
             in: nil, in: .page, completionHandler: nil
         )
     }
 
     private func tabDidChange() {
-        window?.title = "\(tab.displayTitle) – Kikare"
+        window?.title = "\(tab.displayTitle) – Dialup"
         emit("tab", tab.state)
     }
 
@@ -126,8 +206,16 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         window?.makeFirstResponder(tab.webView)
     }
 
+    /// Item spec: `{ id, title, enabled?, checked?, separator?, items? }`; `items` makes a submenu.
     private func popupMenu(_ items: [[String: Any]], at point: NSPoint) -> String? {
         let picker = MenuPicker()
+        let menu = Self.buildMenu(items, picker: picker)
+        // layoutView is flipped and the chrome fills it, so chrome CSS pixels map directly.
+        menu.popUp(positioning: nil, at: point, in: layoutView)
+        return picker.picked
+    }
+
+    private static func buildMenu(_ items: [[String: Any]], picker: MenuPicker, depth: Int = 0) -> NSMenu {
         let menu = NSMenu()
         menu.autoenablesItems = false
         for spec in items {
@@ -135,15 +223,19 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
                 menu.addItem(.separator())
                 continue
             }
-            let item = NSMenuItem(title: spec["title"] as? String ?? "", action: #selector(MenuPicker.pick(_:)), keyEquivalent: "")
-            item.target = picker
-            item.representedObject = spec["id"] as? String
+            let item = NSMenuItem(title: spec["title"] as? String ?? "", action: nil, keyEquivalent: "")
             item.isEnabled = spec["enabled"] as? Bool ?? true
+            item.state = (spec["checked"] as? Bool ?? false) ? .on : .off
+            if let children = spec["items"] as? [[String: Any]], depth < 3 {
+                item.submenu = buildMenu(children, picker: picker, depth: depth + 1)
+            } else {
+                item.action = #selector(MenuPicker.pick(_:))
+                item.target = picker
+                item.representedObject = spec["id"] as? String
+            }
             menu.addItem(item)
         }
-        // layoutView is flipped and the chrome fills it, so chrome CSS pixels map directly.
-        menu.popUp(positioning: nil, at: point, in: layoutView)
-        return picker.picked
+        return menu
     }
 
     // MARK: Menu actions (native shortcuts)
@@ -153,11 +245,15 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         emit("focusAddress", [:])
     }
 
-    @objc func kikareBack(_ sender: Any?) { tab.webView.goBack() }
-    @objc func kikareForward(_ sender: Any?) { tab.webView.goForward() }
-    @objc func kikareReload(_ sender: Any?) { tab.webView.reload() }
-    @objc func kikareStop(_ sender: Any?) { tab.webView.stopLoading() }
-    @objc func kikareHome(_ sender: Any?) { tab.webView.load(URLRequest(url: Self.homeURL)) }
+    @objc func dialupBack(_ sender: Any?) { tab.webView.goBack() }
+    @objc func dialupForward(_ sender: Any?) { tab.webView.goForward() }
+    @objc func dialupReload(_ sender: Any?) { tab.webView.reload() }
+    @objc func dialupStop(_ sender: Any?) { tab.webView.stopLoading() }
+    @objc func dialupHome(_ sender: Any?) { tab.webView.load(URLRequest(url: Self.homeURL)) }
+
+    @objc func toggleExtremeMode(_ sender: Any?) {
+        ExtremeMode.shared.settings.enabled.toggle()
+    }
 
     @objc func reloadChrome(_ sender: Any?) {
         chromeReady = false
@@ -166,19 +262,24 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         switch menuItem.action {
-        case #selector(kikareBack(_:)): tab.webView.canGoBack
-        case #selector(kikareForward(_:)): tab.webView.canGoForward
-        case #selector(kikareStop(_:)): tab.webView.isLoading
+        case #selector(dialupBack(_:)): tab.webView.canGoBack
+        case #selector(dialupForward(_:)): tab.webView.canGoForward
+        case #selector(dialupStop(_:)): tab.webView.isLoading
+        case #selector(toggleExtremeMode(_:)):
+            {
+                menuItem.state = ExtremeMode.shared.settings.enabled ? .on : .off
+                return true
+            }()
         default: true
         }
     }
 
     // MARK: Chrome navigation guard
 
-    /// The chrome may only show kikare:// content. Anything else opens in the page instead.
+    /// The chrome may only show dialup:// content. Anything else opens in the page instead.
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
         guard webView === chromeView else { return .allow }
-        if navigationAction.request.url?.scheme == KikareSchemeHandler.scheme { return .allow }
+        if navigationAction.request.url?.scheme == DialupSchemeHandler.scheme { return .allow }
         if let url = navigationAction.request.url { tab.webView.load(URLRequest(url: url)) }
         return .cancel
     }

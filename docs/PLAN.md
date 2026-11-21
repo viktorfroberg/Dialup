@@ -1,4 +1,4 @@
-# Kikare — a 2003-style browser on modern WebKit
+# Dialup — a 2003-style browser on modern WebKit
 
 ## Context
 Hobby project in the empty folder `~/hacks/browser`. Goal: a real, usable macOS browser that looks and feels like 2002–2004 browsers (IE6, Safari 1, Firefox 1.0). It has rearrangeable toolbar rows ("rebar"), add-on search/links bars, a throbber, a status bar and an Explorer-style sidebar. It also supports modern essentials: tabs, real sites, and later Chrome extensions. People should be able to reskin it and write toolbars without touching Swift.
@@ -18,9 +18,9 @@ Optional: borderless NSPanel + WKWebView for address-bar autocomplete (the only 
 ```
 
 **Key decisions**
-- **Two separate WKWebViewConfigurations.** The chrome config gets the `host` message handler and the `kikare://` scheme handler. The page config gets neither. Pages only get a tiny hover-link script in an isolated `WKContentWorld` posting `{url}` to a narrow handler, used for status bar text. This boundary is the core security rule.
-- **`kikare://` custom scheme** (`WKURLSchemeHandler`) serves `chrome/`, `skins/<id>/`, `toolbars/<id>/`. Bundled resources are merged with user folders in `~/Library/Application Support/Kikare/{skins,toolbars}`, and user folders win.
-- **Bridge v1:** chrome → host is `await host.call(cmd, args)` via `WKScriptMessageHandlerWithReply`. Host → chrome is `kikare.receive({event, data})` via `callAsyncJavaScript`. Messages are Codable enums in Swift and carry an `apiVersion` field.
+- **Two separate WKWebViewConfigurations.** The chrome config gets the `host` message handler and the `dialup://` scheme handler. The page config gets neither. Pages only get a tiny hover-link script in an isolated `WKContentWorld` posting `{url}` to a narrow handler, used for status bar text. This boundary is the core security rule.
+- **`dialup://` custom scheme** (`WKURLSchemeHandler`) serves `chrome/`, `skins/<id>/`, `toolbars/<id>/`. Bundled resources are merged with user folders in `~/Library/Application Support/Dialup/{skins,toolbars}`, and user folders win.
+- **Bridge v1:** chrome → host is `await host.call(cmd, args)` via `WKScriptMessageHandlerWithReply`. Host → chrome is `dialup.receive({event, data})` via `callAsyncJavaScript`. Messages are Codable enums in Swift and carry an `apiVersion` field.
 - **Layout from insets, not rects,** so live window resize stays in sync without waiting on JS.
 - **Native menus for every dropdown:** the in-window "File Edit View Favorites" bar, back/forward history and toolbar chevrons all call `host.popupMenu(items, point)`. This avoids clipping and removes most overlay needs.
 - **Native owns shortcuts.** Main-menu key equivalents work regardless of focus. Cmd-L focuses the chrome web view, then JS focuses the address field. Enter navigates and gives focus back to the page.
@@ -30,12 +30,12 @@ Optional: borderless NSPanel + WKWebView for address-bar autocomplete (the only 
 ## Repo layout
 ```
 browser/
-  project.yml                 XcodeGen → Kikare.xcodeproj (generated, gitignored)
+  project.yml                 XcodeGen → Dialup.xcodeproj (generated, gitignored)
   Host/
     App/AppDelegate.swift, MainMenu.swift
     Window/BrowserWindowController.swift, BrowserLayoutView.swift
     Tabs/Tab.swift (wraps WKWebView, KVO title/url/progress/canGoBack), TabStore.swift
-    Bridge/ChromeBridge.swift, BridgeMessages.swift, KikareSchemeHandler.swift
+    Bridge/ChromeBridge.swift, BridgeMessages.swift, DialupSchemeHandler.swift
     Page/PageConfiguration.swift, HoverLinkScript.swift, NavigationDelegate.swift
     Addons/SkinRegistry.swift, ToolbarRegistry.swift, Manifest.swift, Permissions.swift
     Store/Session.swift, Favorites.swift, History.swift (sqlite3 C API)
@@ -43,7 +43,7 @@ browser/
   Skins/    blasippa/ (Luna-ish blue, original art), akvarell/ (Aqua pinstripe-ish, original art)
             each: skin.json, skin.css, img/
   Toolbars/ search/, links/   each: manifest.json, index.html, toolbar.js
-  Tests/    KikareTests (manifest parsing, permission gate, URL-vs-search input, tab state)
+  Tests/    DialupTests (manifest parsing, permission gate, URL-vs-search input, tab state)
   docs/     host-api.md, skin-api.md (stable class names/parts + CSS variables), toolbar-api.md
 ```
 
@@ -71,7 +71,7 @@ browser/
 - *Things WebKit can't do.* No Widevine DRM (some streaming fails) and no built-in password manager. Accepted.
 
 ## Verification
-- `xcodegen && xcodebuild -scheme Kikare build test` (unit tests for manifest parsing, permission gate, input→URL/search, page-config isolation).
+- `xcodegen && xcodebuild -scheme Dialup build test` (unit tests for manifest parsing, permission gate, input→URL/search, page-config isolation).
 - Run the app and work through the phase exit-criteria checklist. Take window screenshots with `screencapture -l<windowID>` to compare skins.
 - `python3 -m http.server` in `Chrome/` and open `index.html?mock` to check skins and toolbars in a normal browser.
 - Not deployed anywhere. Local builds only (ad-hoc signed).

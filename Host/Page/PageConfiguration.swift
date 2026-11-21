@@ -1,7 +1,7 @@
 import Foundation
 import WebKit
 
-/// Configuration for web pages. Deliberately has NO host bridge and NO kikare:// scheme.
+/// Configuration for web pages. Deliberately has NO host bridge and NO dialup:// scheme.
 /// The only addition is a hover-link script in an isolated content world, which page
 /// scripts can't see, so the status bar can show link targets.
 @MainActor
@@ -15,7 +15,7 @@ enum PageConfiguration {
         config.applicationNameForUserAgent = userAgentSuffix
         config.preferences.isElementFullscreenEnabled = true
 
-        let world = WKContentWorld.world(name: "kikare-hover")
+        let world = WKContentWorld.world(name: "dialup-hover")
         config.userContentController.addUserScript(WKUserScript(
             source: HoverLinkHandler.script,
             injectionTime: .atDocumentEnd,
@@ -29,7 +29,7 @@ enum PageConfiguration {
 
 @MainActor
 final class HoverLinkHandler: NSObject, WKScriptMessageHandler {
-    static let name = "kikareHover"
+    static let name = "dialupHover"
     static let script = """
     (() => {
       let last = null;

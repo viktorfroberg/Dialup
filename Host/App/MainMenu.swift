@@ -24,14 +24,14 @@ enum MainMenu {
             return item
         }
 
-        submenu("Kikare", [
-            item("About Kikare", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
+        submenu("Dialup", [
+            item("About Dialup", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
             .separator(),
-            item("Hide Kikare", #selector(NSApplication.hide(_:)), "h"),
+            item("Hide Dialup", #selector(NSApplication.hide(_:)), "h"),
             item("Hide Others", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
             item("Show All", #selector(NSApplication.unhideAllApplications(_:))),
             .separator(),
-            item("Quit Kikare", #selector(NSApplication.terminate(_:)), "q"),
+            item("Quit Dialup", #selector(NSApplication.terminate(_:)), "q"),
         ])
 
         submenu("File", [
@@ -52,16 +52,19 @@ enum MainMenu {
         ])
 
         submenu("View", [
-            item("Stop", #selector(BrowserWindowController.kikareStop(_:)), "."),
-            item("Refresh", #selector(BrowserWindowController.kikareReload(_:)), "r"),
+            item("Stop", #selector(BrowserWindowController.dialupStop(_:)), "."),
+            item("Refresh", #selector(BrowserWindowController.dialupReload(_:)), "r"),
+            .separator(),
+            item("Extreme Mode", #selector(BrowserWindowController.toggleExtremeMode(_:)), "e", [.command, .shift]),
+            item("Enter Full Screen", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
             .separator(),
             item("Reload Chrome", #selector(BrowserWindowController.reloadChrome(_:)), "r", [.command, .option]),
         ])
 
         submenu("Go", [
-            item("Back", #selector(BrowserWindowController.kikareBack(_:)), "["),
-            item("Forward", #selector(BrowserWindowController.kikareForward(_:)), "]"),
-            item("Home", #selector(BrowserWindowController.kikareHome(_:)), "h", [.command, .shift]),
+            item("Back", #selector(BrowserWindowController.dialupBack(_:)), "["),
+            item("Forward", #selector(BrowserWindowController.dialupForward(_:)), "]"),
+            item("Home", #selector(BrowserWindowController.dialupHome(_:)), "h", [.command, .shift]),
         ])
 
         let windowMenu = submenu("Window", [

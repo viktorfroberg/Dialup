@@ -1,6 +1,6 @@
 import WebKit
 import XCTest
-@testable import Kikare
+@testable import Dialup
 
 final class AddressResolverTests: XCTestCase {
     func resolve(_ s: String) -> String? { AddressResolver.resolve(s)?.absoluteString }
@@ -25,7 +25,7 @@ final class AddressResolverTests: XCTestCase {
     func testEverythingElseSearches() {
         XCTAssertEqual(resolve("hello world"), "https://duckduckgo.com/?q=hello%20world")
         XCTAssertEqual(resolve("a&b=c"), "https://duckduckgo.com/?q=a%26b%3Dc")
-        XCTAssertEqual(resolve("kikare"), "https://duckduckgo.com/?q=kikare")
+        XCTAssertEqual(resolve("dialup"), "https://duckduckgo.com/?q=dialup")
         XCTAssertEqual(resolve("what is 3.5 mm"), "https://duckduckgo.com/?q=what%20is%203.5%20mm")
     }
 
@@ -47,38 +47,67 @@ final class SchemeHandlerTests: XCTestCase {
         try "secret".write(to: root.appendingPathComponent("secret.txt"), atomically: true, encoding: .utf8)
     }
 
-    func handler() -> KikareSchemeHandler {
-        KikareSchemeHandler(roots: ["chrome": [root.appendingPathComponent("chrome")]])
+    func handler() -> DialupSchemeHandler {
+        DialupSchemeHandler(roots: ["chrome": [root.appendingPathComponent("chrome")]])
     }
 
     func testResolvesFiles() {
-        XCTAssertEqual(handler().resolve(URL(string: "kikare://chrome/")!)?.lastPathComponent, "index.html")
-        XCTAssertEqual(handler().resolve(URL(string: "kikare://chrome/js/main.js")!)?.lastPathComponent, "main.js")
+        XCTAssertEqual(handler().resolve(URL(string: "dialup://chrome/")!)?.lastPathComponent, "index.html")
+        XCTAssertEqual(handler().resolve(URL(string: "dialup://chrome/js/main.js")!)?.lastPathComponent, "main.js")
     }
 
     func testRefusesTraversalAndUnknownAreas() {
-        XCTAssertNil(handler().resolve(URL(string: "kikare://chrome/../secret.txt")!))
-        XCTAssertNil(handler().resolve(URL(string: "kikare://chrome/%2E%2E/secret.txt")!))
-        XCTAssertNil(handler().resolve(URL(string: "kikare://skins/index.html")!))
+        XCTAssertNil(handler().resolve(URL(string: "dialup://chrome/../secret.txt")!))
+        XCTAssertNil(handler().resolve(URL(string: "dialup://chrome/%2E%2E/secret.txt")!))
+        XCTAssertNil(handler().resolve(URL(string: "dialup://skins/index.html")!))
         XCTAssertNil(handler().resolve(URL(string: "https://chrome/index.html")!))
     }
 
     func testMimeTypes() {
-        XCTAssertTrue(KikareSchemeHandler.mimeType(forExtension: "js").hasPrefix("text/javascript"))
-        XCTAssertEqual(KikareSchemeHandler.mimeType(forExtension: "svg"), "image/svg+xml")
+        XCTAssertTrue(DialupSchemeHandler.mimeType(forExtension: "js").hasPrefix("text/javascript"))
+        XCTAssertEqual(DialupSchemeHandler.mimeType(forExtension: "svg"), "image/svg+xml")
     }
 }
 
 @MainActor
 final class ConfigurationIsolationTests: XCTestCase {
-    /// The core security rule: web pages never get the kikare:// scheme or the chrome's script controller.
+    /// The core security rule: web pages never get the dialup:// scheme or the chrome's script controller.
     func testPagesDoNotGetChromePowers() {
-        let chrome = ChromeConfiguration.make(bridge: ChromeBridge(), schemeHandler: KikareSchemeHandler(roots: [:]))
+        let chrome = ChromeConfiguration.make(bridge: ChromeBridge(), schemeHandler: DialupSchemeHandler(roots: [:]))
         let page = PageConfiguration.make(hoverHandler: HoverLinkHandler())
 
-        XCTAssertNotNil(chrome.urlSchemeHandler(forURLScheme: KikareSchemeHandler.scheme))
-        XCTAssertNil(page.urlSchemeHandler(forURLScheme: KikareSchemeHandler.scheme))
+        XCTAssertNotNil(chrome.urlSchemeHandler(forURLScheme: DialupSchemeHandler.scheme))
+        XCTAssertNil(page.urlSchemeHandler(forURLScheme: DialupSchemeHandler.scheme))
         XCTAssertFalse(chrome.userContentController === page.userContentController)
         XCTAssertFalse(page.userContentController.userScripts.contains { $0.source.contains("messageHandlers.host") })
+    }
+}
+
+@MainActor
+final class ExtremeModeTests: XCTestCase {
+    func testMergeAppliesKnownKeysAndIgnoresJunk() {
+        let base = ExtremeSettings()
+        let merged = base.merging(["enabled": true, "colors": "thousands", "bogus": 1])
+        XCTAssertTrue(merged.enabled)
+        XCTAssertEqual(merged.colors, .thousands)
+        XCTAssertEqual(merged.resolution, base.resolution)
+    }
+
+    func testInvalidValueKeepsSettings() {
+        let base = ExtremeSettings()
+        XCTAssertEqual(base.merging(["colors": "ultraviolet"]), base)
+    }
+
+    func testDisabledMeansNoFilters() {
+        var s = ExtremeSettings.presets["1998"]!
+        XCTAssertEqual(ExtremeRenderer.filters(for: s, backingScale: 2).count, 3) // pixellate, dither, posterize
+        s.enabled = false
+        XCTAssertTrue(ExtremeRenderer.filters(for: s, backingScale: 2).isEmpty)
+    }
+
+    func testClassicPixelsAreNoOpOnNonRetina() {
+        let s = ExtremeSettings(enabled: true, colors: .millions, resolution: .classic, scanlines: false, oldFonts: false)
+        XCTAssertTrue(ExtremeRenderer.filters(for: s, backingScale: 1).isEmpty)
+        XCTAssertEqual(ExtremeRenderer.filters(for: s, backingScale: 2).first?.name, "CIPixellate")
     }
 }

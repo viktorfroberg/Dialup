@@ -3,8 +3,23 @@ import AppKit
 /// Content view of a browser window. The chrome web view fills the whole view.
 /// The page web view sits on top of it, inset by the margins the chrome reports.
 /// Insets (not absolute rects) mean live window resizing never waits on JavaScript.
+/// The scanline overlay (extreme mode) covers everything and ignores clicks.
 final class BrowserLayoutView: NSView {
     override var isFlipped: Bool { true }
+
+    let scanlineView: ScanlineView = {
+        let view = ScanlineView(frame: .zero)
+        view.isHidden = true
+        return view
+    }()
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        addSubview(scanlineView)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("not used") }
 
     var chromeView: NSView? {
         didSet {
@@ -17,7 +32,7 @@ final class BrowserLayoutView: NSView {
     var pageView: NSView? {
         didSet {
             oldValue?.removeFromSuperview()
-            if let pageView { addSubview(pageView, positioned: .above, relativeTo: chromeView) }
+            if let pageView { addSubview(pageView, positioned: .below, relativeTo: scanlineView) }
             needsLayout = true
         }
     }
@@ -30,6 +45,7 @@ final class BrowserLayoutView: NSView {
     override func layout() {
         super.layout()
         chromeView?.frame = bounds
+        scanlineView.frame = bounds
         guard let pageView else { return }
         guard let i = insets else {
             pageView.isHidden = true

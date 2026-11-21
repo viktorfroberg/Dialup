@@ -1,5 +1,5 @@
 /*
- * Kikare base chrome styles.
+ * Dialup base chrome styles.
  * Skins (phase 2) override the CSS variables below and may restyle the
  * documented classes: .rebar .band .gripper .tb .drop .address-box .throbber #statusbar .cell
  */
@@ -252,3 +252,70 @@ button { font: inherit; color: inherit; }
   color: #555;
 }
 .mock-page a { color: #00c; }
+
+/* ---------- Title bar (drawn by the chrome; skins restyle it) ---------- */
+
+:root {
+  --titlebar-height: 30px;
+  --titlebar-bg: linear-gradient(#3d8af7 0%, #1b62e0 8%, #0a4fd0 40%, #0b47c2 88%, #0839a3 100%);
+  --titlebar-bg-inactive: linear-gradient(#a6c1f5 0%, #8bacee 10%, #7c9fe6 90%, #7193d9 100%);
+  --titlebar-text: #fff;
+  --titlebar-text-inactive: #dfe7f8;
+  --cap-bg: linear-gradient(135deg, #5d95ff, #1b55db 60%, #2f6cf0);
+  --cap-close-bg: linear-gradient(135deg, #f19a7c, #d9431c 55%, #e85c35);
+  --icon-extreme: url(img/crt.svg);
+  --icon-app: url(img/zone.svg);
+}
+
+#titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--titlebar-height);
+  padding: 0 5px 0 8px;
+  background: var(--titlebar-bg);
+  color: var(--titlebar-text);
+  font: bold 13px var(--font);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, .45);
+}
+body.inactive #titlebar { background: var(--titlebar-bg-inactive); color: var(--titlebar-text-inactive); text-shadow: none; }
+body.fullscreen #titlebar { display: none; }
+
+#titlebar .app-icon { width: 16px; height: 16px; background-image: var(--icon-app); }
+#window-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.caption-buttons { display: flex; gap: 2px; }
+.cap {
+  position: relative;
+  width: 21px;
+  height: 21px;
+  padding: 0;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: var(--cap-bg);
+  box-shadow: inset -1px -1px 1px rgba(0, 0, 0, .25), inset 1px 1px 1px rgba(255, 255, 255, .35);
+}
+.cap:hover { filter: brightness(1.15); }
+.cap:active { filter: brightness(.85); }
+.cap-close { background: var(--cap-close-bg); }
+body.inactive .cap { opacity: .75; }
+
+.cap::before, .cap::after { content: ""; position: absolute; background: #fff; }
+.cap-min::before { left: 5px; bottom: 5px; width: 7px; height: 3px; }
+.cap-max::before { left: 4px; top: 4px; width: 11px; height: 11px; background: transparent; border: 1px solid #fff; border-top-width: 3px; box-sizing: border-box; }
+body.zoomed .cap-max::before { left: 6px; top: 3px; width: 9px; height: 8px; }
+body.zoomed .cap-max::after  { left: 3px; top: 7px; width: 9px; height: 8px; background: var(--cap-bg); border: 1px solid #fff; border-top-width: 3px; box-sizing: border-box; }
+.cap-close::before, .cap-close::after { left: 4px; top: 8.5px; width: 11px; height: 2px; }
+.cap-close::before { transform: rotate(45deg); }
+.cap-close::after  { transform: rotate(-45deg); }
+
+/* ---------- Extreme mode button ---------- */
+
+.tb-sep { width: 1px; height: 22px; margin: 0 3px; background: var(--band-divider-shadow); box-shadow: 1px 0 0 var(--band-divider); }
+.ico-extreme { background-image: var(--icon-extreme); }
+.tb.toggle.on {
+  background: var(--button-active-bg);
+  border-color: var(--face-shadow);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, .2);
+}
+#extreme .tb.toggle.on + .drop { border-color: var(--face-shadow); }

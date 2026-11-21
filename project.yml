@@ -1,6 +1,6 @@
-name: Kikare
+name: Dialup
 options:
-  bundleIdPrefix: se.kikare
+  bundleIdPrefix: se.dialup
   deploymentTarget:
     macOS: "15.4"
 settings:
@@ -8,7 +8,7 @@ settings:
     SWIFT_VERSION: "6.0"
     MACOSX_DEPLOYMENT_TARGET: "15.4"
 targets:
-  Kikare:
+  Dialup:
     type: application
     platform: macOS
     sources:
@@ -18,35 +18,35 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: se.kikare.Kikare
-        PRODUCT_NAME: Kikare
+        PRODUCT_BUNDLE_IDENTIFIER: se.dialup.Dialup
+        PRODUCT_NAME: Dialup
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
-        INFOPLIST_KEY_CFBundleDisplayName: Kikare
-        INFOPLIST_KEY_NSHumanReadableCopyright: "Kikare — a browser from 2003, built in 2026"
+        INFOPLIST_KEY_CFBundleDisplayName: Dialup
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Dialup — a browser from 2003, built in 2026"
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         ENABLE_HARDENED_RUNTIME: NO
-  KikareTests:
+  DialupTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - path: Tests
     dependencies:
-      - target: Kikare
+      - target: Dialup
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
 schemes:
-  Kikare:
+  Dialup:
     build:
       targets:
-        Kikare: all
-        KikareTests: [test]
+        Dialup: all
+        DialupTests: [test]
     test:
       targets:
-        - KikareTests
+        - DialupTests
