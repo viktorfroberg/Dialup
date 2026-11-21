@@ -3,70 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dialup</title>
+  <title>Dialup Search</title>
   <link rel="stylesheet" href="start.css">
   <script src="config.js"></script>
   <script src="start.js" defer></script>
 </head>
 <body>
-  <!-- One page, edge to edge: status strip on top, content in an 800x600-friendly column, footer at the bottom. -->
-  <table class="sheet" align="center" cellspacing="0" cellpadding="0">
-    <tr>
-      <td class="bar">
-        <span class="led"></span>Connected &middot; <span id="today"></span>
-        <span class="bar-links"><a href="portal.html">Portal</a> <i>|</i> <a href="dialup-start://home/customize">Customize</a></span>
-      </td>
-    </tr>
-    <tr>
-      <td class="main">
-        <div class="masthead">
-          <h1 class="wordmark">dialup</h1>
-        </div>
-        <p class="greeting" id="greeting">Welcome back to the Web.</p>
+  <!-- A 2004-style search start page: logo, tabs, one big box, two buttons, a few small links. -->
+  <div class="toplinks"><a href="portal.html">Portal</a> &nbsp;|&nbsp; <a href="dialup-start://home/customize">Customize</a></div>
 
-        <form id="search" class="searchbox" role="search">
-          <label class="search-label" for="q">Search the Web with <b id="engine">DuckDuckGo</b></label>
-          <div class="search-row">
-            <input type="text" id="q" aria-label="Search the Web" autocomplete="off" spellcheck="false" autofocus>
-            <input type="submit" class="go" value="Search">
-          </div>
-          <div class="search-under"><a href="#" id="surprise">surprise me&hellip;</a></div>
-        </form>
+  <center>
+    <div class="logo">
+      <h1 class="wordmark">dialup</h1>
+      <div class="tagline">Search the Web, old and new</div>
+    </div>
 
-        <p class="favorites" id="favorites" hidden><span class="fav-label">Favourites:</span> </p>
+    <form id="search" name="f">
+      <table class="tabs" cellpadding="0" cellspacing="0"><tr>
+        <td><a href="#" data-tab="web" class="on">Web</a></td>
+        <td><a href="#" data-tab="images">Images</a></td>
+        <td><a href="#" data-tab="news">News</a></td>
+        <td><a href="#" data-tab="wikipedia">Wikipedia</a></td>
+        <td><a href="#" data-tab="archive">Archive</a></td>
+      </tr></table>
 
-        <table class="nooks" cellspacing="0" cellpadding="0">
-          <tr>
-            <td class="nook">
-              <div class="nook-title"><span class="glyph">&#9733;</span> Site of the Day</div>
-              <div class="nook-body">
-                <a id="sotd-link" class="sotd" href="#"></a>
-                <div class="nook-text" id="sotd-text"></div>
-              </div>
-            </td>
-            <td class="nook-gap"></td>
-            <td class="nook">
-              <div class="nook-title"><span class="glyph">?</span> Did you know?</div>
-              <div class="nook-body">
-                <div class="nook-text" id="tip"></div>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td class="foot">
-        <div class="webring">&laquo; <a href="https://neocities.org/browse">prev</a> &middot; <a href="#" id="ring-random">random</a> &middot; <a href="https://wiby.me/">next</a> &raquo; &nbsp;a member of the <em>Modem Lovers</em> webring</div>
-        <div class="foot-row">
-          <span class="badges">
-            <a class="badge b1" href="https://neocities.org/">HOME<b>MADE</b></a><a class="badge b2" href="https://web.archive.org/">OLD WEB<b>ARCHIVE</b></a><a class="badge b3" href="https://wiby.me/">SMALL<b>WEB</b></a><span class="badge b4">800&times;600<b>FRIENDLY</b></span>
-          </span>
-          <span class="visits">You are visitor<br><span class="counter" id="counter">001337</span></span>
-        </div>
-        <p class="colophon">Best viewed with Dialup at 800&times;600 &middot; <a href="https://web.archive.org/">Time travel</a></p>
-      </td>
-    </tr>
-  </table>
+      <table class="box" cellpadding="0" cellspacing="0"><tr>
+        <td class="box-side"></td>
+        <td>
+          <input type="text" id="q" maxlength="2048" size="55" autocomplete="off" spellcheck="false" aria-label="Search" autofocus><br>
+          <input type="submit" class="btn" value="Dialup Search">
+          <input type="button" class="btn" id="lucky" value="Surprise Me">
+        </td>
+        <td class="box-side side-links">
+          <a href="dialup-start://home/customize">Preferences</a><br>
+          <a href="https://web.archive.org/">Time Travel</a><br>
+          <a href="https://en.wikipedia.org/wiki/Special:Random">Random Article</a>
+        </td>
+      </tr></table>
+    </form>
+
+    <p class="hint" id="hint">Searching the Web with <b id="engine">DuckDuckGo</b></p>
+
+    <p class="greeting" id="greeting"></p>
+    <p class="favorites" id="favorites" hidden></p>
+
+    <div class="extras">
+      <div><b>Site of the Day:</b> <a id="sotd-link" href="#"></a> <span id="sotd-text"></span></div>
+      <div><b>Tip:</b> <span id="tip"></span></div>
+      <div><b>Feeling curious?</b> Read a <a href="https://en.wikipedia.org/wiki/Special:Random">random Wikipedia article</a>.</div>
+    </div>
+
+    <p class="footer">
+      <a href="portal.html">Portal</a> - <a href="dialup-start://home/customize">Customize</a> - <a href="https://web.archive.org/">Time Travel</a> - <a href="https://www.spacejam.com/1996/">Best of the Old Web</a>
+      <br><br><span class="copy">&copy;2004&ndash;2026 Dialup</span>
+    </p>
+  </center>
 </body>
 </html>
