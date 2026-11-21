@@ -1,62 +1,152 @@
 # Dialup
 
-A browser from 2003, built in 2026. It has rebar toolbars, a throbber, a status bar with a security zone, and later add-on search bars, all on modern WebKit (the same engine as Safari).
+**A browser from 2003, built in 2026.**
+
+Dialup is a hobby macOS browser that looks and feels like the browsers of 2001–2004: the blue Windows XP title bar, the brushed-metal Mac toolbar, the grey 3D bevels of Windows 98. Underneath it's modern WebKit (the engine Safari uses), so today's web works fine. Turn on **Dial-up Mode** and pictures trickle in at modem speed while the status bar counts down "(3 items remaining)".
+
+The whole browser UI is plain HTML and CSS, with no build step. A skin is one CSS file.
+
+<p align="center">
+  <img src="docs/screenshots/hero-luna-tabs.png" alt="Dialup in the Luna skin with two tabs open, showing the 1996 Space Jam website" width="860">
+</p>
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/skin-luna.png" alt="Luna skin: blue XP-style title bar and toolbars"></td>
+    <td width="33%"><img src="docs/screenshots/skin-aqua.png" alt="Aqua skin: brushed-metal Mac-style toolbar with bookmarks bar"></td>
+    <td width="33%"><img src="docs/screenshots/skin-classic.png" alt="Classic skin: grey Windows 98/2000-style chrome"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Luna</b><br>Windows XP, 2001 (default)</td>
+    <td align="center"><b>Aqua</b><br>Mac OS X, 2003</td>
+    <td align="center"><b>Classic</b><br>Windows 98/2000</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dialup-mode.png" alt="Dial-up Mode: a picture in 256 colours and the status bar reading '(2 items remaining) Downloading picture…'"></td>
+    <td width="50%"><img src="docs/screenshots/dialup-mode-hard.png" alt="Dial-up Mode hard mode: Space Jam 1996 in 216 dithered web-safe colours on the Classic skin"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Dial-up Mode</b>: pictures load at 56k speed, in GIF colours</td>
+    <td align="center"><b>Hard mode</b>: the whole page in 216 dithered colours</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/options-dialup.png" alt="The Dialup Options dialog, Dial-up Mode tab, with visual previews of each colour setting"></td>
+    <td><img src="docs/screenshots/setup-wizard.png" alt="The first-run Setup Wizard asking which computer you grew up with"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Dialup Options</b> (⌘,) with live previews</td>
+    <td align="center"><b>Setup Wizard</b> on first run</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/start-page-luna.png" alt="The built-in start page in the Luna skin: modem logo, search box, favourites, webring and 88x31 buttons"></td>
+    <td><img src="docs/screenshots/start-page-aqua.png" alt="The same start page in the Aqua skin, with pinstripes and a glossy Search button"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Start page</b>, hand-made at 800×600</td>
+    <td align="center">…and it dresses up to match each skin</td>
+  </tr>
+</table>
+
+## Features
+
+- **Three skins.** Luna, Aqua and Classic each restyle everything: title bar, caption buttons, toolbars, menus, dialogs, tooltips, dropdowns and the status bar. The window frame is drawn by the skin too.
+- **Dial-up Mode** (⇧⌘D). Pictures load line by line at 56k, ISDN or 512k speed with a live "(n items remaining)" count. You also get a dial-in sequence, 256-colour "GIF" pictures, a faint CRT glow and scanlines, and old fonts. Hard mode puts the whole page in 16-bit or 216 web-safe colours, dithered if you like.
+- **Retro page touches.** Classic scrollbars and square corners (on by default). No shadows, no animations and underlined links are opt-in.
+- **Sounds.** Original synthesized clicks, a page-complete tick, error and ding, and a modem handshake. No samples taken from anywhere.
+- **Tabs, or one page per window.** You choose in the wizard, like it's 2004. Session restore loads tabs lazily.
+- **Wayback button.** Reload the current page as the Wayback Machine saw it in a year you pick.
+- **Favorites.** Add to Favorites, a Favorites menu and a Links bar (Aqua gets a bookmarks bar). Import and export the Netscape `bookmarks.html` format that every browser still understands.
+- **A retro start page** (`about:home`) with search, favourites, Site of the Day, a webring and 88×31 buttons. There's also a portal-style page.
+- **Era details.** Padlock and certificate dialog, security zone in the status bar, throbber, address-bar combo dropdown, Back/Forward history menus.
+- **Setup Wizard** on first run (Help → Setup Wizard… to see it again), and **Dialup Options** with visual previews of every Dial-up Mode setting.
+
+## Build & run
+
+**Requirements:** macOS 15.4 or later, Xcode 16 or later (Swift 6), and [XcodeGen](https://github.com/yonaskolb/XcodeGen) via Homebrew.
+
+```sh
+brew install xcodegen                 # once
+git clone https://github.com/viktorfroberg/Dialup.git
+cd Dialup
+xcodegen generate                     # creates Dialup.xcodeproj (not checked in)
+xcodebuild -project Dialup.xcodeproj -scheme Dialup -derivedDataPath build build
+open build/Build/Products/Debug/Dialup.app
+```
+
+Run the tests:
+
+```sh
+xcodebuild -project Dialup.xcodeproj -scheme Dialup -derivedDataPath build test
+```
+
+Or open `Dialup.xcodeproj` in Xcode and press ⌘R.
+
+The app is **ad-hoc signed**, not notarized. If you copy the built app somewhere else or download a build, macOS may refuse to open it the first time. Right-click the app, choose **Open**, then confirm.
 
 ## How it works
 
 ```
-NSWindow
- ├─ Chrome WKWebView   dialup://chrome/index.html — the whole UI is HTML/CSS/JS (Chrome/)
- └─ Page WKWebView     the web page, positioned inside insets the chrome reports
+NSWindow (full-size content, native buttons hidden)
+ └─ BrowserLayoutView
+     ├─ Chrome WKWebView   dialup://chrome/index.html  (transparent; draws title bar, toolbars, status bar)
+     ├─ Page WKWebView     the website, positioned inside insets the chrome reports
+     └─ ScanlineView       Dial-up Mode CRT overlay (ignores clicks)
 ```
 
-- **Host** (`Host/`, Swift): windows, menus and shortcuts, focus, the page web view, the bridge.
-- **Chrome** (`Chrome/`, plain HTML/CSS/ES modules, no build step): everything you see around the page.
-- The chrome talks to the host with `host.call(cmd, args)`. The host pushes events with `window.dialup.receive({event, data})`. See [docs/host-api.md](docs/host-api.md).
-- **Security rule:** web pages use a separate WebKit configuration with no bridge and no `dialup://` scheme. A unit test enforces it.
+- **Host** (`Host/`, Swift): windows, native menus and shortcuts, focus, preferences, tabs, Dial-up Mode, sounds, bookmarks, and the bridge.
+- **Chrome** (`Chrome/`, plain HTML/CSS/ES modules, no build step): everything you see around the page, plus the HTML menus and dialogs, Dialup Options and the wizard.
+- **Start page** (`Start/`): static files served to pages as `dialup-start://home/`.
+- **Bridge:** the chrome calls `host.call(cmd, args)`. The host pushes events back with `window.dialup.receive({event, data})`. See [docs/host-api.md](docs/host-api.md).
+- **Menus that can cover the page:** while a menu or dialog is open, the host raises the transparent chrome web view above the page, so nothing gets clipped.
 
-## Build & run
+**The security boundary.** The browser UI and web pages never share a WebKit configuration. Pages get their own configuration with **no bridge** and **no `dialup://` scheme**, so a website can't call the host or load the chrome's files. The bridge only accepts messages from the chrome's main frame on `dialup://`. The scheme handler resolves symlinks before its folder check, and the chrome runs under a strict Content-Security-Policy (own files only, no remote scripts, styles or frames). The only extras injected into pages (a hover-link helper and the Dial-up Mode script) run in isolated content worlds. The start page's personal config is only served to the start page itself. Unit tests in `Tests/` check the bridge, scheme-handler and start-page rules.
+
+## Make it yours
+
+**Skins are CSS.** Each skin is one file in [`Chrome/skins/`](Chrome/skins/) (`luna.css`, `aqua.css`, `classic.css`) on top of `Chrome/base.css`. `base.css` declares the variables (`--face`, `--rebar-bg`, `--icon-back`…) and lists the class names in its header comment. Copy a skin, change it, and add its id to `Preferences.skins` in `Host/App/Preferences.swift`.
+
+**Hack on the UI without Xcode.** The chrome runs in any browser with a fake host:
 
 ```sh
-brew install xcodegen          # once
-xcodegen generate
-xcodebuild -scheme Dialup -derivedDataPath build build
-open build/Build/Products/Debug/Dialup.app
-xcodebuild -scheme Dialup -derivedDataPath build test
+cd Chrome && python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-## Hacking on the UI without Xcode
+Without a native host, `js/mock-host.js` stands in for it, so you can restyle the whole browser in Safari or Chrome: edit, reload, repeat, with devtools at hand.
+
+**Inside the app**, use **View → Reload Chrome** (⌥⌘R) after editing files in the built app bundle. Both the chrome and pages can be inspected with Safari's Web Inspector (Develop menu).
+
+**Debug snapshots** (debug builds only) write the composited window to a PNG without Screen Recording permission. That's how the screenshots above were made:
 
 ```sh
-cd Chrome && python3 -m http.server 8000   # open http://localhost:8000
+build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup \
+  -DialupSnapshot ~/Desktop/dialup.png -DialupSnapshotDelay 6 \
+  -HomePage "https://www.spacejam.com/1996/"
+# add  -DialupChromeEval "<js>"  to run JavaScript in the chrome first (e.g. open a dialog)
 ```
 
-Without a native host, `js/mock-host.js` fakes one, so you can restyle the chrome in any browser. Inside the app, use **View → Reload Chrome** (⌥⌘R) after editing files in the built app bundle. The chrome and pages are inspectable with Safari's Web Inspector (Develop menu).
-
-## Debug snapshot (debug builds only)
-
-```sh
-build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp/dialup.png -DialupSnapshotDelay 6
-```
+**Docs:** [docs/host-api.md](docs/host-api.md) (chrome ↔ host bridge), [docs/PLAN.md](docs/PLAN.md) (architecture and plan), [docs/EXTENDING-PROPOSAL.md](docs/EXTENDING-PROPOSAL.md) (user skins, toolbars and add-ons). There's an index in [docs/README.md](docs/README.md).
 
 ## Roadmap
 
-0. ✅ Test build: chrome web view + page, address bar, nav buttons, throbber, status bar, history dropdowns
-   ✅ Custom title bar drawn by the chrome
-   ✅ Dial-up mode (⇧⌘D): images trickle in at modem speed, "(n items remaining)" status bar,
-      dial-in sequence, 256-colour images, faint CRT scanlines, old fonts; hard-mode whole-page colours/pixels
-   ✅ Retro HTML menus and dialogs · ✅ Dialup Options (⌘,) with visual Dial-up Mode previews
-   ✅ Skins: Luna (Windows 2001, default) and Aqua (Mac 2003) in `Chrome/skins/` · ✅ Retro start page (`Start/`)
-   ✅ First-run Setup Wizard (Help → Setup Wizard…) · ✅ Page touches: classic scrollbars, light mode,
-      square corners (safe, on) + no shadows / no animations / underlined links (opt-in)
-   ✅ Authenticity pass: Luna menu bar/frame/throbber/Links, Aqua Safari-style toolbar + bookmarks bar + search,
-      retro dropdowns/tooltips/menus, padlock + certificate dialog, original synthesized sounds, portal start page
-   ✅ Tabs (or one page per window, chosen in the wizard), session restore, Wayback button, Classic skin,
-      Favorites (Add to Favorites, menu, Links bar) with bookmarks.html import/export
-   Next for dial-up mode: modem/click sounds, optional real network throttling, 800×600 window
-1. Tabs, session restore, multiple windows
-2. Skins (`Skins/<id>/skin.json + skin.css`)
-3. Toolbar plugins (`Toolbars/<id>/manifest.json`), rearrangeable rebar
-4. Favorites, history sidebar, downloads, find, zoom, autocomplete
-5. Real extensions via WKWebExtension (optional)
-6. Polish: content blocking, icon, about box
+Next up, roughly in order:
+
+1. Toolbar plugins in sandboxed iframes, with draggable rebar bands and Lock the Toolbars.
+2. Explorer-style sidebars (Search, Favorites, History) and history storage.
+3. Downloads, find in page, zoom, address autocomplete.
+4. More skins (Platinum, Communicator-style) and user skins you can install without rebuilding.
+5. A real throttling proxy for Dial-up Mode, a pop-up blocker with an information bar, WebExtensions.
+
+See [docs/PLAN.md](docs/PLAN.md) for the full plan and [docs/EXTENDING-PROPOSAL.md](docs/EXTENDING-PROPOSAL.md) for how add-ons could work safely. What has shipped so far is in [CHANGELOG.md](CHANGELOG.md).
+
+## Originality
+
+All artwork, icons, sounds and the start page in this repository are original, drawn or synthesized for Dialup. The skins are *inspired by* the look of the era. They don't contain any Microsoft or Apple artwork, and Dialup isn't affiliated with or endorsed by Microsoft, Apple, Netscape or anyone else. Windows, Windows XP, Internet Explorer, Mac OS X, Aqua, Safari and other names mentioned are trademarks of their respective owners. Websites in the screenshots belong to their owners.
+
+## License
+
+No license yet — all rights reserved. You're welcome to read the code and try it; a license may come later.

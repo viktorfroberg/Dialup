@@ -1,6 +1,6 @@
 # Dialup: plan and architecture (kept current)
 
-A hobby macOS browser that looks and feels like 2001–2004 browsers (IE6/XP, Safari 1/Aqua, Firefox 1.0) on modern WebKit. It's meant to be easy to reskin and extend: the whole UI is HTML/CSS, with no build step.
+A hobby macOS browser that looks and feels like 2001–2004 browsers (Windows XP, Mac OS X Aqua, Windows 98/2000 Classic) on modern WebKit. It's meant to be easy to reskin and extend: the whole UI is HTML/CSS, with no build step.
 
 ## Architecture (as built)
 
@@ -23,13 +23,15 @@ NSWindow (titled, full-size content, native buttons hidden)
 
 - Test build; custom title bar; skins Luna (default) and Aqua; retro HTML menus and dialogs; Dialup Options; first-run Setup Wizard; retro start page.
 - Dial-up Mode: image trickle-in with "(n items remaining)", dial-in sequence, 256-colour images, faint CRT, old fonts, page touches (safe ones on, risky ones opt-in), hard-mode whole-page filters.
-- Review round 1 fixes: detached images, start-page privacy and Customize lock, stale status, settings and wizard only send changed keys, address bar dirtiness, dialog key stack and focus trap, lifecycle, debug-only flags.
+- Fixes from the first review: detached images, start-page privacy and Customize lock, stale status, settings and wizard only send changed keys, address bar dirtiness, dialog key stack and focus trap, lifecycle, debug-only flags.
 
-## Done in review round 2
+## Done in the second round
 
 - Authenticity pass for Luna and Aqua, original synthesized sounds, padlock and certificate dialog, portal start page.
 - Tabs with the wizard and Settings choice (tabs or one page per window), session restore with lazily loaded tabs, popups as tabs or cascading windows.
 - Wayback button, Classic (98/2000) skin, Favorites menu, Add to Favorites, bookmarks.html import/export.
+- Skin-drawn window corners, IE-style address bar dropdown, start page redesign (800×600 home page with per-skin personality).
+- Security groundwork for add-ons: symlink-safe scheme handler (tested) and a Content-Security-Policy on the browser UI. The add-on design is in `docs/EXTENDING-PROPOSAL.md`.
 
 ## Next
 

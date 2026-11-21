@@ -1,6 +1,6 @@
 # Proposal: customizing and extending Dialup
 
-Status: proposal, nothing built yet. It's grounded in the code as of 2026-11 and follows on from PLAN.md "Next" items 1, 4 and 5.
+Status: proposal. It's grounded in the code as of 2026-11 and follows on from PLAN.md "Next" items 1, 4 and 5. Part of phase 0 has since landed: the symlink-safe `resolve` (with a test) and the chrome CSP, so those two gaps below are closed.
 
 **Summary.** Dialup's best feature for extension is one most browsers lack: the whole UI is CSS. So let people share **data first and code later**. Skins, sounds, presets, search engines and start themes are files that can't run code, so they carry little risk and give a lot back. Toolbars are next: sandboxed iframes in rebar bands with a small API that you have to ask permission for. Page scripts and real WebExtensions stay opt-in and come last. Every add-on type is a folder under `~/Library/Application Support/Dialup/`, and all of them are managed from one Add-ons tab.
 
