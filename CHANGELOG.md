@@ -1,8 +1,10 @@
 # Changelog
 
-Milestones so far, oldest first. Version 0.1.0, not released yet.
+Milestones so far, oldest first.
 
-## 0.1.0 (in development)
+## 0.1.0 (2026-11-21)
+
+First public release.
 
 ### Foundations
 - Test build: an HTML/CSS/JS browser UI in one WKWebView, the web page in another, a Swift host in between. Address bar, Back/Forward with history dropdowns, throbber, status bar.

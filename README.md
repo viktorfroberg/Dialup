@@ -69,6 +69,12 @@ The whole browser UI is plain HTML and CSS, with no build step. A skin is one CS
 - **Era details.** Padlock and certificate dialog, security zone in the status bar, throbber, address-bar combo dropdown, Back/Forward history menus.
 - **Setup Wizard** on first run (Help → Setup Wizard… to see it again), and **Dialup Options** with visual previews of every Dial-up Mode setting.
 
+## Download
+
+**[Download Dialup for macOS](https://github.com/viktorfroberg/Dialup/releases/latest/download/Dialup.zip)** (macOS 15.4 or later, Apple silicon and Intel). Unzip it and drag Dialup.app to Applications. All versions are on the [Releases page](https://github.com/viktorfroberg/Dialup/releases).
+
+Dialup is ad-hoc signed, not notarized by Apple, so macOS blocks it the first time. Try to open it once, then go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** (or run `xattr -dr com.apple.quarantine /Applications/Dialup.app`).
+
 ## Build & run
 
 **Requirements:** macOS 15.4 or later, Xcode 16 or later (Swift 6), and [XcodeGen](https://github.com/yonaskolb/XcodeGen) via Homebrew.
@@ -92,7 +98,7 @@ The tests run inside the app, but it opens no windows and leaves your saved sess
 
 Or open `Dialup.xcodeproj` in Xcode and press ⌘R.
 
-The app is **ad-hoc signed**, not notarized. If you copy the built app somewhere else or download a build, macOS will refuse to open it the first time. Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** (or run `xattr -dr com.apple.quarantine /Applications/Dialup.app`). Building it yourself avoids this.
+A build you make yourself opens without the Gatekeeper warning.
 
 ## How it works
 

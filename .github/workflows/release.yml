@@ -1,0 +1,58 @@
+name: Release
+
+# Push a tag like v0.1.0 to build Dialup and publish it as a GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      # Universal (Apple silicon + Intel), ad-hoc signed: no Developer ID, so not notarized.
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Dialup.xcodeproj \
+            -scheme Dialup \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            | grep -E "error:|warning:|\*\* BUILD"
+
+      - name: Package
+        run: |
+          APP=build/Build/Products/Release/Dialup.app
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
+          [ "v$VERSION" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME does not match app version $VERSION"; exit 1; }
+          lipo -info "$APP/Contents/MacOS/Dialup"
+          codesign --verify --deep --strict "$APP"
+          ditto -c -k --keepParent "$APP" Dialup.zip
+          shasum -a 256 Dialup.zip | tee Dialup.zip.sha256
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" Dialup.zip Dialup.zip.sha256 \
+            --title "Dialup ${GITHUB_REF_NAME#v}" \
+            --notes-file .github/release-notes.md
