@@ -3,7 +3,7 @@ import AppKit
 /// Content view of a browser window. The chrome web view fills the whole view.
 /// The page web view sits on top of it, inset by the margins the chrome reports.
 /// Insets (not absolute rects) mean live window resizing never waits on JavaScript.
-/// The scanline overlay (extreme mode) covers everything and ignores clicks.
+/// The scanline overlay (dial-up mode) covers everything and ignores clicks.
 final class BrowserLayoutView: NSView {
     override var isFlipped: Bool { true }
 
@@ -37,7 +37,7 @@ final class BrowserLayoutView: NSView {
         }
     }
 
-    /// Extreme mode: scanlines over the whole window, or only over the page (default).
+    /// Dial-up mode: scanlines over the whole window, or only over the page (default).
     var scanlinesCoverChrome = false {
         didSet { needsLayout = true }
     }

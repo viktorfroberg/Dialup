@@ -38,11 +38,11 @@ enum DebugSnapshot {
             pageImage.draw(in: NSRect(x: f.minX, y: size.height - f.maxY, width: f.width, height: f.height))
         }
         NSGraphicsContext.restoreGraphicsState()
-        // Window-level Core Image filters (extreme mode) aren't part of WebKit snapshots,
+        // Window-level Core Image filters (dial-up mode) aren't part of WebKit snapshots,
         // so apply the same filters here to preview the result.
         var output = rep
-        let settings = ExtremeMode.shared.settings
-        let filters = ExtremeRenderer.filters(for: settings, backingScale: scale)
+        let settings = DialupMode.shared.settings
+        let filters = DialupModeRenderer.filters(for: settings, backingScale: scale)
         if !filters.isEmpty, let full = CIImage(bitmapImageRep: rep) {
             // Filter the whole window, or only the page rect (CI coordinates: bottom-left origin, pixels).
             let f = page.frame

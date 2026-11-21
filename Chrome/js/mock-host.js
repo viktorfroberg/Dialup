@@ -9,10 +9,10 @@ export function createMockHost(dialup) {
   const tab = { url: history[0], title: 'Wikipedia', loading: false, progress: 0, canGoBack: false, canGoForward: false, statusText: null };
 
   const win = { key: true, zoomed: false, fullscreen: false };
-  const extreme = { enabled: false, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: false, includeChrome: false };
+  const dialupMode = { enabled: false, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: false, includeChrome: false };
   const presets = {
-    1998: { enabled: true, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: true },
-    2003: { enabled: true, colors: 'thousands', resolution: 'classic', scanlines: false, oldFonts: false },
+    1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true },
+    2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false },
   };
   const emit = (event, data) => dialup.receive({ event, data });
   const sync = () => {
@@ -61,7 +61,7 @@ export function createMockHost(dialup) {
   };
 
   const commands = {
-    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, extreme: { ...extreme } }; },
+    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, dialupMode: { ...dialupMode } }; },
     setInsets: () => null,
     navigate: ({ input }) => { if (input?.trim()) go(resolve(input)); return null; },
     back: () => { if (index > 0) { index--; fakeLoad(); } return null; },
@@ -80,9 +80,9 @@ export function createMockHost(dialup) {
     windowZoom: () => { win.zoomed = !win.zoomed; emit('windowState', { ...win }); return null; },
     windowDrag: () => null,
     titlebarDoubleClick: () => commands.windowZoom(),
-    extremeGet: () => ({ ...extreme }),
-    extremeSet: (patch) => { Object.assign(extreme, patch); emit('extreme', { ...extreme }); return null; },
-    extremePreset: ({ id }) => { Object.assign(extreme, presets[id] ?? {}); emit('extreme', { ...extreme }); return null; },
+    dialupModeGet: () => ({ ...dialupMode }),
+    dialupModeSet: (patch) => { Object.assign(dialupMode, patch); emit('dialupMode', { ...dialupMode }); return null; },
+    dialupModePreset: ({ id }) => { Object.assign(dialupMode, presets[id] ?? {}); emit('dialupMode', { ...dialupMode }); return null; },
     popupMenu: ({ items }) => {
       const flat = (list) => list.flatMap((i) => (i.items ? flat(i.items) : [i]));
       const choices = flat(items).filter((i) => !i.separator && i.id);

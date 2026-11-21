@@ -55,7 +55,7 @@ enum MainMenu {
             item("Stop", #selector(BrowserWindowController.dialupStop(_:)), "."),
             item("Refresh", #selector(BrowserWindowController.dialupReload(_:)), "r"),
             .separator(),
-            item("Extreme Mode", #selector(BrowserWindowController.toggleExtremeMode(_:)), "e", [.command, .shift]),
+            item("Dial-up Mode", #selector(BrowserWindowController.toggleDialupMode(_:)), "d", [.command, .shift]),
             item("Enter Full Screen", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
             .separator(),
             item("Reload Chrome", #selector(BrowserWindowController.reloadChrome(_:)), "r", [.command, .option]),

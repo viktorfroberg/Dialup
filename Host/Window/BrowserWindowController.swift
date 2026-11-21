@@ -4,7 +4,10 @@ import WebKit
 /// One browser window: a chrome web view (the HTML UI) plus the page web view.
 @MainActor
 final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation, WKNavigationDelegate {
-    static let homeURL = URL(string: "https://www.wikipedia.org/")!
+    /// Override with `defaults write se.dialup.Dialup HomePage <url>` (a settings UI comes later).
+    static var homeURL: URL {
+        UserDefaults.standard.string(forKey: "HomePage").flatMap(URL.init(string:)) ?? URL(string: "https://www.wikipedia.org/")!
+    }
     static let chromeURL = URL(string: "dialup://chrome/index.html")!
 
     var onClose: (() -> Void)?
@@ -12,6 +15,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let layoutView = BrowserLayoutView()
     private let bridge = ChromeBridge()
     private let hoverHandler = HoverLinkHandler()
+    private let dialupModePage = DialupModePage()
     private let chromeView: WKWebView
     private let tab: Tab
     private var chromeReady = false
@@ -20,7 +24,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         let chromeConfig = ChromeConfiguration.make(bridge: bridge, schemeHandler: .bundled())
         chromeView = WKWebView(frame: .zero, configuration: chromeConfig)
         chromeView.isInspectable = true
-        tab = Tab(configuration: PageConfiguration.make(hoverHandler: hoverHandler))
+        tab = Tab(configuration: PageConfiguration.make(hoverHandler: hoverHandler, dialupModePage: dialupModePage))
 
         // A real titled window (so ⌘W/⌘M, Mission Control, Stage Manager and resizing all work),
         // but the title bar and its buttons are drawn by the HTML chrome.
@@ -52,11 +56,15 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             guard let self, webView === self.tab.webView else { return }
             self.emit("hoverLink", ["url": url])
         }
-        tab.onChange = { [weak self] in self?.tabDidChange() }
-        NotificationCenter.default.addObserver(forName: ExtremeMode.didChange, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.extremeDidChange() }
+        dialupModePage.onStatus = { [weak self] webView, remaining, total, url in
+            guard let self, webView === self.tab.webView else { return }
+            self.tab.setItems(remaining: remaining, total: total, url: url)
         }
-        ExtremeRenderer.apply(ExtremeMode.shared.settings, to: layoutView, page: tab.webView)
+        tab.onChange = { [weak self] in self?.tabDidChange() }
+        NotificationCenter.default.addObserver(forName: DialupMode.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.dialupModeDidChange() }
+        }
+        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView)
 
         chromeView.load(URLRequest(url: Self.chromeURL))
         tab.webView.load(URLRequest(url: Self.homeURL))
@@ -98,7 +106,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     func windowDidResize(_ notification: Notification) {
         if !(window?.inLiveResize ?? false) { emitWindowState() }
     }
-    func windowDidChangeBackingProperties(_ notification: Notification) { extremeDidChange() }
+    func windowDidChangeBackingProperties(_ notification: Notification) { dialupModeDidChange() }
 
     /// Title bar double-click follows the user's macOS setting (Zoom / Minimize / nothing).
     private func titlebarDoubleClick() {
@@ -109,12 +117,12 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         }
     }
 
-    // MARK: Extreme mode
+    // MARK: Dial-up mode
 
-    private func extremeDidChange() {
-        let settings = ExtremeMode.shared.settings
-        ExtremeRenderer.apply(settings, to: layoutView, page: tab.webView)
-        emit("extreme", settings.dictionary)
+    private func dialupModeDidChange() {
+        let settings = DialupMode.shared.settings
+        DialupModeRenderer.apply(settings, to: layoutView, page: tab.webView)
+        emit("dialupMode", settings.dictionary)
     }
 
     // MARK: Host API (called from the chrome via ChromeBridge)
@@ -129,7 +137,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
                 "apiVersion": ChromeBridge.apiVersion,
                 "tab": tab.state,
                 "window": lastWindowState,
-                "extreme": ExtremeMode.shared.settings.dictionary,
+                "dialupMode": DialupMode.shared.settings.dictionary,
             ]
         case "windowClose": window?.performClose(nil)
         case "windowMinimize": window?.performMiniaturize(nil)
@@ -140,12 +148,12 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
                 window?.performDrag(with: event)
             }
         case "titlebarDoubleClick": titlebarDoubleClick()
-        case "extremeGet": return ExtremeMode.shared.settings.dictionary
-        case "extremeSet":
-            ExtremeMode.shared.settings = ExtremeMode.shared.settings.merging(args)
-        case "extremePreset":
-            if let id = args["id"] as? String, let preset = ExtremeSettings.presets[id] {
-                ExtremeMode.shared.settings = preset
+        case "dialupModeGet": return DialupMode.shared.settings.dictionary
+        case "dialupModeSet":
+            DialupMode.shared.settings = DialupMode.shared.settings.merging(args)
+        case "dialupModePreset":
+            if let id = args["id"] as? String, let preset = DialupModeSettings.presets[id] {
+                DialupMode.shared.settings = preset
             }
         case "setInsets":
             func n(_ key: String) -> CGFloat { CGFloat((args[key] as? NSNumber)?.doubleValue ?? 0) }
@@ -251,8 +259,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     @objc func dialupStop(_ sender: Any?) { tab.webView.stopLoading() }
     @objc func dialupHome(_ sender: Any?) { tab.webView.load(URLRequest(url: Self.homeURL)) }
 
-    @objc func toggleExtremeMode(_ sender: Any?) {
-        ExtremeMode.shared.settings.enabled.toggle()
+    @objc func toggleDialupMode(_ sender: Any?) {
+        DialupMode.shared.settings.enabled.toggle()
     }
 
     @objc func reloadChrome(_ sender: Any?) {
@@ -265,9 +273,9 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         case #selector(dialupBack(_:)): tab.webView.canGoBack
         case #selector(dialupForward(_:)): tab.webView.canGoForward
         case #selector(dialupStop(_:)): tab.webView.isLoading
-        case #selector(toggleExtremeMode(_:)):
+        case #selector(toggleDialupMode(_:)):
             {
-                menuItem.state = ExtremeMode.shared.settings.enabled ? .on : .off
+                menuItem.state = DialupMode.shared.settings.enabled ? .on : .off
                 return true
             }()
         default: true

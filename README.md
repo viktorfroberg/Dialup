@@ -42,8 +42,10 @@ build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp
 ## Roadmap
 
 0. ✅ Test build: chrome web view + page, address bar, nav buttons, throbber, status bar, history dropdowns
-   ✅ Custom title bar drawn by the chrome · ✅ Extreme mode v1 (colours, pixels, CRT scanlines, old fonts)
-   Next for extreme mode: real dial-up speed (local throttling proxy), modem/click sounds, 800×600 window
+   ✅ Custom title bar drawn by the chrome
+   ✅ Dial-up mode (⇧⌘D): images trickle in at modem speed, "(n items remaining)" status bar,
+      dial-in sequence, 256-colour images, faint CRT scanlines, old fonts; hard-mode whole-page colours/pixels
+   Next for dial-up mode: modem/click sounds, optional real network throttling, 800×600 window
 1. Tabs, session restore, multiple windows
 2. Skins (`Skins/<id>/skin.json + skin.css`)
 3. Toolbar plugins (`Toolbars/<id>/manifest.json`), rearrangeable rebar

@@ -263,7 +263,7 @@ button { font: inherit; color: inherit; }
   --titlebar-text-inactive: #dfe7f8;
   --cap-bg: linear-gradient(135deg, #5d95ff, #1b55db 60%, #2f6cf0);
   --cap-close-bg: linear-gradient(135deg, #f19a7c, #d9431c 55%, #e85c35);
-  --icon-extreme: url(img/crt.svg);
+  --icon-dialup-mode: url(img/crt.svg);
   --icon-app: url(img/zone.svg);
 }
 
@@ -309,13 +309,13 @@ body.zoomed .cap-max::after  { left: 3px; top: 7px; width: 9px; height: 8px; bac
 .cap-close::before { transform: rotate(45deg); }
 .cap-close::after  { transform: rotate(-45deg); }
 
-/* ---------- Extreme mode button ---------- */
+/* ---------- Dial-up mode button ---------- */
 
 .tb-sep { width: 1px; height: 22px; margin: 0 3px; background: var(--band-divider-shadow); box-shadow: 1px 0 0 var(--band-divider); }
-.ico-extreme { background-image: var(--icon-extreme); }
+.ico-dialup-mode { background-image: var(--icon-dialup-mode); }
 .tb.toggle.on {
   background: var(--button-active-bg);
   border-color: var(--face-shadow);
   box-shadow: inset 1px 1px 2px rgba(0, 0, 0, .2);
 }
-#extreme .tb.toggle.on + .drop { border-color: var(--face-shadow); }
+#dialup-mode .tb.toggle.on + .drop { border-color: var(--face-shadow); }

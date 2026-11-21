@@ -74,7 +74,7 @@ final class ConfigurationIsolationTests: XCTestCase {
     /// The core security rule: web pages never get the dialup:// scheme or the chrome's script controller.
     func testPagesDoNotGetChromePowers() {
         let chrome = ChromeConfiguration.make(bridge: ChromeBridge(), schemeHandler: DialupSchemeHandler(roots: [:]))
-        let page = PageConfiguration.make(hoverHandler: HoverLinkHandler())
+        let page = PageConfiguration.make(hoverHandler: HoverLinkHandler(), dialupModePage: DialupModePage())
 
         XCTAssertNotNil(chrome.urlSchemeHandler(forURLScheme: DialupSchemeHandler.scheme))
         XCTAssertNil(page.urlSchemeHandler(forURLScheme: DialupSchemeHandler.scheme))
@@ -84,38 +84,56 @@ final class ConfigurationIsolationTests: XCTestCase {
 }
 
 @MainActor
-final class ExtremeModeTests: XCTestCase {
+final class DialupModeTests: XCTestCase {
     func testMergeAppliesKnownKeysAndIgnoresJunk() {
-        let base = ExtremeSettings()
+        let base = DialupModeSettings()
         let merged = base.merging(["enabled": true, "colors": "thousands", "bogus": 1])
         XCTAssertTrue(merged.enabled)
         XCTAssertEqual(merged.colors, .thousands)
         XCTAssertEqual(merged.resolution, base.resolution)
     }
 
-    func testInvalidValueKeepsSettings() {
-        let base = ExtremeSettings()
-        XCTAssertEqual(base.merging(["colors": "ultraviolet"]), base)
+    func testInvalidValueKeepsCurrentSetting() {
+        let current = DialupModeSettings(colors: .websafe)
+        XCTAssertEqual(current.merging(["colors": "ultraviolet"]).colors, .websafe)
     }
 
-    func testDisabledMeansNoFilters() {
-        var s = ExtremeSettings.presets["1998"]!
-        XCTAssertEqual(ExtremeRenderer.filters(for: s, backingScale: 2).count, 3) // pixellate, dither, posterize
+    func testDefaultsKeepTextSharp() {
+        // The default and both presets must not filter the page (text stays readable).
+        var s = DialupModeSettings()
+        s.enabled = true
+        XCTAssertTrue(DialupModeRenderer.filters(for: s, backingScale: 2).isEmpty)
+        for preset in DialupModeSettings.presets.values {
+            XCTAssertTrue(DialupModeRenderer.filters(for: preset, backingScale: 2).isEmpty)
+        }
+    }
+
+    func testHardModeFilters() {
+        var s = DialupModeSettings(enabled: true, colors: .websafeDither, resolution: .classic)
+        XCTAssertEqual(DialupModeRenderer.filters(for: s, backingScale: 2).count, 3) // pixellate, dither, posterize
         s.enabled = false
-        XCTAssertTrue(ExtremeRenderer.filters(for: s, backingScale: 2).isEmpty)
+        XCTAssertTrue(DialupModeRenderer.filters(for: s, backingScale: 2).isEmpty)
+    }
+
+    func testConnectionSpeedOnlyWhenEnabled() {
+        var s = DialupModeSettings(connection: .modem56k)
+        XCTAssertEqual(s.bitsPerSecond, 0)
+        s.enabled = true
+        XCTAssertEqual(s.bitsPerSecond, 53_333)
+        XCTAssertEqual(DialupModePage.config(for: s)["gifImages"] as? Bool, true)
     }
 
     func testClassicPixelsAreNoOpOnNonRetina() {
-        let s = ExtremeSettings(enabled: true, colors: .millions, resolution: .classic, scanlines: false, oldFonts: false)
-        XCTAssertTrue(ExtremeRenderer.filters(for: s, backingScale: 1).isEmpty)
-        XCTAssertEqual(ExtremeRenderer.filters(for: s, backingScale: 2).first?.name, "CIPixellate")
+        let s = DialupModeSettings(enabled: true, colors: .millions, resolution: .classic, scanlines: false, oldFonts: false)
+        XCTAssertTrue(DialupModeRenderer.filters(for: s, backingScale: 1).isEmpty)
+        XCTAssertEqual(DialupModeRenderer.filters(for: s, backingScale: 2).first?.name, "CIPixellate")
     }
 }
 
-final class ExtremeSettingsCompatTests: XCTestCase {
+final class DialupModeSettingsCompatTests: XCTestCase {
     func testOldSavedSettingsStillDecode() throws {
         let old = #"{"enabled":true,"colors":"websafe","resolution":"classic","scanlines":true,"oldFonts":false}"#
-        let s = try JSONDecoder().decode(ExtremeSettings.self, from: Data(old.utf8))
+        let s = try JSONDecoder().decode(DialupModeSettings.self, from: Data(old.utf8))
         XCTAssertTrue(s.enabled)
         XCTAssertEqual(s.colors, .websafe)
         XCTAssertFalse(s.includeChrome)

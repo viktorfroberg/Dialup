@@ -9,7 +9,7 @@ enum PageConfiguration {
     /// Many sites check for "Version/x Safari"; a bare WKWebView user agent doesn't include it.
     static let userAgentSuffix = "Version/26.0 Safari/605.1.15"
 
-    static func make(hoverHandler: HoverLinkHandler) -> WKWebViewConfiguration {
+    static func make(hoverHandler: HoverLinkHandler, dialupModePage: DialupModePage) -> WKWebViewConfiguration {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
         config.applicationNameForUserAgent = userAgentSuffix
@@ -23,6 +23,7 @@ enum PageConfiguration {
             in: world
         ))
         config.userContentController.add(hoverHandler, contentWorld: world, name: HoverLinkHandler.name)
+        dialupModePage.install(on: config.userContentController)
         return config
     }
 }

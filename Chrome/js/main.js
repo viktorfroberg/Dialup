@@ -9,12 +9,19 @@ let addressDirty = false; // user has typed something we shouldn't overwrite
 
 // ---------- Rendering ----------
 
+let dialInText = null; // dial-up mode "connecting…" sequence overrides the status bar
+
+const itemsRemaining = () => (tab.items && tab.items.remaining) || 0;
+
 function render() {
   $('btn-back').disabled = $('drop-back').disabled = !tab.canGoBack;
   $('btn-forward').disabled = $('drop-forward').disabled = !tab.canGoForward;
   $('btn-stop').disabled = !tab.loading;
-  $('throbber').classList.toggle('busy', tab.loading);
-  $('progress-bar').style.width = tab.loading ? `${Math.max(5, Math.round(tab.progress * 100))}%` : '0';
+  $('throbber').classList.toggle('busy', tab.loading || itemsRemaining() > 0 || dialInText != null);
+  let progress = 0;
+  if (tab.loading) progress = Math.max(5, Math.round(tab.progress * 100));
+  else if (itemsRemaining() > 0) progress = Math.round(100 * (tab.items.total - itemsRemaining()) / tab.items.total);
+  $('progress-bar').style.width = `${progress}%`;
   if (!addressDirty && address.value !== tab.url) address.value = tab.url;
   $('window-title').textContent = `${tab.title || tab.url || 'Untitled'} - Dialup`;
   renderStatus();
@@ -22,9 +29,12 @@ function render() {
 
 function renderStatus() {
   let text;
-  if (hoverUrl) text = hoverUrl;
+  const n = itemsRemaining();
+  if (dialInText) text = dialInText;
+  else if (hoverUrl) text = hoverUrl;
   else if (tab.statusText) text = tab.statusText;
   else if (tab.loading) text = `Opening page ${tab.url}...`;
+  else if (n > 0) text = `(${n} item${n === 1 ? '' : 's'} remaining) Downloading picture ${tab.items.url}...`;
   else text = 'Done';
   $('status-text').textContent = text;
 }
@@ -100,54 +110,83 @@ $('cap-min').addEventListener('click', () => host.call('windowMinimize'));
 $('cap-max').addEventListener('click', () => host.call('windowZoom'));
 $('cap-close').addEventListener('click', () => host.call('windowClose'));
 
-// ---------- Extreme mode ----------
+// ---------- Dial-up mode ----------
 
-let extreme = {};
-function renderExtreme(s) {
-  extreme = s;
-  $('btn-extreme').classList.toggle('on', !!s.enabled);
-  document.body.classList.toggle('extreme', !!s.enabled);
+let dialupMode = {};
+const CONNECT_SPEED = { modem56k: '53,333 bps', isdn: '128,000 bps', dsl: '512 Kbps', off: '10 Mbps' };
+
+function renderDialupMode(s, { announce = false } = {}) {
+  const turnedOn = announce && s.enabled && !dialupMode.enabled;
+  dialupMode = s;
+  $('btn-dialup-mode').classList.toggle('on', !!s.enabled);
+  document.body.classList.toggle('dialup-mode', !!s.enabled);
+  if (turnedOn) dialIn(s);
 }
-onEvent('extreme', renderExtreme);
+onEvent('dialupMode', (s) => renderDialupMode(s, { announce: true }));
 
-$('btn-extreme').addEventListener('click', () => host.call('extremeSet', { enabled: !extreme.enabled }));
-$('drop-extreme').addEventListener('click', async (e) => {
-  const s = await host.call('extremeGet');
+// A little "connecting" moment in the status bar when the mode is switched on.
+async function dialIn(s) {
+  const steps = s.connection === 'dsl' || s.connection === 'off'
+    ? ['Obtaining network address...', `Connected at ${CONNECT_SPEED[s.connection]}`]
+    : ['Dialing 555-0199...', 'Verifying username and password...', 'Logging on to network...',
+       `Connected at ${CONNECT_SPEED[s.connection] ?? '53,333 bps'}`];
+  for (const step of steps) {
+    dialInText = step;
+    render();
+    await new Promise((r) => setTimeout(r, 750));
+    if (!dialupMode.enabled) break;
+  }
+  dialInText = null;
+  render();
+}
+
+$('btn-dialup-mode').addEventListener('click', () => host.call('dialupModeSet', { enabled: !dialupMode.enabled }));
+$('drop-dialup-mode').addEventListener('click', async (e) => {
+  const s = await host.call('dialupModeGet');
   const radio = (key, value, title) => ({ id: `set:${key}:${value}`, title, checked: s[key] === value });
   const anchor = e.currentTarget.closest('.split').getBoundingClientRect();
   const picked = await host.call('popupMenu', {
     x: anchor.left,
     y: anchor.bottom + 2,
     items: [
-      { id: 'toggle', title: 'Extreme Mode', checked: s.enabled },
+      { id: 'toggle', title: 'Dial-up Mode', checked: s.enabled },
       { separator: true },
-      { id: 'preset:1998', title: '1998: 56k on a 15" CRT' },
-      { id: 'preset:2003', title: '2003: Broadband at 1024×768' },
+      { id: 'preset:1998', title: '1998: 56k Modem, Old Fonts, CRT' },
+      { id: 'preset:2003', title: '2003: Broadband' },
       { separator: true },
-      { title: 'Colours', items: [
-        radio('colors', 'millions', 'Millions of Colours (off)'),
-        radio('colors', 'thousands', 'Thousands of Colours (16-bit)'),
-        radio('colors', 'websafe', '256 Colours (web-safe)'),
-        radio('colors', 'websafeDither', '256 Colours, Dithered'),
+      { title: 'Connection', items: [
+        radio('connection', 'modem56k', '56k Modem'),
+        radio('connection', 'isdn', 'ISDN (128 Kbps)'),
+        radio('connection', 'dsl', 'Broadband (512 Kbps)'),
+        radio('connection', 'off', 'No Slowdown'),
       ] },
-      { title: 'Resolution', items: [
-        radio('resolution', 'retina', 'Retina (off)'),
-        radio('resolution', 'classic', 'Classic Pixels'),
+      { title: 'Colours', items: [
+        radio('colors', 'millions', 'Millions of Colours'),
+        radio('colors', 'gifImages', 'Images in 256 Colours'),
+        { separator: true },
+        { title: 'Hard Mode (whole page, harder to read)', enabled: false },
+        radio('colors', 'thousands', 'Whole Page: Thousands of Colours'),
+        radio('colors', 'websafe', 'Whole Page: 256 Colours'),
+        radio('colors', 'websafeDither', 'Whole Page: 256 Colours, Dithered'),
+      ] },
+      { title: 'Pixels', items: [
+        radio('resolution', 'retina', 'Sharp (Retina)'),
+        { separator: true },
+        { title: 'Hard Mode (harder to read)', enabled: false },
+        radio('resolution', 'classic', 'Classic CRT Pixels'),
         radio('resolution', 'chunky', 'Chunky Pixels'),
       ] },
       { id: 'flip:scanlines', title: 'CRT Scanlines', checked: s.scanlines },
       { id: 'flip:oldFonts', title: 'Old Fonts (may break some icons)', checked: s.oldFonts },
-      { id: 'flip:includeChrome', title: 'Apply to Toolbars Too', checked: s.includeChrome },
-      { separator: true },
-      { title: 'Connection Speed (coming soon)', enabled: false },
+      { id: 'flip:includeChrome', title: 'Apply Effects to Toolbars Too', checked: s.includeChrome },
     ],
   });
   if (picked == null) return;
   const [kind, key, value] = picked.split(':');
-  if (kind === 'toggle') host.call('extremeSet', { enabled: !s.enabled });
-  else if (kind === 'preset') host.call('extremePreset', { id: key });
-  else if (kind === 'set') host.call('extremeSet', { [key]: value, enabled: true });
-  else if (kind === 'flip') host.call('extremeSet', { [key]: !s[key], enabled: true });
+  if (kind === 'toggle') host.call('dialupModeSet', { enabled: !s.enabled });
+  else if (kind === 'preset') host.call('dialupModePreset', { id: key });
+  else if (kind === 'set') host.call('dialupModeSet', { [key]: value, enabled: true });
+  else if (kind === 'flip') host.call('dialupModeSet', { [key]: !s[key], enabled: true });
 });
 
 // ---------- Layout: tell the host where the page goes ----------
@@ -180,5 +219,5 @@ document.addEventListener('contextmenu', (e) => {
 const init = await host.call('ready');
 if (init?.tab) { tab = init.tab; render(); }
 renderWindowState(init?.window);
-renderExtreme(init?.extreme ?? {});
+renderDialupMode(init?.dialupMode ?? {});
 reportInsets();

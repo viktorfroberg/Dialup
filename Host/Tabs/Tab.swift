@@ -9,6 +9,8 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     /// Last error or other message for the status bar; cleared on next navigation.
     private(set) var statusText: String?
+    /// Dial-up mode: images still "downloading" on this page.
+    private(set) var items: (remaining: Int, total: Int, url: String)?
     private var observations: [NSKeyValueObservation] = []
 
     init(configuration: WKWebViewConfiguration) {
@@ -42,7 +44,13 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
             "canGoBack": webView.canGoBack,
             "canGoForward": webView.canGoForward,
             "statusText": statusText ?? NSNull(),
+            "items": items.map { ["remaining": $0.remaining, "total": $0.total, "url": $0.url] as [String: Any] } ?? NSNull(),
         ]
+    }
+
+    func setItems(remaining: Int, total: Int, url: String) {
+        items = total > 0 ? (remaining, total, url) : nil
+        onChange?()
     }
 
     var displayTitle: String {
@@ -54,6 +62,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         statusText = nil
+        items = nil
         onChange?()
     }
 
