@@ -79,11 +79,11 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         }
 
         if popupConfiguration != nil {
-            _ = addTab(configuration: popupConfiguration, url: nil, select: true)
+            addTab(configuration: popupConfiguration, url: nil, select: true)
         } else if urls.isEmpty {
-            _ = addTab(url: Self.homeURL, select: true)
+            addTab(url: Self.homeURL, select: true)
         } else {
-            for url in urls { _ = addTab(url: url, select: false, lazy: true) }
+            for url in urls { addTab(url: url, at: .end, select: false, lazy: true) }
             selectTab(at: min(max(0, activeIndex), tabs.count - 1))
         }
         observers.append(NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { [weak self] _ in
@@ -118,8 +118,11 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     private var tabsEnabled: Bool { PreferencesStore.shared.preferences.tabs }
 
     /// Creates a tab. `configuration` is only passed for WebKit-created popups.
+    enum TabPosition { case afterActive, end }
+
     @discardableResult
-    private func addTab(configuration: WKWebViewConfiguration? = nil, url: URL?, select: Bool, lazy: Bool = false) -> Tab {
+    private func addTab(configuration: WKWebViewConfiguration? = nil, url: URL?, at position: TabPosition = .afterActive,
+                        select: Bool, lazy: Bool = false) -> Tab {
         let tab = Tab(configuration: configuration ?? pageConfiguration, pendingURL: lazy ? url : nil)
         tab.onChange = { [weak self, weak tab] in
             guard let self, let tab else { return }
@@ -127,14 +130,15 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         }
         tab.onOpenSettings = { [weak self] section in self?.emit("openSettings", ["tab": section]) }
         tab.onCreateWebView = { [weak self] configuration, _ in self?.openPopup(configuration: configuration) }
+        tab.onDownload = { [weak self] info in self?.emit("download", info) }
         tab.onCloseRequest = { [weak self, weak tab] in
             guard let self, let tab, let index = self.tabs.firstIndex(where: { $0 === tab }) else { return }
             self.closeTab(at: index)
         }
-        let insertAt = tabs.isEmpty ? 0 : activeIndex + 1
+        let insertAt = (tabs.isEmpty || position == .end) ? tabs.count : activeIndex + 1
         tabs.insert(tab, at: insertAt)
         if !lazy, let url { tab.webView.load(URLRequest(url: url)) }
-        if select { selectTab(at: insertAt) } else if insertAt <= activeIndex && tabs.count > 1 { activeIndex += 1 }
+        if select { selectTab(at: insertAt) }
         emitTabs()
         return tab
     }
@@ -163,11 +167,15 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         guard tabs.indices.contains(index) else { return }
         if tabs.count == 1 { window?.performClose(nil); return }
         let closing = tabs.remove(at: index)
+        if let url = closing.sessionURL { closedTabs.append(url); closedTabs = Array(closedTabs.suffix(20)) }
         closing.webView.stopLoading()
         closing.webView.removeFromSuperview()
         if index < activeIndex || activeIndex >= tabs.count { activeIndex = max(0, activeIndex - 1) }
         selectTab(at: activeIndex)
     }
+
+    /// For ⇧⌘T (Reopen Closed Tab).
+    private var closedTabs: [URL] = []
 
     private func tabIndex(_ args: [String: Any]) -> Int? {
         guard let id = (args["id"] as? NSNumber)?.intValue else { return nil }
@@ -383,7 +391,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             }
         case "newTab":
             let url = (args["url"] as? String).flatMap { AddressResolver.resolve($0) } ?? Self.homeURL
-            if tabsEnabled { addTab(url: url, select: true) } else { (NSApp.delegate as? AppDelegate)?.openWindow(urls: [url]) }
+            if tabsEnabled { addTab(url: url, at: .end, select: true) } else { (NSApp.delegate as? AppDelegate)?.openWindow(urls: [url]) }
         case "closeTab":
             if let index = tabIndex(args) { closeTab(at: index) }
         case "selectTab":
@@ -395,6 +403,17 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
                let url = URL(string: "https://web.archive.org/web/\(year)0601000000/\(current.absoluteString)") {
                 SoundEffects.shared.play(.click)
                 tab.webView.load(URLRequest(url: url))
+            }
+        case "find":
+            // Find in page (the chrome draws the retro Find dialog). Result arrives as the `findResult` event.
+            if let text = args["text"] as? String, !text.isEmpty {
+                let config = WKFindConfiguration()
+                config.backwards = args["backwards"] as? Bool ?? false
+                config.caseSensitive = args["caseSensitive"] as? Bool ?? false
+                config.wraps = true
+                tab.webView.find(text, configuration: config) { [weak self] result in
+                    MainActor.assumeIsolated { self?.emit("findResult", ["found": result.matchFound]) }
+                }
             }
         case "importBookmarks": importBookmarks()
         case "exportBookmarks": exportBookmarks()
@@ -538,7 +557,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     @objc func newTab(_ sender: Any?) {
-        if tabsEnabled { addTab(url: Self.homeURL, select: true) } else { (NSApp.delegate as? AppDelegate)?.newWindow(nil) }
+        if tabsEnabled { addTab(url: Self.homeURL, at: .end, select: true) } else { (NSApp.delegate as? AppDelegate)?.newWindow(nil) }
     }
 
     /// ⌘W closes the current tab; the last tab closes the window.
@@ -546,6 +565,40 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     @objc func selectNextTab(_ sender: Any?) { selectTab(at: (activeIndex + 1) % tabs.count) }
     @objc func selectPreviousTab(_ sender: Any?) { selectTab(at: (activeIndex - 1 + tabs.count) % tabs.count) }
     @objc func selectTabByNumber(_ sender: NSMenuItem) { selectTab(at: min(sender.tag, tabs.count) - 1) }
+
+    func openInNewTab(_ url: URL) {
+        addTab(url: url, at: .end, select: true)
+        window?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc func reopenClosedTab(_ sender: Any?) {
+        guard let url = closedTabs.popLast() else { return }
+        if tabsEnabled { addTab(url: url, select: true) } else { (NSApp.delegate as? AppDelegate)?.openWindow(urls: [url]) }
+    }
+
+    // View → Text Size: page zoom in classic steps
+    private static let zoomSteps: [CGFloat] = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+    @objc func zoomIn(_ sender: Any?) { zoom(by: 1) }
+    @objc func zoomOut(_ sender: Any?) { zoom(by: -1) }
+    @objc func actualSize(_ sender: Any?) { tab.webView.pageZoom = 1 }
+    private func zoom(by step: Int) {
+        let steps = Self.zoomSteps
+        let current = steps.enumerated().min { abs($0.element - tab.webView.pageZoom) < abs($1.element - tab.webView.pageZoom) }?.offset ?? 4
+        tab.webView.pageZoom = steps[min(max(0, current + step), steps.count - 1)]
+    }
+
+    @objc func printPage(_ sender: Any?) {
+        guard let window else { return }
+        let operation = tab.webView.printOperation(with: NSPrintInfo.shared)
+        operation.view?.frame = tab.webView.bounds
+        operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
+    }
+
+    @objc func findInPage(_ sender: Any?) { emit("openFind", [:]) }
+    @objc func findNext(_ sender: Any?) { emit("findAgain", ["backwards": false]) }
+    @objc func findPrevious(_ sender: Any?) { emit("findAgain", ["backwards": true]) }
+
+    @objc func addToFavorites(_ sender: Any?) { emit("addFavorite", [:]) }
 
     @objc func dialupBack(_ sender: Any?) { tab.webView.goBack() }
     @objc func dialupForward(_ sender: Any?) { tab.webView.goForward() }
@@ -569,6 +622,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         case #selector(dialupForward(_:)): tab.webView.canGoForward
         case #selector(dialupStop(_:)): tab.webView.isLoading
         case #selector(selectNextTab(_:)), #selector(selectPreviousTab(_:)): tabs.count > 1
+        case #selector(reopenClosedTab(_:)): !closedTabs.isEmpty
+        case #selector(addToFavorites(_:)): ["http", "https"].contains(tab.webView.url?.scheme ?? "")
         case #selector(selectTabByNumber(_:)): menuItem.tag <= tabs.count
         case #selector(toggleDialupMode(_:)):
             {

@@ -27,7 +27,8 @@ enum MainMenu {
         submenu("Dialup", [
             item("About Dialup", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
             .separator(),
-            item("Settings…", #selector(BrowserWindowController.openSettings(_:)), ","),
+            item("Dialup Options…", #selector(BrowserWindowController.openSettings(_:)), ","),
+            item("Make Dialup the Default Browser…", #selector(AppDelegate.makeDefaultBrowser(_:))),
             .separator(),
             item("Hide Dialup", #selector(NSApplication.hide(_:)), "h"),
             item("Hide Others", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
@@ -43,6 +44,9 @@ enum MainMenu {
             .separator(),
             item("Close Tab", #selector(BrowserWindowController.closeTabOrWindow(_:)), "w"),
             item("Close Window", #selector(NSWindow.performClose(_:)), "w", [.command, .shift]),
+            item("Reopen Closed Tab", #selector(BrowserWindowController.reopenClosedTab(_:)), "t", [.command, .shift]),
+            .separator(),
+            item("Print…", #selector(BrowserWindowController.printPage(_:)), "p"),
         ])
 
         submenu("Edit", [
@@ -53,11 +57,19 @@ enum MainMenu {
             item("Copy", #selector(NSText.copy(_:)), "c"),
             item("Paste", #selector(NSText.paste(_:)), "v"),
             item("Select All", #selector(NSText.selectAll(_:)), "a"),
+            .separator(),
+            item("Find…", #selector(BrowserWindowController.findInPage(_:)), "f"),
+            item("Find Next", #selector(BrowserWindowController.findNext(_:)), "g"),
+            item("Find Previous", #selector(BrowserWindowController.findPrevious(_:)), "g", [.command, .shift]),
         ])
 
         submenu("View", [
             item("Stop", #selector(BrowserWindowController.dialupStop(_:)), "."),
             item("Refresh", #selector(BrowserWindowController.dialupReload(_:)), "r"),
+            .separator(),
+            item("Zoom In", #selector(BrowserWindowController.zoomIn(_:)), "+"),
+            item("Zoom Out", #selector(BrowserWindowController.zoomOut(_:)), "-"),
+            item("Actual Size", #selector(BrowserWindowController.actualSize(_:)), "0"),
             .separator(),
             item("Dial-up Mode", #selector(BrowserWindowController.toggleDialupMode(_:)), "d", [.command, .shift]),
             item("Enter Full Screen", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
@@ -69,6 +81,10 @@ enum MainMenu {
             item("Back", #selector(BrowserWindowController.dialupBack(_:)), "["),
             item("Forward", #selector(BrowserWindowController.dialupForward(_:)), "]"),
             item("Home", #selector(BrowserWindowController.dialupHome(_:)), "h", [.command, .shift]),
+        ])
+
+        submenu("Favorites", [
+            item("Add to Favorites…", #selector(BrowserWindowController.addToFavorites(_:)), "d"),
         ])
 
         var tabNumbers: [NSMenuItem] = []

@@ -22,15 +22,32 @@ targets:
       - path: Resources/SkinIcons
         type: folder
         buildPhase: resources
+    info:
+      path: Host/Info.plist
+      properties:
+        CFBundleDisplayName: Dialup
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSPrincipalClass: NSApplication
+        NSHumanReadableCopyright: "Dialup — a browser from 2003, built in 2026"
+        LSApplicationCategoryType: public.app-category.productivity
+        # A browser must load plain http:// sites (ATS would block them in the web view).
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsInWebContent: true
+        # Lets macOS offer Dialup as the default web browser and send it links.
+        CFBundleURLTypes:
+          - CFBundleURLName: Web site URL
+            CFBundleTypeRole: Viewer
+            CFBundleURLSchemes: [http, https]
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: HTML document
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes: [public.html]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: se.dialup.Dialup
         PRODUCT_NAME: Dialup
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_NSPrincipalClass: NSApplication
-        INFOPLIST_KEY_CFBundleDisplayName: Dialup
-        INFOPLIST_KEY_NSHumanReadableCopyright: "Dialup — a browser from 2003, built in 2026"
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_IDENTITY: "-"

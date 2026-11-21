@@ -29,6 +29,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) { saveSession() }
 
+    /// Links from other apps (when Dialup is the default browser) and opened HTML files.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        let target = (NSApp.keyWindow?.windowController as? BrowserWindowController) ?? windows.last
+        for url in urls {
+            if let target, PreferencesStore.shared.preferences.tabs { target.openInNewTab(url) } else { openWindow(urls: [url]) }
+        }
+        NSApp.activate()
+    }
+
+    @objc func makeDefaultBrowser(_ sender: Any?) {
+        let app = Bundle.main.bundleURL
+        // macOS asks the user to confirm each change.
+        NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "http") { _ in
+            NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "https") { _ in }
+        }
+    }
+
     @objc func newWindow(_ sender: Any?) { openWindow() }
 
     @discardableResult

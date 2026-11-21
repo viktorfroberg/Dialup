@@ -454,6 +454,11 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
 
         return {
           update(next) {
+            // Our own start page keeps its design: only the retro scrollbars apply there.
+            if (location.protocol === 'dialup-start:') {
+              next = Object.assign({}, next, { oldFonts: false, squareCorners: false, noShadows: false,
+                                                noAnimations: false, underlineLinks: false, gifImages: false });
+            }
             const wasActive = !!(cfg.enabled && cfg.bps);
             cfg = next;
             if (!cfg.enabled) {

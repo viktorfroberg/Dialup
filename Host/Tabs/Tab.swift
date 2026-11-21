@@ -3,7 +3,7 @@ import WebKit
 
 /// One page: wraps a WKWebView and reports its state to whoever listens.
 @MainActor
-final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
+final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
     private static var nextID = 1
     let id: Int
     let webView: WKWebView
@@ -17,6 +17,8 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     var onChange: (() -> Void)?
     /// The start page's "Customize" link asks to open settings at a given tab.
     var onOpenSettings: ((String) -> Void)?
+    /// Download progress and completion, for the chrome (`{ name, fraction, state, path }`).
+    var onDownload: (([String: Any]) -> Void)?
 
     /// Last error or other message for the status bar; cleared on next navigation.
     private(set) var statusText: String?
@@ -114,6 +116,12 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
            [.linkActivated, .formSubmitted, .backForward].contains(navigationAction.navigationType) {
             SoundEffects.shared.play(.click) // the era's navigation "tick"
         }
+        if navigationAction.shouldPerformDownload { return .download }
+        if let url = navigationAction.request.url, let scheme = url.scheme?.lowercased(), !Self.webSchemes.contains(scheme) {
+            // mailto:, tel:, itms-apps: … go to the system, but only when the user clicked something.
+            if navigationAction.navigationType == .linkActivated { NSWorkspace.shared.open(url) }
+            return .cancel
+        }
         if navigationAction.request.url == StartPageSchemeHandler.customizeURL {
             // Only the start page itself, navigating its own main frame, may open settings.
             if Self.isTrustedCustomize(sourceProtocol: navigationAction.sourceFrame.securityOrigin.protocol,
@@ -123,6 +131,89 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
             return .cancel
         }
         return .allow
+    }
+
+    /// Schemes WebKit renders itself; anything else is handed to the system.
+    static let webSchemes: Set<String> = ["http", "https", "about", "data", "blob", "file", "javascript", StartPageSchemeHandler.scheme]
+
+    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
+        let disposition = (navigationResponse.response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Disposition") ?? ""
+        if !navigationResponse.canShowMIMEType || disposition.lowercased().hasPrefix("attachment") { return .download }
+        return .allow
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    // MARK: Downloads (to ~/Downloads, never overwriting)
+
+    private var downloadObservations: [ObjectIdentifier: NSKeyValueObservation] = [:]
+    private var downloadNames: [ObjectIdentifier: String] = [:]
+    private var downloadPaths: [ObjectIdentifier: URL] = [:]
+
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String) async -> URL? {
+        let folder = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
+        let destination = Self.uniqueDestination(in: folder, for: suggestedFilename)
+        let id = ObjectIdentifier(download)
+        downloadNames[id] = destination.lastPathComponent
+        downloadPaths[id] = destination
+        downloadObservations[id] = download.progress.observe(\.fractionCompleted) { [weak self] progress, _ in
+            let fraction = progress.fractionCompleted
+            MainActor.assumeIsolated { self?.downloadChanged(id, state: "downloading", fraction: fraction) }
+        }
+        downloadChanged(id, state: "downloading", fraction: 0)
+        return destination
+    }
+
+    func downloadDidFinish(_ download: WKDownload) {
+        let id = ObjectIdentifier(download)
+        downloadChanged(id, state: "done", fraction: 1)
+        SoundEffects.shared.play(.complete)
+        forget(id)
+    }
+
+    func download(_ download: WKDownload, didFailWithError error: any Error, resumeData: Data?) {
+        let id = ObjectIdentifier(download)
+        downloadChanged(id, state: "failed", fraction: 0)
+        SoundEffects.shared.play(.error)
+        forget(id)
+    }
+
+    private func downloadChanged(_ id: ObjectIdentifier, state: String, fraction: Double) {
+        let name = downloadNames[id] ?? "file"
+        statusText = switch state {
+        case "done": "Download complete: \(name)"
+        case "failed": "Download failed: \(name)"
+        default: "Downloading \(name)… \(Int(fraction * 100))%"
+        }
+        onDownload?(["name": name, "fraction": fraction, "state": state, "path": downloadPaths[id]?.path ?? ""])
+        scheduleChange()
+    }
+
+    private func forget(_ id: ObjectIdentifier) {
+        downloadObservations[id] = nil
+        downloadNames[id] = nil
+        downloadPaths[id] = nil
+    }
+
+    /// "file.zip", then "file 2.zip", "file 3.zip"… so downloads never overwrite each other.
+    static func uniqueDestination(in folder: URL, for suggested: String) -> URL {
+        let safe = suggested.replacingOccurrences(of: "/", with: "-").trimmingCharacters(in: .whitespaces)
+        let name = safe.isEmpty ? "download" : safe
+        var candidate = folder.appendingPathComponent(name)
+        let base = (name as NSString).deletingPathExtension, ext = (name as NSString).pathExtension
+        var n = 2
+        while FileManager.default.fileExists(atPath: candidate.path) {
+            candidate = folder.appendingPathComponent(ext.isEmpty ? "\(base) \(n)" : "\(base) \(n).\(ext)")
+            n += 1
+        }
+        return candidate
     }
 
     static func isTrustedCustomize(sourceProtocol: String, targetIsMainFrame: Bool) -> Bool {
@@ -198,6 +289,32 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
         alert.messageText = frame.securityOrigin.host.isEmpty ? "Dialup" : frame.securityOrigin.host
         alert.informativeText = message
         if let window = webView.window { _ = await alert.beginSheetModal(for: window) } else { alert.runModal() }
+    }
+
+    /// `<input type=file>`: without this, file pickers silently do nothing in WKWebView.
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
+                 initiatedByFrame frame: WKFrameInfo) async -> [URL]? {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.canChooseDirectories = parameters.allowsDirectories
+        panel.canChooseFiles = true
+        guard let window = webView.window else { return panel.runModal() == .OK ? panel.urls : nil }
+        return await panel.beginSheetModal(for: window) == .OK ? panel.urls : nil
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?,
+                 initiatedByFrame frame: WKFrameInfo) async -> String? {
+        let alert = NSAlert()
+        alert.messageText = frame.securityOrigin.host.isEmpty ? "Dialup" : frame.securityOrigin.host
+        alert.informativeText = prompt
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        field.stringValue = defaultText ?? ""
+        alert.accessoryView = field
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        let response = if let window = webView.window { await alert.beginSheetModal(for: window) } else { alert.runModal() }
+        return response == .alertFirstButtonReturn ? field.stringValue : nil
     }
 
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
