@@ -15,6 +15,30 @@ struct ExtremeSettings: Codable, Equatable {
     var resolution: Resolution = .classic
     var scanlines = true
     var oldFonts = false
+    /// Off by default: effects only touch the page, the browser UI stays crisp.
+    var includeChrome = false
+
+    init(enabled: Bool = false, colors: Colors = .websafeDither, resolution: Resolution = .classic,
+         scanlines: Bool = true, oldFonts: Bool = false, includeChrome: Bool = false) {
+        self.enabled = enabled
+        self.colors = colors
+        self.resolution = resolution
+        self.scanlines = scanlines
+        self.oldFonts = oldFonts
+        self.includeChrome = includeChrome
+    }
+
+    /// Tolerates missing keys so settings saved by older versions keep working.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = ExtremeSettings()
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
+        colors = try c.decodeIfPresent(Colors.self, forKey: .colors) ?? d.colors
+        resolution = try c.decodeIfPresent(Resolution.self, forKey: .resolution) ?? d.resolution
+        scanlines = try c.decodeIfPresent(Bool.self, forKey: .scanlines) ?? d.scanlines
+        oldFonts = try c.decodeIfPresent(Bool.self, forKey: .oldFonts) ?? d.oldFonts
+        includeChrome = try c.decodeIfPresent(Bool.self, forKey: .includeChrome) ?? d.includeChrome
+    }
 
     static let presets: [String: ExtremeSettings] = [
         "1998": ExtremeSettings(enabled: true, colors: .websafeDither, resolution: .classic, scanlines: true, oldFonts: true),
@@ -65,8 +89,7 @@ final class ExtremeMode {
 /// Applies extreme settings to one window.
 @MainActor
 enum ExtremeRenderer {
-    /// Core Image filters for the whole window content (chrome + page), so the browser UI
-    /// and the page share the same low-colour, low-res look.
+    /// Core Image filters for the page (or, with includeChrome, the whole window).
     static func filters(for s: ExtremeSettings, backingScale: CGFloat) -> [CIFilter] {
         guard s.enabled else { return [] }
         var filters: [CIFilter] = []
@@ -100,9 +123,13 @@ enum ExtremeRenderer {
 
     static func apply(_ s: ExtremeSettings, to layoutView: BrowserLayoutView, page: WKWebView) {
         let scale = layoutView.window?.backingScaleFactor ?? 2
-        layoutView.wantsLayer = true
-        layoutView.layerUsesCoreImageFilters = true
-        layoutView.contentFilters = filters(for: s, backingScale: scale)
+        let target: NSView = s.includeChrome ? layoutView : page
+        let other: NSView = s.includeChrome ? page : layoutView
+        other.contentFilters = []
+        target.wantsLayer = true
+        target.layerUsesCoreImageFilters = true
+        target.contentFilters = filters(for: s, backingScale: scale)
+        layoutView.scanlinesCoverChrome = s.includeChrome
         layoutView.scanlineView.isHidden = !(s.enabled && s.scanlines)
         OldFonts.apply(s.enabled && s.oldFonts, to: page)
     }
@@ -159,14 +186,14 @@ final class ScanlineView: NSView {
         super.init(frame: frame)
         wantsLayer = true
         let stripe = NSImage(size: NSSize(width: 1, height: 3), flipped: false) { _ in
-            NSColor.black.withAlphaComponent(0.16).setFill()
+            NSColor.black.withAlphaComponent(0.09).setFill()
             NSRect(x: 0, y: 0, width: 1, height: 1).fill()
             return true
         }
         layer?.backgroundColor = NSColor(patternImage: stripe).cgColor
         let vignette = CAGradientLayer()
         vignette.type = .radial
-        vignette.colors = [NSColor.clear.cgColor, NSColor.black.withAlphaComponent(0.22).cgColor]
+        vignette.colors = [NSColor.clear.cgColor, NSColor.black.withAlphaComponent(0.14).cgColor]
         vignette.locations = [0.65, 1]
         vignette.startPoint = CGPoint(x: 0.5, y: 0.5)
         vignette.endPoint = CGPoint(x: 1.15, y: 1.15)

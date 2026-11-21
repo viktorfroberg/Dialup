@@ -137,6 +137,7 @@ $('drop-extreme').addEventListener('click', async (e) => {
       ] },
       { id: 'flip:scanlines', title: 'CRT Scanlines', checked: s.scanlines },
       { id: 'flip:oldFonts', title: 'Old Fonts (may break some icons)', checked: s.oldFonts },
+      { id: 'flip:includeChrome', title: 'Apply to Toolbars Too', checked: s.includeChrome },
       { separator: true },
       { title: 'Connection Speed (coming soon)', enabled: false },
     ],

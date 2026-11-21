@@ -9,7 +9,7 @@ export function createMockHost(dialup) {
   const tab = { url: history[0], title: 'Wikipedia', loading: false, progress: 0, canGoBack: false, canGoForward: false, statusText: null };
 
   const win = { key: true, zoomed: false, fullscreen: false };
-  const extreme = { enabled: false, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: false };
+  const extreme = { enabled: false, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: false, includeChrome: false };
   const presets = {
     1998: { enabled: true, colors: 'websafeDither', resolution: 'classic', scanlines: true, oldFonts: true },
     2003: { enabled: true, colors: 'thousands', resolution: 'classic', scanlines: false, oldFonts: false },

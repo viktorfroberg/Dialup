@@ -37,6 +37,11 @@ final class BrowserLayoutView: NSView {
         }
     }
 
+    /// Extreme mode: scanlines over the whole window, or only over the page (default).
+    var scanlinesCoverChrome = false {
+        didSet { needsLayout = true }
+    }
+
     /// nil until the chrome has reported its layout; the page stays hidden until then.
     var insets: NSEdgeInsets? {
         didSet { needsLayout = true }
@@ -45,7 +50,7 @@ final class BrowserLayoutView: NSView {
     override func layout() {
         super.layout()
         chromeView?.frame = bounds
-        scanlineView.frame = bounds
+        defer { scanlineView.frame = scanlinesCoverChrome ? bounds : (pageView?.frame ?? .zero) }
         guard let pageView else { return }
         guard let i = insets else {
             pageView.isHidden = true

@@ -41,14 +41,19 @@ enum DebugSnapshot {
         // Window-level Core Image filters (extreme mode) aren't part of WebKit snapshots,
         // so apply the same filters here to preview the result.
         var output = rep
-        let filters = ExtremeRenderer.filters(for: ExtremeMode.shared.settings, backingScale: scale)
-        if !filters.isEmpty, var image = CIImage(bitmapImageRep: rep) {
-            let extent = image.extent
+        let settings = ExtremeMode.shared.settings
+        let filters = ExtremeRenderer.filters(for: settings, backingScale: scale)
+        if !filters.isEmpty, let full = CIImage(bitmapImageRep: rep) {
+            // Filter the whole window, or only the page rect (CI coordinates: bottom-left origin, pixels).
+            let f = page.frame
+            let region = settings.includeChrome ? full.extent
+                : CGRect(x: f.minX * scale, y: (size.height - f.maxY) * scale, width: f.width * scale, height: f.height * scale)
+            var image = full.cropped(to: region)
             for filter in filters {
                 filter.setValue(image, forKey: kCIInputImageKey)
-                image = filter.outputImage?.cropped(to: extent) ?? image
+                image = filter.outputImage?.cropped(to: region) ?? image
             }
-            output = NSBitmapImageRep(ciImage: image)
+            output = NSBitmapImageRep(ciImage: image.composited(over: full))
         }
         do {
             try output.representation(using: .png, properties: [:])?.write(to: url)

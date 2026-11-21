@@ -111,3 +111,13 @@ final class ExtremeModeTests: XCTestCase {
         XCTAssertEqual(ExtremeRenderer.filters(for: s, backingScale: 2).first?.name, "CIPixellate")
     }
 }
+
+final class ExtremeSettingsCompatTests: XCTestCase {
+    func testOldSavedSettingsStillDecode() throws {
+        let old = #"{"enabled":true,"colors":"websafe","resolution":"classic","scanlines":true,"oldFonts":false}"#
+        let s = try JSONDecoder().decode(ExtremeSettings.self, from: Data(old.utf8))
+        XCTAssertTrue(s.enabled)
+        XCTAssertEqual(s.colors, .websafe)
+        XCTAssertFalse(s.includeChrome)
+    }
+}
