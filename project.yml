@@ -29,7 +29,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSPrincipalClass: NSApplication
-        NSHumanReadableCopyright: "Dialup — a browser from 2003, built in 2026"
+        NSHumanReadableCopyright: "© 2026 Viktor Fröberg"
         LSApplicationCategoryType: public.app-category.productivity
         # A browser must load plain http:// sites (ATS would block them in the web view).
         NSAppTransportSecurity:

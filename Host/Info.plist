@@ -55,7 +55,7 @@
 		<true/>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
-	<string>Dialup — a browser from 2003, built in 2026</string>
+	<string>© 2026 Viktor Fröberg</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

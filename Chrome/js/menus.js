@@ -176,7 +176,7 @@ export function addFavorite(tab) {
 function aboutDialog() {
   const body = el('div', 'about');
   body.append(html`
-    <div class="about-banner"><div class="about-logo"></div><div><div class="about-name">Dialup</div><div class="about-tag">Version ${ctx.getVersion?.() || '0.1'} (2003 Edition, built in 2026)</div></div></div>
+    <div class="about-banner"><div class="about-logo"></div><div><div class="about-name">Dialup</div><div class="about-tag">Version ${ctx.getVersion?.() || '0.1'}</div></div></div>
     <div class="about-text">
       <p>Cipher Strength: 128-bit<br>Product ID: 55555-OEM-0001337-56K<br>Update Versions: SP1; dial-up</p>
       <p>Based on modern WebKit, wearing a 2003 outfit.<br>Icons from the Tango Icon Library (public domain). No modems were harmed.</p>
