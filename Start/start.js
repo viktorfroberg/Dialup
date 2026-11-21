@@ -12,7 +12,7 @@
 
   // Look: follow the browser skin (luna is the default palette).
   const skin = typeof cfg.skin === 'string' ? cfg.skin.toLowerCase() : '';
-  if (skin === 'aqua' || skin === 'classic' || skin === 'luna') document.body.classList.add('skin-' + skin);
+  document.body.classList.add('skin-' + (skin === 'aqua' || skin === 'classic' ? skin : 'luna'));
 
   // Today's date in the top bar, the way home pages used to stamp it.
   $('today').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

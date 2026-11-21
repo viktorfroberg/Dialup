@@ -14,15 +14,6 @@
   --wall: #d5dde8;
   --wall-dot: #c3cedd;
 }
-body.skin-aqua {
-  --accent: #3a6fc4; --accent-2: #6b9be0; --link: #1f5bc6;
-  --band: #f0f2f5; --edge: #9a9a9a;
-}
-body.skin-classic {
-  --accent: #000080; --accent-2: #1084d0; --link: #00009c;
-  --band: #ecebe6; --edge: #6f6f6f; --paper: #fffffb;
-  --wall: #6f9a9a; --wall-dot: #5e8a8a;
-}
 
 html { background: var(--wall); }
 body {
@@ -40,12 +31,6 @@ body {
   background-image: radial-gradient(var(--wall-dot) 1px, transparent 1.2px);
   background-size: 4px 4px;
 }
-body.skin-aqua {
-  /* brushed pinstripes */
-  background-color: #ececec;
-  background-image: repeating-linear-gradient(#f4f4f4 0 2px, #e7e7e7 2px 4px);
-  background-size: auto;
-}
 
 a:link, a:visited { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -61,7 +46,6 @@ img { image-rendering: pixelated; }
   border: 1px solid var(--edge);
   box-shadow: 1px 1px 0 #fff inset, 5px 5px 0 rgba(0, 0, 0, .13);
 }
-body.skin-classic .sheet { box-shadow: 1px 1px 0 #fff inset, 5px 5px 0 rgba(0, 0, 0, .28); }
 
 .bar {
   height: 24px;
@@ -209,7 +193,6 @@ a.badge:hover { text-decoration: none; filter: brightness(1.1); }
   font-size: 10px;
   color: #59616e;
 }
-body.skin-classic .colophon, body.skin-classic .colophon a { color: #eef4f4; }
 
 /* ---------- narrow windows ---------- */
 @media (max-width: 700px) {
@@ -220,12 +203,248 @@ body.skin-classic .colophon, body.skin-classic .colophon a { color: #eef4f4; }
   .nook-gap { display: block; height: 10px; }
 }
 
-/* Aqua: a softer, rounded button to match the Mac skin */
-body.skin-aqua .go {
-  border: 1px solid #7d8ba3; border-radius: 11px; box-shadow: 0 1px 1px rgba(0,0,0,.25);
-  background: linear-gradient(#ffffff, #e2e8f2 50%, #cfd9ea 51%, #eef3fb);
+/* =====================================================================
+   Skins. Same layout for all three (muscle memory); only the era changes.
+   ===================================================================== */
+
+/* ---------- Luna: a busy, glossy turn-of-the-millennium portal ---------- */
+body.skin-luna {
+  --ink: #1b1b1b; --muted: #4d5b74; --link: #0b46b8;
+  --accent: #0a3fa8; --accent-2: #3a83f0;
+  --edge: #7f9db9; --band: #e9f0fb;
+  --wall: #cfdcf3; --wall-dot: #a9bfe6;
+  font-family: Tahoma, Verdana, sans-serif;
+  background-size: 5px 5px;
 }
-body.skin-aqua .go:active { background: linear-gradient(#a9c6f1, #6f9fe6 50%, #4f86dc 51%, #9cc0f4); padding: 0 18px; box-shadow: none; }
+.skin-luna .sheet { border-color: #2a5bc7; box-shadow: 0 0 0 1px #fff inset, 4px 4px 0 rgba(10, 40, 110, .18); }
+.skin-luna .bar {
+  background: linear-gradient(#fbfdff, #dfe9f8 60%, #cfdcf2);
+  border-bottom-color: #9db5dd;
+}
+.skin-luna .bar-links a { font-weight: bold; }
+.skin-luna .main {
+  /* a pale sky fading into the page, like a portal banner */
+  background: linear-gradient(#eaf2fe, var(--paper) 150px);
+}
+.skin-luna .wordmark {
+  font: bold 70px/0.9 "Trebuchet MS", Verdana, Tahoma, sans-serif;
+  letter-spacing: -3px;
+  color: #1c55c9;
+  text-shadow: 1px 1px 0 #fff, 3px 3px 0 rgba(10, 50, 140, .18);
+}
+.skin-luna .greeting { font: bold 13px Verdana, Tahoma, sans-serif; color: #3b5f9e; }
+.skin-luna .search-label { font-family: Tahoma, sans-serif; }
+.skin-luna #q {
+  height: 30px;
+  font-family: Tahoma, Verdana, sans-serif; font-size: 15px;
+  border: 1px solid #7f9db9; box-shadow: none; border-radius: 0;
+}
+.skin-luna #q:focus { outline: none; border-color: #2a6ae8; box-shadow: 0 0 0 2px #a8c8f8; }
+.skin-luna .go {
+  height: 30px; padding: 0 20px;
+  font: bold 12px Tahoma, Verdana, sans-serif; color: #10215c;
+  border: 1px solid #003c74; border-radius: 3px;
+  background: linear-gradient(#ffffff, #f3f3ee 45%, #e6e4dc 85%, #d6d0c5);
+  box-shadow: inset 0 -1px 0 #cbc6ba, inset 0 1px 0 #fff;
+}
+.skin-luna .go:hover { box-shadow: inset 0 0 0 2px #fbca5f, inset 0 -3px 0 #f0a020; }
+.skin-luna .go:active { padding: 0 20px; background: linear-gradient(#e2e0d6, #ecebe5); box-shadow: inset 1px 1px 2px rgba(0,0,0,.25); }
+.skin-luna .search-under a:link, .skin-luna .search-under a:visited { font: bold 11px Tahoma, sans-serif; font-style: normal; }
+.skin-luna .favorites { font: 13px/1.9 Tahoma, Verdana, sans-serif; color: #7f9db9; }
+.skin-luna .favorites a { font-weight: bold; }
+.skin-luna .fav-label {
+  padding: 2px 7px; color: #fff; font-weight: bold;
+  background: linear-gradient(#5d9bf6, #1f5fd6); border-radius: 3px;
+}
+.skin-luna .nook { border: 1px solid #2a5bc7; border-top: 0; border-radius: 4px 4px 0 0; background: #f7faff; }
+.skin-luna .nook-title {
+  padding: 4px 9px;
+  font: bold 12px Tahoma, Verdana, sans-serif; letter-spacing: 0;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#4f9bff, #2a72ea 45%, #1554d4 55%, #2a69e0);
+  text-shadow: 1px 1px 0 #0c2f86;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+}
+.skin-luna .glyph { color: #ffd84a; }
+.skin-luna .sotd:link, .skin-luna .sotd:visited { font: bold 14px Verdana, Tahoma, sans-serif; }
+.skin-luna .nook-text { font: 12px/1.55 Tahoma, Verdana, sans-serif; color: #333; }
+.skin-luna .foot { background: linear-gradient(#e6eefb, #d3e0f5); border-top-color: #9db5dd; }
+.skin-luna .colophon { color: #3c5480; }
+
+/* ---------- Aqua: white, airy, gel and pinstripes ---------- */
+body.skin-aqua {
+  --ink: #1e1e1e; --muted: #707070; --link: #1a5fd0;
+  --accent: #2d6cd2; --accent-2: #6aa8f0;
+  --edge: #b3b3b3; --band: #f6f6f6; --paper: #fff;
+  font-family: "Lucida Grande", "Lucida Sans Unicode", "Helvetica Neue", Helvetica, sans-serif;
+  /* pinstripes */
+  background-color: #efefef;
+  background-image: repeating-linear-gradient(#f7f7f7 0 1px, #f7f7f7 1px 2px, #e9e9e9 2px 4px);
+  background-size: auto;
+}
+.skin-aqua .sheet {
+  border-color: #b8b8b8; border-radius: 9px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .18), 0 1px 3px rgba(0, 0, 0, .12);
+}
+.skin-aqua .bar {
+  height: 26px; border-radius: 8px 8px 0 0;
+  background: linear-gradient(#fcfcfc, #e9e9e9 55%, #dcdcdc);
+  border-bottom-color: #c2c2c2;
+  font-size: 11px; color: #555; text-shadow: 0 1px 0 #fff;
+}
+.skin-aqua .led { display: none; }                 /* too Windows-y */
+.skin-aqua .bar i { color: #c5c5c5; }
+.skin-aqua .main { padding-top: 36px; padding-bottom: 36px; }
+.skin-aqua .wordmark {
+  font: bold 68px/0.9 "Lucida Grande", "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: -4px;
+  color: #2a67cc;
+  text-shadow: 0 3px 6px rgba(20, 60, 140, .22);
+}
+.skin-aqua .greeting { font: 14px "Lucida Grande", "Helvetica Neue", sans-serif; color: #8a8a8a; margin-bottom: 24px; }
+.skin-aqua .search-label { margin-left: 14px; }
+.skin-aqua .search-row { gap: 10px; }
+.skin-aqua #q {
+  height: 30px; padding: 3px 14px;
+  font: 14px "Lucida Grande", "Helvetica Neue", sans-serif;
+  border: 1px solid #9a9a9a; border-top-color: #7a7a7a; border-radius: 15px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .28);
+}
+.skin-aqua #q:focus { outline: none; border-color: #5e95e3; box-shadow: inset 0 1px 2px rgba(0,0,0,.2), 0 0 0 3px rgba(110, 160, 235, .55); }
+.skin-aqua .go {
+  height: 30px; padding: 0 22px;
+  font: 13px "Lucida Grande", "Helvetica Neue", sans-serif; color: #0c1f40;
+  border: 1px solid #3b6fb8; border-radius: 15px;
+  background: linear-gradient(#d4e9ff 0, #a8d0fb 12%, #6eaaf1 49%, #4a90ea 50%, #7fc0ff 88%, #b6e0ff 100%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255,255,255,.7);
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+.skin-aqua .go:active {
+  padding: 0 22px;
+  background: linear-gradient(#a9cdf6, #5f97e2 49%, #3a78d6 50%, #6ba6ee);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .35);
+}
+.skin-aqua .search-under { margin-right: 6px; }
+.skin-aqua .search-under a:link, .skin-aqua .search-under a:visited { font: 11px "Lucida Grande", sans-serif; }
+.skin-aqua .favorites { font: 13px/1.9 "Lucida Grande", "Helvetica Neue", sans-serif; color: #b5b5b5; }
+.skin-aqua .fav-label { font-family: "Lucida Grande", sans-serif; color: #8a8a8a; }
+.skin-aqua .nooks { border-spacing: 0; margin-top: 28px; }
+.skin-aqua .nook {
+  border: 1px solid #b3b3b3; border-radius: 7px; background: #fff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .09);
+}
+.skin-aqua .nook-gap { width: 18px; }
+.skin-aqua .nook-title {
+  padding: 4px 10px;
+  font: bold 11px "Lucida Grande", "Helvetica Neue", sans-serif; letter-spacing: 0;
+  color: #13325f; text-shadow: 0 1px 0 rgba(255,255,255,.7);
+  border-radius: 6px 6px 0 0; border-bottom: 1px solid #7ea6dc;
+  background:
+    repeating-linear-gradient(rgba(255,255,255,.18) 0 1px, transparent 1px 2px),
+    linear-gradient(#e0eefd, #bcd8f8 50%, #a3c8f4 51%, #cfe6fd);
+}
+.skin-aqua .glyph { color: #2a67cc; }
+.skin-aqua .nook-body { padding: 10px 12px 12px; }
+.skin-aqua .sotd:link, .skin-aqua .sotd:visited { font: bold 14px "Lucida Grande", "Helvetica Neue", sans-serif; }
+.skin-aqua .nook-text { font: 12px/1.6 "Lucida Grande", "Helvetica Neue", sans-serif; color: #555; }
+.skin-aqua .foot {
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(#fafafa, #efefef);
+  border-top-color: #dedede; color: #888;
+}
+.skin-aqua .badge { border-radius: 4px; border-color: rgba(0,0,0,.45); }
+.skin-aqua .visits { display: none; }              /* LED counter: too Windows-y */
+.skin-aqua .colophon { color: #8a8a8a; font-family: "Lucida Grande", sans-serif; }
+
+/* ---------- Classic: grey bevels, navy title strips, square everything ---------- */
+body.skin-classic {
+  --ink: #000; --muted: #404040; --link: #00007f;
+  --accent: #000080; --accent-2: #1084d0;
+  --paper: #d4d0c8; --band: #d4d0c8;
+  --wall: #3a6ea5;
+  font-family: Arial, Helvetica, sans-serif;
+  background-image: none;
+}
+.skin-classic .sheet {
+  border: 2px solid; border-color: #fff #404040 #404040 #fff;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
+}
+/* the top band becomes a window title bar */
+.skin-classic .bar {
+  height: 20px; padding: 0 4px 0 6px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  border-bottom: 0;
+  font: bold 11px Tahoma, Arial, sans-serif; color: #fff;
+}
+.skin-classic .bar a:link, .skin-classic .bar a:visited { color: #fff; }
+.skin-classic .bar i { color: #8fb4e0; }
+.skin-classic .led { border-color: #000; box-shadow: none; }
+.skin-classic .main { padding-top: 24px; }
+.skin-classic .wordmark {
+  font: bold 72px/0.9 "Times New Roman", Times, serif;
+  letter-spacing: -1px;
+  color: #000080;
+  text-shadow: 2px 2px 0 #fff;
+}
+.skin-classic .greeting { font: italic 16px "Times New Roman", Times, serif; color: #000; }
+.skin-classic .search-label { font: 12px Arial, sans-serif; color: #000; }
+.skin-classic #q {
+  height: 28px; font: 15px "Times New Roman", Times, serif;
+  border: 2px solid; border-color: #808080 #fff #fff #808080;
+  box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #dfdfdf;
+}
+.skin-classic #q:focus { outline: none; }
+.skin-classic .go {
+  height: 28px; padding: 0 16px;
+  font: 12px Arial, Helvetica, sans-serif; color: #000;
+  background: #d4d0c8;
+  border: 2px solid; border-color: #fff #404040 #404040 #fff;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
+}
+.skin-classic .go:focus { outline: 1px dotted #000; outline-offset: -5px; }
+.skin-classic .go:active {
+  padding: 1px 15px 0 17px;
+  border-color: #404040 #fff #fff #404040;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf;
+}
+.skin-classic .search-under a:link, .skin-classic .search-under a:visited { font: 13px "Times New Roman", serif; text-decoration: underline; }
+.skin-classic .favorites { font: 15px/1.9 "Times New Roman", Times, serif; color: #404040; }
+.skin-classic .favorites a { text-decoration: underline; }
+.skin-classic .fav-label { font: bold 12px Arial, sans-serif; color: #000; }
+.skin-classic .nook {
+  background: #d4d0c8; padding: 2px;
+  border: 2px solid; border-color: #fff #404040 #404040 #fff;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
+}
+.skin-classic .nook-title {
+  padding: 2px 5px;
+  font: bold 11px Tahoma, Arial, sans-serif; letter-spacing: 0;
+  background: linear-gradient(90deg, #000080, #1084d0);
+}
+.skin-classic .glyph { color: #fff; }
+.skin-classic .nook-body { margin-top: 3px; padding: 6px 8px 8px; background: #fff;
+  border: 1px solid; border-color: #808080 #fff #fff #808080; }
+.skin-classic .sotd:link, .skin-classic .sotd:visited { font: bold 16px "Times New Roman", serif; text-decoration: underline; }
+.skin-classic .nook-text { font: 14px/1.4 "Times New Roman", Times, serif; color: #000; }
+.skin-classic .foot {
+  border-top: 1px solid #808080; box-shadow: inset 0 1px 0 #fff;
+  font-family: Arial, sans-serif; color: #000;
+}
+.skin-classic .webring a { text-decoration: underline; }
+.skin-classic .counter { color: #00e000; background: #000; border-color: #808080 #fff #fff #808080; }
+.skin-classic .colophon, .skin-classic .colophon a { color: #fff; font-family: Arial, sans-serif; }
+
+/* Dial-up Mode's "square corners" squares every page with *{border-radius:0!important}.
+   On our own page the era's shapes ARE the skin, so these few keep their curves. */
+.skin-luna .go, .skin-luna .fav-label { border-radius: 3px !important; }
+.skin-luna .nook, .skin-luna .nook-title { border-radius: 4px 4px 0 0 !important; }
+.skin-aqua .sheet { border-radius: 9px !important; }
+.skin-aqua .bar { border-radius: 8px 8px 0 0 !important; }
+.skin-aqua .foot { border-radius: 0 0 8px 8px !important; }
+.skin-aqua #q, .skin-aqua .go { border-radius: 15px !important; }
+.skin-aqua .nook { border-radius: 7px !important; }
+.skin-aqua .nook-title { border-radius: 6px 6px 0 0 !important; }
+.skin-aqua .badge { border-radius: 4px !important; }
 
 /* Big, tall screens: the same page, just a touch larger, so it doesn't look lost */
 @media (min-width: 1500px) and (min-height: 860px) {
