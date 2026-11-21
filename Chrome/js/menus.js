@@ -40,13 +40,26 @@ export function renderLinksBar(links = []) {
 }
 
 async function openMenu(title) {
-  const r = title.getBoundingClientRect();
-  const items = menus[title.dataset.menu]?.();
-  if (!items) return;
-  title.classList.add('open');
-  const picked = await showMenu(items, r.left, r.bottom);
-  title.classList.remove('open');
-  if (picked != null) run(picked);
+  const titles = [...document.querySelectorAll('.menu-title')];
+  const siblings = titles.map((el) => ({ id: el.dataset.menu, el }));
+  let current = title;
+  let viaKeyboard = false;
+  // Like Windows: while a menu is open, hovering another title (or ←/→) switches menus.
+  while (current) {
+    const items = menus[current.dataset.menu]?.();
+    if (!items) return;
+    const r = current.getBoundingClientRect();
+    current.classList.add('open');
+    const picked = await showMenu(items, r.left, r.bottom, { siblings, current: current.dataset.menu, keyboardStart: viaKeyboard });
+    current.classList.remove('open');
+    if (picked && typeof picked === 'object' && picked.switchTo) {
+      current = titles.find((el) => el.dataset.menu === picked.switchTo);
+      viaKeyboard = !!picked.viaKeyboard;
+      continue;
+    }
+    if (picked != null) run(picked);
+    current = null;
+  }
 }
 
 const menus = {

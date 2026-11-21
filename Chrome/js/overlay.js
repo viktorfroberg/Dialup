@@ -49,6 +49,8 @@ const el = (tag, cls, text) => {
  * Shows a menu at (x, y) in window coordinates.
  * items: [{ id, title, enabled?, checked?, radio?, separator?, items? }]  (items = submenu)
  * options: { minWidth, className } — e.g. the address bar's dropdown is a full-width combo list.
+ *          { siblings: [{ id, el }], current } — menu bar mode: hovering another title (or ←/→)
+ *          resolves with `{ switchTo: id }`; clicking the open title again closes the menu.
  * Resolves with the picked id, or null.
  */
 export function showMenu(items, x, y, options = {}) {
@@ -68,7 +70,28 @@ export function showMenu(items, x, y, options = {}) {
       release();
       resolve(value ?? null);
     };
-    shield.addEventListener('mousedown', (e) => { e.preventDefault(); close(null); });
+    shield.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const hit = siblingAt(e.clientX, e.clientY);
+      if (hit && hit.id !== options.current) close({ switchTo: hit.id });
+      else close(null); // outside, or the open title itself: close
+    });
+    // Menu bar behaviour: with a menu open, moving over another title switches to it.
+    const siblingAt = (x, y) => (options.siblings || []).find(({ el }) => {
+      const r = el.getBoundingClientRect();
+      return x >= r.left && x < r.right && y >= r.top && y < r.bottom;
+    });
+    shield.addEventListener('mousemove', (e) => {
+      const hit = siblingAt(e.clientX, e.clientY);
+      if (hit && hit.id !== options.current) close({ switchTo: hit.id });
+    });
+    const switchBy = (step) => {
+      const list = options.siblings || [];
+      const i = list.findIndex((s) => s.id === options.current);
+      if (i < 0 || !list.length) return false;
+      close({ switchTo: list[(i + step + list.length) % list.length].id, viaKeyboard: true });
+      return true;
+    };
 
     // Some skins (Aqua) blink the chosen item before the menu closes.
     const pick = (row, id) => {
@@ -141,6 +164,8 @@ export function showMenu(items, x, y, options = {}) {
       else if (e.key === 'ArrowUp') { stop(); setActive(menu, list[(index - 1 + list.length) % list.length]); }
       else if (e.key === 'ArrowRight' && active?._item.items) { stop(); const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
       else if (e.key === 'ArrowLeft' && menus.length > 1) { stop(); trim(menus.length - 1); }
+      else if (e.key === 'ArrowRight' && options.siblings) { stop(); switchBy(1); }
+      else if (e.key === 'ArrowLeft' && options.siblings) { stop(); switchBy(-1); }
       else if (e.key === 'Enter' && active) {
         stop();
         if (active._item.items) { const sub = openSub(active, menus.length - 1); setActive(sub, rows(sub)[0]); }
@@ -150,7 +175,9 @@ export function showMenu(items, x, y, options = {}) {
     const keys = { onKey };
     pushKeys(keys);
 
-    place(build(items, 0), x, y);
+    const first = build(items, 0);
+    place(first, x, y);
+    if (options.keyboardStart) setActive(first, rows(first)[0]);
   });
 }
 
