@@ -561,26 +561,3 @@ body.inactive .dialog-titlebar { background: var(--titlebar-bg-inactive); color:
 /* Window shape: square corners */
 body { border-radius: 0; }
 .menu.combo-list { border: 1px solid #000; box-shadow: none; }
-
-/* Classic icon set: original 16-colour pixel icons (Chrome/img/classic/) */
-:root {
-  --icon-back: url(../img/classic/back.svg);
-  --icon-forward: url(../img/classic/forward.svg);
-  --icon-stop: url(../img/classic/stop.svg);
-  --icon-reload: url(../img/classic/reload.svg);
-  --icon-home: url(../img/classic/home.svg);
-  --icon-favorites: url(../img/classic/favorites.svg);
-  --icon-wayback: url(../img/classic/wayback.svg);
-  --icon-dialup-mode: url(../img/classic/dialup.svg);
-  --icon-go: url(../img/classic/go.svg);
-  --icon-page: url(../img/classic/page.svg);
-  --icon-zone: url(../img/classic/zone.svg);
-  --icon-app: url(../img/classic/zone.svg);
-}
-.ico, .throbber, .tab-icon { image-rendering: pixelated; }
-.ico-page-sm, .tab-icon { background-image: url(../img/classic/page-sm.svg); }
-.ico-lock { background-image: url(../img/classic/lock.svg); }
-.ico-sound { background-image: url(../img/classic/sound.svg); }
-body.muted .ico-sound { background-image: url(../img/classic/sound-off.svg); }
-#band-menu .throbber { background-image: url(../img/classic/throbber.svg); background-size: 22px; }
-.tab-item.loading .tab-icon { background-image: url(../img/classic/throbber.svg); }
