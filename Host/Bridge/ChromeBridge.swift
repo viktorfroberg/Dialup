@@ -11,13 +11,18 @@ final class ChromeBridge: NSObject, WKScriptMessageHandlerWithReply {
 
     weak var controller: BrowserWindowController?
 
+    /// Only the chrome document itself (main frame, dialup:// origin) may talk to the host.
+    nonisolated static func accepts(isMainFrame: Bool, originProtocol: String) -> Bool {
+        isMainFrame && originProtocol == DialupSchemeHandler.scheme
+    }
+
     func userContentController(
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage,
         replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void
     ) {
-        guard message.frameInfo.isMainFrame,
-              message.frameInfo.securityOrigin.protocol == DialupSchemeHandler.scheme,
+        guard Self.accepts(isMainFrame: message.frameInfo.isMainFrame,
+                           originProtocol: message.frameInfo.securityOrigin.protocol),
               let body = message.body as? [String: Any],
               let cmd = body["cmd"] as? String else {
             replyHandler(nil, "rejected message")

@@ -58,14 +58,14 @@ struct Preferences: Codable, Equatable {
         if !Self.searchEngines.contains(where: { $0.id == searchEngine }) { searchEngine = fallback.searchEngine }
         name = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))
         if homePage != "start" {
-            let resolved = AddressResolver.resolve(homePage)
+            let resolved = AddressResolver.resolveAddress(homePage)
             homePage = resolved.map(\.absoluteString) ?? "start"
         }
         quickLinks = quickLinks.prefix(12).compactMap { link in
             let title = String(link.title.trimmingCharacters(in: .whitespaces).prefix(60))
             let raw = link.url.trimmingCharacters(in: .whitespaces).lowercased()
             if ["javascript:", "data:", "file:", "about:", "blob:"].contains(where: raw.hasPrefix) { return nil }
-            guard let url = AddressResolver.resolve(link.url), ["http", "https"].contains(url.scheme ?? "") else { return nil }
+            guard let url = AddressResolver.resolveAddress(link.url), ["http", "https"].contains(url.scheme ?? "") else { return nil }
             return QuickLink(title: title.isEmpty ? (url.host ?? url.absoluteString) : title, url: url.absoluteString)
         }
     }
@@ -96,11 +96,15 @@ struct Preferences: Codable, Equatable {
         return merged
     }
 
-    /// Lists the chrome needs to build the settings UI.
+    /// Single source of truth for lists and constants the chrome needs (settings, wizard, mock).
     static var catalog: [String: Any] {
         [
             "skins": skins.map { ["id": $0.id, "name": $0.name] },
             "searchEngines": searchEngines.map { ["id": $0.id, "name": $0.name] },
+            "defaultLinks": defaultLinks.map { ["title": $0.title, "url": $0.url] },
+            "dialupPresets": DialupModeSettings.presets.mapValues(\.dictionary),
+            "connectionSpeeds": ["modem56k": 53_333, "isdn": 128_000, "dsl": 512_000, "off": 0],
+            "pictureCapMs": DialupModePage.pictureCapMs,
         ]
     }
 }

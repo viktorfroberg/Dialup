@@ -9,21 +9,30 @@ export function createMockHost(dialup) {
   const tab = { url: history[0], title: 'Wikipedia', loading: false, progress: 0, canGoBack: false, canGoForward: false, statusText: null };
 
   const win = { key: true, zoomed: false, fullscreen: false };
-  const dialupMode = { enabled: false, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: false, includeChrome: false };
+  const dialupMode = { enabled: false, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: false, includeChrome: false,
+    retroPage: true, squareCorners: true, noShadows: false, noAnimations: false, underlineLinks: false };
   const presets = {
-    1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true },
-    2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false },
+    1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true, includeChrome: false,
+      retroPage: true, squareCorners: true, noShadows: true, noAnimations: false, underlineLinks: true },
+    2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false, includeChrome: false,
+      retroPage: true, squareCorners: true, noShadows: false, noAnimations: false, underlineLinks: false },
   };
   const prefs = {
     skin: new URLSearchParams(location.search).get('skin') || 'luna',
     onboarded: new URLSearchParams(location.search).has('onboarded'),
     homePage: 'start', searchEngine: 'duckduckgo', name: '',
     quickLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
+    // Mirrors Preferences.catalog in Host/App/Preferences.swift (the real source of truth).
     catalog: {
       skins: [{ id: 'luna', name: 'Luna (Windows, 2001)' }, { id: 'aqua', name: 'Aqua (Mac, 2003)' }],
-      searchEngines: [{ id: 'duckduckgo', name: 'DuckDuckGo' }, { id: 'google', name: 'Google' }],
+      searchEngines: [{ id: 'duckduckgo', name: 'DuckDuckGo' }, { id: 'google', name: 'Google' }, { id: 'bing', name: 'Bing' }, { id: 'wikipedia', name: 'Wikipedia' }],
+      defaultLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
+      connectionSpeeds: { modem56k: 53333, isdn: 128000, dsl: 512000, off: 0 },
+      pictureCapMs: 2500,
+      dialupPresets: {},
     },
   };
+  prefs.catalog.dialupPresets = presets;
   const emit = (event, data) => dialup.receive({ event, data });
   const sync = () => {
     tab.url = history[index];

@@ -9,6 +9,20 @@ import { host } from './host.js';
 const layer = document.getElementById('overlay');
 let openCount = 0;
 
+// Only the topmost menu/dialog handles keys (stacked dialogs must not all react to Esc/Enter).
+const keyStack = [];
+const pushKeys = (entry) => keyStack.push(entry);
+const popKeys = (entry) => { const i = keyStack.indexOf(entry); if (i >= 0) keyStack.splice(i, 1); };
+document.addEventListener('keydown', (e) => {
+  const top = keyStack[keyStack.length - 1];
+  if (top) top.onKey(e);
+}, true);
+// Keep focus inside the topmost dialog (Tab, clicks or ⌘L must not reach the UI behind it).
+document.addEventListener('focusin', (e) => {
+  const top = keyStack[keyStack.length - 1];
+  if (top?.root && !top.root.contains(e.target)) top.root.querySelector('input, select, button')?.focus();
+});
+
 function acquire() {
   if (openCount++ === 0) {
     document.body.classList.add('overlay-open');
@@ -47,7 +61,7 @@ export function showMenu(items, x, y) {
     const close = (value) => {
       if (done) return;
       done = true;
-      document.removeEventListener('keydown', onKey, true);
+      popKeys(keys);
       shield.remove();
       menus.forEach((m) => m.remove());
       release();
@@ -122,7 +136,8 @@ export function showMenu(items, x, y) {
         else close(active._item.id);
       }
     }
-    document.addEventListener('keydown', onKey, true);
+    const keys = { onKey };
+    pushKeys(keys);
 
     place(build(items, 0), x, y);
   });
@@ -154,7 +169,7 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
   const close = () => {
     if (closed) return;
     closed = true;
-    document.removeEventListener('keydown', onKey, true);
+    popKeys(keys);
     backdrop.remove();
     release();
   };
@@ -164,6 +179,7 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
   };
   for (const b of buttons) {
     const button = el('button', `btn${b.primary ? ' primary' : ''}`, b.label);
+    button.dataset.value = String(b.value);
     button.addEventListener('click', () => press(b.value));
     footer.append(button);
   }
@@ -194,13 +210,24 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
   });
 
   function onKey(e) {
+    if (e.key === 'Tab') {
+      const focusables = [...dialog.querySelectorAll('input:not([disabled]), select:not([disabled]), button:not([disabled]), textarea')]
+        .filter((n) => n.offsetParent !== null);
+      if (!focusables.length) return;
+      const i = focusables.indexOf(document.activeElement);
+      const next = e.shiftKey ? (i <= 0 ? focusables.length - 1 : i - 1) : (i + 1) % focusables.length;
+      e.preventDefault();
+      focusables[next].focus();
+      return;
+    }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); press(cancelValue); }
     else if (e.key === 'Enter' && !(e.target instanceof HTMLTextAreaElement) && !(e.target instanceof HTMLButtonElement)) {
       const primary = buttons.find((b) => b.primary);
       if (primary) { e.preventDefault(); press(primary.value); }
     }
   }
-  document.addEventListener('keydown', onKey, true);
+  const keys = { onKey, root: dialog };
+  pushKeys(keys);
 
   const firstField = dialog.querySelector('input, select, textarea, button.btn.primary');
   setTimeout(() => firstField?.focus(), 0);

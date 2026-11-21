@@ -5,20 +5,35 @@ import { host } from './host.js';
 import { openDialog, confirmBox } from './overlay.js';
 
 const SAMPLE = 'img/sample.svg';
-const SPEEDS = { modem56k: 53333, isdn: 128000, dsl: 512000, off: 0 };
 const PICTURE_BYTES = 40 * 1024; // "a typical 40 KB photo"
-const PICTURE_CAP_MS = 2500;     // same cap the page script uses
 
-let current = null; // the open dialog, so ⌘, twice doesn't stack dialogs
+let current = null;  // the open dialog, so ⌘, twice doesn't stack dialogs
+let opening = false; // set before the first await, so a quick second ⌘, is ignored
+let pendingTab = null;
+
+const withoutCatalog = ({ catalog, ...rest }) => rest;
+
+/** Keys whose values differ (deep) between two flat objects. */
+function changed(before, after) {
+  const out = {};
+  for (const key of Object.keys(after)) {
+    if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) out[key] = after[key];
+  }
+  return out;
+}
 
 export async function openSettings(startTab = 'general', { getCurrentUrl } = {}) {
   if (current) { current.select(startTab); return; }
+  if (opening) { pendingTab = startTab; return; }
+  opening = true;
   const [prefs, dialup] = await Promise.all([host.call('prefsGet'), host.call('dialupModeGet')]);
+  opening = false;
+  if (pendingTab) { startTab = pendingTab; pendingTab = null; }
   const catalog = prefs.catalog || { skins: [], searchEngines: [] };
-  const draft = {
-    prefs: structuredClone({ ...prefs, catalog: undefined }),
-    dialup: structuredClone(dialup),
-  };
+  // baseline = what the host had when we last synced. Only keys changed from it are sent,
+  // so changes made elsewhere meanwhile (⇧⌘D, another window) aren't overwritten.
+  let baseline = { prefs: withoutCatalog(prefs), dialup: structuredClone(dialup) };
+  const draft = structuredClone(baseline);
 
   const tabs = [
     ['general', 'General', generalTab],
@@ -36,11 +51,12 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
   panels.className = 'tab-panels';
   root.append(strip, panels);
 
-  const ctx = { draft, catalog, getCurrentUrl, refresh: [] };
+  const ctx = { draft, catalog, getCurrentUrl };
   const byId = {};
   for (const [id, label, build] of tabs) {
     const tab = document.createElement('button');
     tab.className = 'tab';
+    tab.dataset.tab = id; // skins can give tabs icons (Aqua shows a preferences toolbar)
     tab.textContent = label;
     tab.addEventListener('click', () => select(id));
     strip.append(tab);
@@ -48,7 +64,7 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
     panel.className = 'tab-panel';
     panel.append(build(ctx));
     panels.append(panel);
-    byId[id] = { tab, panel };
+    byId[id] = { tab, panel, build };
   }
 
   function select(id) {
@@ -60,8 +76,15 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
   select(byId[startTab] ? startTab : 'general');
 
   const apply = async () => {
-    await host.call('prefsSet', draft.prefs);
-    await host.call('dialupModeSet', draft.dialup);
+    const prefsPatch = changed(baseline.prefs, draft.prefs);
+    const dialupPatch = changed(baseline.dialup, draft.dialup);
+    if (Object.keys(prefsPatch).length) await host.call('prefsSet', prefsPatch);
+    if (Object.keys(dialupPatch).length) await host.call('dialupModeSet', dialupPatch);
+    // Re-read the host's validated values and rebuild the panels, so the dialog shows what was saved.
+    const [freshPrefs, freshDialup] = await Promise.all([host.call('prefsGet'), host.call('dialupModeGet')]);
+    baseline = { prefs: withoutCatalog(freshPrefs), dialup: structuredClone(freshDialup) };
+    Object.assign(draft, structuredClone(baseline));
+    for (const { panel, build } of Object.values(byId)) panel.replaceChildren(build(ctx));
   };
 
   const dialog = openDialog({
@@ -197,7 +220,7 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
 
 // ---------- Start Page ----------
 
-function startPageTab({ draft }) {
+function startPageTab({ draft, catalog }) {
   const root = document.createElement('div');
   root.append(html`
     <fieldset>
@@ -211,7 +234,7 @@ function startPageTab({ draft }) {
     </fieldset>
     <p class="hint">Tip: the Start Page also greets you by name (General tab) and searches with your chosen search engine.</p>`);
   const rowsEl = root.querySelector('.link-rows');
-  const defaults = structuredClone(draft.prefs.quickLinks);
+  const defaults = catalog.defaultLinks || [];
 
   const render = () => {
     rowsEl.replaceChildren();
@@ -274,7 +297,9 @@ function appearanceTab({ draft, catalog }) {
 
 // ---------- Dial-up Mode ----------
 
-function dialupTab({ draft }) {
+function dialupTab({ draft, catalog }) {
+  const SPEEDS = catalog.connectionSpeeds || { modem56k: 53333, isdn: 128000, dsl: 512000, off: 0 };
+  const PICTURE_CAP_MS = catalog.pictureCapMs || 2500;
   const root = document.createElement('div');
   root.className = 'dialup-tab';
   root.append(html`
@@ -400,7 +425,7 @@ function dialupTab({ draft }) {
   const playTrickle = () => {
     anim?.cancel();
     const bps = SPEEDS[draft.dialup.connection] ?? 0;
-    const ms = bps ? Math.min(PICTURE_CAP_MS * 2, (PICTURE_BYTES * 8 / bps) * 1000) : 1;
+    const ms = bps ? Math.min(PICTURE_CAP_MS, (PICTURE_BYTES * 8 / bps) * 1000) : 1;
     anim = trickleImg.animate([
       { clipPath: 'inset(0 0 100% 0)', filter: 'blur(3px)', offset: 0 },
       { clipPath: 'inset(0 0 0 0)', filter: 'blur(0px)', offset: ms / (ms + 1500) },
@@ -417,13 +442,7 @@ function dialupTab({ draft }) {
   bind(root, draft, (group, key) => { if (key === 'connection') updateSpeed(); updateTouches(); });
   for (const button of root.querySelectorAll('[data-preset]')) {
     button.addEventListener('click', () => {
-      const presets = {
-        1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true,
-          retroPage: true, squareCorners: true, noShadows: true, noAnimations: false, underlineLinks: true },
-        2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false,
-          retroPage: true, squareCorners: true, noShadows: false, noAnimations: false, underlineLinks: false },
-      };
-      Object.assign(draft.dialup, presets[button.dataset.preset]);
+      Object.assign(draft.dialup, (catalog.dialupPresets || {})[button.dataset.preset] || {});
       sync(root, draft);
       updateSpeed();
       updateTouches();

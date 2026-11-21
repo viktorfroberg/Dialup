@@ -33,7 +33,7 @@ cd Chrome && python3 -m http.server 8000   # open http://localhost:8000
 
 Without a native host, `js/mock-host.js` fakes one, so you can restyle the chrome in any browser. Inside the app, use **View → Reload Chrome** (⌥⌘R) after editing files in the built app bundle. The chrome and pages are inspectable with Safari's Web Inspector (Develop menu).
 
-## Debug snapshot
+## Debug snapshot (debug builds only)
 
 ```sh
 build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp/dialup.png -DialupSnapshotDelay 6
@@ -46,8 +46,8 @@ build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp
    ✅ Dial-up mode (⇧⌘D): images trickle in at modem speed, "(n items remaining)" status bar,
       dial-in sequence, 256-colour images, faint CRT scanlines, old fonts; hard-mode whole-page colours/pixels
    ✅ Retro HTML menus and dialogs · ✅ Dialup Options (⌘,) with visual Dial-up Mode previews
-   ✅ Skins: Aqua (Mac 2003, default) and Luna (Windows 2001) in `Chrome/skins/` · ✅ Retro start page (`Start/`)
-   ✅ First-run Setup Wizard (Help → Setup Wizard…), Luna default · ✅ Page touches: classic scrollbars, light mode,
+   ✅ Skins: Luna (Windows 2001, default) and Aqua (Mac 2003) in `Chrome/skins/` · ✅ Retro start page (`Start/`)
+   ✅ First-run Setup Wizard (Help → Setup Wizard…) · ✅ Page touches: classic scrollbars, light mode,
       square corners (safe, on) + no shadows / no animations / underlined links (opt-in)
    Next for dial-up mode: modem/click sounds, optional real network throttling, 800×600 window
 1. Tabs, session restore, multiple windows

@@ -20,6 +20,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let chromeView: WKWebView
     private let tab: Tab
     private var chromeReady = false
+    private var observers: [NSObjectProtocol] = []
 
     init() {
         let chromeConfig = ChromeConfiguration.make(bridge: bridge, schemeHandler: .bundled())
@@ -65,13 +66,13 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         }
         tab.onChange = { [weak self] in self?.tabDidChange() }
         tab.onOpenSettings = { [weak self] section in self?.emit("openSettings", ["tab": section]) }
-        NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { [weak self] _ in
+        observers.append(NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.preferencesDidChange() }
-        }
-        NotificationCenter.default.addObserver(forName: DialupMode.didChange, object: nil, queue: .main) { [weak self] _ in
+        })
+        observers.append(NotificationCenter.default.addObserver(forName: DialupMode.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.dialupModeDidChange() }
-        }
-        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView)
+        })
+        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView, pageScripts: dialupModePage)
 
         chromeView.load(URLRequest(url: Self.chromeURL))
         tab.webView.load(URLRequest(url: Self.homeURL))
@@ -82,6 +83,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     required init?(coder: NSCoder) { fatalError("not used") }
 
     func windowWillClose(_ notification: Notification) {
+        observers.forEach(NotificationCenter.default.removeObserver)
+        observers.removeAll()
         onClose?()
     }
 
@@ -128,7 +131,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     private func dialupModeDidChange() {
         let settings = DialupMode.shared.settings
-        DialupModeRenderer.apply(settings, to: layoutView, page: tab.webView)
+        DialupModeRenderer.apply(settings, to: layoutView, page: tab.webView, pageScripts: dialupModePage)
         emit("dialupMode", settings.dictionary)
     }
 
@@ -140,7 +143,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     private func preferencesDidChange() {
         emit("prefs", preferencesPayload)
-        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView) // skin-specific scrollbars
+        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView, pageScripts: dialupModePage) // skin-specific scrollbars
         if tab.isShowingStartPage { tab.webView.reload() }
     }
 
@@ -200,7 +203,9 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         case "windowZoom": window?.performZoom(nil)
         case "windowDrag":
             // Same trick Tauri uses: start a native window drag from the current mouse-down.
-            if let event = NSApp.currentEvent, event.type == .leftMouseDown || event.type == .leftMouseDragged {
+            // The JS message arrives asynchronously, so only drag while the button is still held.
+            if let event = NSApp.currentEvent, event.type == .leftMouseDown || event.type == .leftMouseDragged,
+               NSEvent.pressedMouseButtons & 1 != 0 {
                 window?.performDrag(with: event)
             }
         case "titlebarDoubleClick": titlebarDoubleClick()

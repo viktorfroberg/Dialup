@@ -20,7 +20,9 @@ final class StartPageSchemeHandler: NSObject, WKURLSchemeHandler {
     func webView(_ webView: WKWebView, start task: any WKURLSchemeTask) {
         guard let url = task.request.url else { return }
         if url.host == "home", url.path == "/config.js" {
-            respond(task, url: url, mime: "text/javascript; charset=utf-8", data: Data(Self.configScript().utf8))
+            // Personal data (name, favourites): only for the start page itself, never for other sites.
+            let config = Self.allowsConfig(mainDocumentURL: task.request.mainDocumentURL) ? Self.configScript() : Self.emptyConfig
+            respond(task, url: url, mime: "text/javascript; charset=utf-8", data: Data(config.utf8))
             return
         }
         guard let file = files.resolve(url), let data = try? Data(contentsOf: file) else {
@@ -38,6 +40,12 @@ final class StartPageSchemeHandler: NSObject, WKURLSchemeHandler {
         task.didReceive(response)
         task.didReceive(data)
         task.didFinish()
+    }
+
+    static let emptyConfig = "window.DIALUP_START = {};\n"
+
+    static func allowsConfig(mainDocumentURL: URL?) -> Bool {
+        mainDocumentURL?.scheme == scheme
     }
 
     static func configScript(_ prefs: Preferences = PreferencesStore.shared.preferences) -> String {

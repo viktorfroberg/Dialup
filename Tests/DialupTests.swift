@@ -194,3 +194,86 @@ final class PageTouchesTests: XCTestCase {
         XCTAssertFalse(Preferences().onboarded)
     }
 }
+
+@MainActor
+final class BoundaryTests: XCTestCase {
+    func testBridgeOnlyAcceptsChromeMainFrame() {
+        XCTAssertTrue(ChromeBridge.accepts(isMainFrame: true, originProtocol: "dialup"))
+        XCTAssertFalse(ChromeBridge.accepts(isMainFrame: false, originProtocol: "dialup"))
+        XCTAssertFalse(ChromeBridge.accepts(isMainFrame: true, originProtocol: "https"))
+        XCTAssertFalse(ChromeBridge.accepts(isMainFrame: true, originProtocol: "dialup-start"))
+    }
+
+    func testOnlyTheStartPageMayOpenSettings() {
+        XCTAssertTrue(Tab.isTrustedCustomize(sourceProtocol: "dialup-start", targetIsMainFrame: true))
+        XCTAssertFalse(Tab.isTrustedCustomize(sourceProtocol: "https", targetIsMainFrame: true))
+        XCTAssertFalse(Tab.isTrustedCustomize(sourceProtocol: "dialup-start", targetIsMainFrame: false))
+    }
+
+    func testStartConfigOnlyForTheStartPage() {
+        XCTAssertTrue(StartPageSchemeHandler.allowsConfig(mainDocumentURL: URL(string: "dialup-start://home/")))
+        XCTAssertFalse(StartPageSchemeHandler.allowsConfig(mainDocumentURL: URL(string: "http://evil.example/")))
+        XCTAssertFalse(StartPageSchemeHandler.allowsConfig(mainDocumentURL: nil))
+        XCTAssertFalse(StartPageSchemeHandler.emptyConfig.contains("name"))
+    }
+
+    func testHomePageAndLinksNeverBecomeSearches() {
+        XCTAssertNil(AddressResolver.resolveAddress("hello world"))
+        XCTAssertEqual(Preferences().merging(["homePage": "not a url"]).homePage, "start")
+        XCTAssertTrue(Preferences().merging(["quickLinks": [["title": "x", "url": "two words"]]]).quickLinks.isEmpty)
+    }
+
+    func testCatalogCarriesTheOnlyCopyOfPresets() {
+        let presets = Preferences.catalog["dialupPresets"] as? [String: [String: Any]]
+        XCTAssertEqual(Set(presets?.keys ?? [:].keys), ["1998", "2003"])
+        XCTAssertEqual(presets?["1998"]?["connection"] as? String, "modem56k")
+        XCTAssertEqual(Preferences.catalog["pictureCapMs"] as? Int, DialupModePage.pictureCapMs)
+    }
+
+    func testOnboardedSurvivesMerge() {
+        XCTAssertTrue(Preferences().merging(["onboarded": true]).onboarded)
+    }
+}
+
+/// Runs the real Dial-up Mode page script in a WKWebView.
+@MainActor
+final class PageScriptTests: XCTestCase {
+    func testImageLoadedWhileDetachedStillAppears() async throws {
+        let page = DialupModePage()
+        let config = PageConfiguration.make(hoverHandler: HoverLinkHandler(), dialupModePage: page)
+        let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: config)
+        var settings = DialupModeSettings()
+        settings.enabled = true
+        settings.connection = .dsl
+        page.apply(settings, to: webView, skin: "luna")
+
+        let loaded = expectation(description: "loaded")
+        let delegate = LoadDelegate { loaded.fulfill() }
+        webView.navigationDelegate = delegate
+        // A preloaded image (new Image + onload → append) never fires a document-level load event.
+        webView.loadHTMLString("""
+        <body><script>
+          const img = new Image();
+          img.onload = () => { img.id = 'late'; document.body.appendChild(img); };
+          img.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'/>";
+        </script></body>
+        """, baseURL: URL(string: "https://example.com/"))
+        await fulfillment(of: [loaded], timeout: 10)
+
+        var visible = false
+        for _ in 0..<40 where !visible {
+            try await Task.sleep(for: .milliseconds(100))
+            let result = try? await webView.evaluateJavaScript(
+                "(() => { const i = document.getElementById('late'); return !!i && getComputedStyle(i).visibility === 'visible'; })()")
+            visible = (result as? Bool) == true
+        }
+        XCTAssertTrue(visible, "a detached-then-inserted image must not stay hidden")
+        _ = delegate
+    }
+}
+
+private final class LoadDelegate: NSObject, WKNavigationDelegate {
+    let done: () -> Void
+    init(_ done: @escaping () -> Void) { self.done = done }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { done() }
+}

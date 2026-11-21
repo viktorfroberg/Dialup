@@ -11,6 +11,15 @@ enum AddressResolver {
     static func resolve(_ raw: String, searchTemplate: String = defaultSearchTemplate) -> URL? {
         let input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else { return nil }
+        if let url = resolveAddress(input) { return url }
+        guard let query = input.addingPercentEncoding(withAllowedCharacters: queryAllowed) else { return nil }
+        return URL(string: searchTemplate.replacingOccurrences(of: "%s", with: query))
+    }
+
+    /// Like `resolve`, but returns nil instead of falling back to a search.
+    static func resolveAddress(_ raw: String) -> URL? {
+        let input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !input.isEmpty else { return nil }
         let lower = input.lowercased()
 
         if passthroughPrefixes.contains(where: lower.hasPrefix) {
@@ -26,8 +35,6 @@ enum AddressResolver {
                 return url
             }
         }
-
-        guard let query = input.addingPercentEncoding(withAllowedCharacters: queryAllowed) else { return nil }
-        return URL(string: searchTemplate.replacingOccurrences(of: "%s", with: query))
+        return nil
     }
 }

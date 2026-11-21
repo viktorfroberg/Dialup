@@ -32,15 +32,29 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     private func watch<Value>(_ keyPath: KeyPath<WKWebView, Value>) {
         observations.append(webView.observe(keyPath, options: []) { [weak self] _, _ in
-            MainActor.assumeIsolated { self?.onChange?() }
+            MainActor.assumeIsolated { self?.scheduleChange() }
         })
+    }
+
+    private var changePending = false
+
+    /// Coalesces bursts of KVO changes (progress ticks etc.) into one state update per run loop.
+    private func scheduleChange() {
+        guard !changePending else { return }
+        changePending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            changePending = false
+            onChange?()
+        }
     }
 
     /// Snapshot sent to the chrome as the `tab` event.
     var state: [String: Any] {
         [
-            "url": Self.displayURL(webView.url),
-            "title": webView.title ?? "",
+            "url": String(Self.displayURL(webView.url).prefix(4096)),
+            "title": String((webView.title ?? "").prefix(300)),
+            "secure": webView.url?.scheme == "https" && webView.hasOnlySecureContent,
             "loading": webView.isLoading,
             "progress": webView.estimatedProgress,
             "canGoBack": webView.canGoBack,
@@ -60,7 +74,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func setItems(remaining: Int, total: Int, url: String) {
         items = total > 0 ? (remaining, total, url) : nil
-        onChange?()
+        scheduleChange()
     }
 
     var displayTitle: String {
@@ -73,10 +87,23 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
         if navigationAction.request.url == StartPageSchemeHandler.customizeURL {
-            onOpenSettings?("startpage")
+            // Only the start page itself, navigating its own main frame, may open settings.
+            if Self.isTrustedCustomize(sourceProtocol: navigationAction.sourceFrame.securityOrigin.protocol,
+                                       targetIsMainFrame: navigationAction.targetFrame?.isMainFrame ?? false) {
+                onOpenSettings?("startpage")
+            }
             return .cancel
         }
         return .allow
+    }
+
+    static func isTrustedCustomize(sourceProtocol: String, targetIsMainFrame: Bool) -> Bool {
+        sourceProtocol == StartPageSchemeHandler.scheme && targetIsMainFrame
+    }
+
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        items = nil // the previous document's "(n items remaining)" no longer applies
+        scheduleChange()
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -103,9 +130,19 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
         onChange?()
     }
 
+    private var lastCrash: Date?
+
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        statusText = "The page crashed and was reloaded."
+        // Reload once; if it crashes again right away, stop instead of looping.
+        if let lastCrash, Date().timeIntervalSince(lastCrash) < 10 {
+            statusText = "The page crashed again. Click Refresh to try once more."
+            scheduleChange()
+            return
+        }
+        lastCrash = Date()
         webView.reload()
+        statusText = "The page crashed and was reloaded."
+        scheduleChange()
     }
 
     private static func isBenign(_ error: NSError) -> Bool {

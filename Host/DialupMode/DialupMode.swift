@@ -167,7 +167,7 @@ enum DialupModeRenderer {
         return filters
     }
 
-    static func apply(_ s: DialupModeSettings, to layoutView: BrowserLayoutView, page: WKWebView) {
+    static func apply(_ s: DialupModeSettings, to layoutView: BrowserLayoutView, page: WKWebView, pageScripts: DialupModePage) {
         let scale = layoutView.window?.backingScaleFactor ?? 2
         let target: NSView = s.includeChrome ? layoutView : page
         let other: NSView = s.includeChrome ? page : layoutView
@@ -177,7 +177,7 @@ enum DialupModeRenderer {
         target.contentFilters = filters(for: s, backingScale: scale)
         layoutView.scanlinesCoverChrome = s.includeChrome
         layoutView.scanlineView.isHidden = !(s.enabled && s.scanlines)
-        DialupModePage.apply(s, to: page, skin: PreferencesStore.shared.preferences.skin)
+        pageScripts.apply(s, to: page, skin: PreferencesStore.shared.preferences.skin)
     }
 }
 
@@ -207,8 +207,12 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         onStatus?(webView, remaining, total, url)
     }
 
+    /// Max time one picture takes to trickle in (shared with the settings preview via the catalog).
+    nonisolated static let pictureCapMs = 2500
+
     static func config(for s: DialupModeSettings, skin: String = "luna") -> [String: Any] {
         [
+            "capMs": pictureCapMs,
             "enabled": s.enabled,
             "bps": s.bitsPerSecond,
             "gifImages": s.enabled && s.colors == .gifImages,
@@ -228,19 +232,28 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         return pageScript.replacingOccurrences(of: "__CFG__", with: json)
     }
 
-    static func apply(_ s: DialupModeSettings, to webView: WKWebView, skin: String) {
+    private var lastSource: String?
+
+    /// Installs (and live-applies) the page script. No-op when nothing relevant changed, so
+    /// unrelated preference or backing-scale changes don't reinstall scripts or reset a trickle.
+    /// Note: live updates reach the main frame; iframes pick up changes on their next load.
+    func apply(_ s: DialupModeSettings, to webView: WKWebView, skin: String) {
         // No dark mode in 2003: pages render in light appearance while retro page touches are on.
         webView.appearance = (s.enabled && s.retroPage) ? NSAppearance(named: .aqua) : nil
+        let source = Self.script(for: s, skin: skin)
+        guard source != lastSource else { return }
+        let wasInstalled = lastSource != nil
+        lastSource = source
         let controller = webView.configuration.userContentController
-        let others = controller.userScripts.filter { !$0.source.contains(marker) }
+        let others = controller.userScripts.filter { !$0.source.contains(Self.marker) }
         controller.removeAllUserScripts()
         others.forEach(controller.addUserScript)
-        let source = script(for: s, skin: skin)
+        if !s.enabled && !wasInstalled { return } // never enabled: nothing to undo on the page
         if s.enabled {
             controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart,
-                                                  forMainFrameOnly: false, in: world))
+                                                  forMainFrameOnly: false, in: Self.world))
         }
-        webView.evaluateJavaScript(source, in: nil, in: world, completionHandler: nil)
+        webView.evaluateJavaScript(source, in: nil, in: Self.world, completionHandler: nil)
     }
 
     // Kept in one place so it's easy to tweak. `__CFG__` is replaced with the JSON config.
@@ -257,7 +270,7 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         let active = 0, total = 0, currentUrl = '', style = null, svg = null, lastPost = 0, postTimer = null;
         const MAX_PARALLEL = 4;   // browsers of the era opened a few connections at once
         const CSS_HIDE = 'img:not([data-dialup-shown]){visibility:hidden!important}';
-        const CSS_GIF = 'img,video{filter:url(#dialup-websafe)}';
+        const CSS_GIF = 'img{filter:url(#dialup-websafe)}';
         const CSS_FONTS = 'html,body,p,div,td,th,li,dd,dt,a,label,input,textarea,select,button,h1,h2,h3,h4,h5,h6,blockquote{font-family:Verdana,Tahoma,"Times New Roman",serif!important}'
           + 'pre,code,kbd,samp,tt{font-family:"Courier New",Courier,monospace!important}'
           + '*{-webkit-font-smoothing:none!important}';
@@ -339,11 +352,11 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         function pump() {
           while (active < MAX_PARALLEL && queue.length) {
             const img = queue.shift();
-            if (!img.isConnected) continue;
+            if (!img.isConnected) { show(img); continue; }
             active++;
             currentUrl = img.currentSrc || img.src;
             // Real speed, but capped, and the cap shrinks as the backlog grows: fun, not annoying.
-            const cap = Math.max(300, 2500 - queue.length * 100);
+            const cap = Math.max(300, (cfg.capMs || 2500) - queue.length * 100);
             const ms = Math.min(cap, Math.max(150, bytes(img) * 8 / cfg.bps * 1000));
             const base = cfg.gifImages ? 'url(#dialup-websafe) ' : '';
             show(img);
@@ -380,8 +393,25 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         document.addEventListener('load', (e) => { if (e.target instanceof HTMLImageElement) schedule(e.target); }, true);
         document.addEventListener('error', (e) => { if (e.target instanceof HTMLImageElement) show(e.target); }, true);
 
+        // Images loaded while detached (new Image(), lightboxes, lazy loaders, clones) never fire a
+        // load event the document can see, so catch them when they're inserted.
+        const adopt = (img) => {
+          if (seen.has(img) || !img.complete) return; // incomplete ones get a load event later
+          if (img.naturalWidth) schedule(img); else show(img); // broken: show alt/box
+        };
+        new MutationObserver((records) => {
+          if (!cfg.enabled || !cfg.bps) return;
+          for (const record of records) {
+            for (const node of record.addedNodes) {
+              if (node instanceof HTMLImageElement) adopt(node);
+              else if (node.querySelectorAll) node.querySelectorAll('img').forEach(adopt);
+            }
+          }
+        }).observe(document, { childList: true, subtree: true });
+
         return {
           update(next) {
+            const wasActive = !!(cfg.enabled && cfg.bps);
             cfg = next;
             if (!cfg.enabled) {
               if (style) style.remove();
@@ -397,8 +427,9 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
             if (!style.isConnected) attach(style);
             if (cfg.gifImages) ensureSvg();
             // Turned on mid-page: don't re-hide what's already loaded; the next page trickles in.
-            document.querySelectorAll('img').forEach((img) => { if (img.complete) { seen.add(img); show(img); } });
+            if (!wasActive) document.querySelectorAll('img').forEach((img) => { if (img.complete) { seen.add(img); show(img); } });
             if (!cfg.bps) queue.splice(0).forEach(show);
+            post(true); // a fresh page always reports, so a stale "(n items remaining)" clears
           },
         };
       }

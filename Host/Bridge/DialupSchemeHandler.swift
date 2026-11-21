@@ -5,7 +5,7 @@ import WebKit
 /// Only the chrome web view has this handler. Pages can't load dialup:// URLs.
 @MainActor
 final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
-    static let scheme = "dialup"
+    nonisolated static let scheme = "dialup"
 
     /// area ("chrome", later "skins", "toolbars") → folders searched in order (user folder first).
     private let roots: [String: [URL]]

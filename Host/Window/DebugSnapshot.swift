@@ -8,6 +8,7 @@ import WebKit
 @MainActor
 enum DebugSnapshot {
     static func scheduleIfRequested(chrome: WKWebView, page: WKWebView, in container: NSView) {
+        #if DEBUG
         guard let path = UserDefaults.standard.string(forKey: "DialupSnapshot") else { return }
         let delay = UserDefaults.standard.double(forKey: "DialupSnapshotDelay")
         let eval = UserDefaults.standard.string(forKey: "DialupChromeEval")
@@ -24,6 +25,7 @@ enum DebugSnapshot {
             }
             await write(chrome: chrome, page: page, container: container, to: URL(fileURLWithPath: path))
         }
+        #endif
     }
 
     private static func write(chrome: WKWebView, page: WKWebView, container: NSView, to url: URL) async {

@@ -9,6 +9,7 @@ const address = $('address');
 let tab = { url: '', title: '', loading: false, progress: 0, canGoBack: false, canGoForward: false, statusText: null };
 let hoverUrl = '';
 let addressDirty = false; // user has typed something we shouldn't overwrite
+let lastUrl = '';
 
 // ---------- Rendering ----------
 
@@ -43,9 +44,23 @@ function renderStatus() {
   $('status-text').textContent = text;
 }
 
-onEvent('tab', (state) => { tab = state; render(); });
+onEvent('tab', (state) => {
+  const navigated = state.url !== lastUrl;
+  const started = state.loading && !tab.loading;
+  tab = state;
+  lastUrl = state.url;
+  // A new page: drop text typed but never submitted (unless the user is still typing),
+  // and the hover URL of the link that was clicked.
+  if (navigated && document.activeElement !== address) addressDirty = false;
+  if (navigated || started) hoverUrl = '';
+  render();
+});
 onEvent('hoverLink', ({ url }) => { hoverUrl = url; renderStatus(); });
-onEvent('focusAddress', () => { address.focus(); address.select(); });
+onEvent('focusAddress', () => {
+  if (document.body.classList.contains('overlay-open')) return; // a dialog has focus
+  address.focus();
+  address.select();
+});
 
 // ---------- Address bar ----------
 
@@ -174,7 +189,7 @@ $('drop-dialup-mode').addEventListener('click', async (e) => {
 // ---------- Preferences, skins, settings ----------
 
 function applyPrefs(prefs = {}) {
-  const skin = prefs.skin || 'aqua';
+  const skin = prefs.skin || 'luna';
   if (document.body.dataset.skin !== skin) {
     document.body.dataset.skin = skin;
     $('skin-css').href = `skins/${skin}.css`;

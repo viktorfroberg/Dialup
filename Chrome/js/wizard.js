@@ -7,20 +7,25 @@ import { openDialog } from './overlay.js';
 
 let running = false;
 
-const EXPERIENCES = {
+// "broadband" and "full" are the host's 2003 and 1998 presets (single source: prefs.catalog).
+const experienceSettings = (id, catalog) => ({
   looks: { enabled: false },
-  broadband: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false,
-    retroPage: true, squareCorners: true, noShadows: false, noAnimations: false, underlineLinks: false },
-  full: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true,
-    retroPage: true, squareCorners: true, noShadows: true, noAnimations: false, underlineLinks: true },
-};
+  broadband: catalog.dialupPresets?.['2003'],
+  full: catalog.dialupPresets?.['1998'],
+}[id]);
+
+/** Which wizard answer matches the current Dial-up Mode setup (so re-running doesn't reset it). */
+const currentExperience = (d) => (!d.enabled ? 'looks' : d.connection === 'modem56k' ? 'full' : 'broadband');
 
 export async function openWizard() {
   if (running) return;
   running = true;
-  const prefs = await host.call('prefsGet');
+  const [prefs, dialup] = await Promise.all([host.call('prefsGet'), host.call('dialupModeGet')]);
+  const catalog = prefs.catalog || {};
   const original = { skin: prefs.skin };
-  const choice = { skin: prefs.skin || 'luna', experience: 'broadband', name: prefs.name || '', searchEngine: prefs.searchEngine || 'duckduckgo' };
+  // First run recommends early broadband; a re-run starts from the current setup.
+  const initialExperience = prefs.onboarded ? currentExperience(dialup) : 'broadband';
+  const choice = { skin: prefs.skin || 'luna', experience: initialExperience, name: prefs.name || '', searchEngine: prefs.searchEngine || 'duckduckgo' };
   const engines = prefs.catalog?.searchEngines || [{ id: 'duckduckgo', name: 'DuckDuckGo' }];
 
   const root = document.createElement('div');
@@ -102,7 +107,11 @@ export async function openWizard() {
 
   const finish = async () => {
     await host.call('prefsSet', { skin: choice.skin, name: choice.name, searchEngine: choice.searchEngine, onboarded: true });
-    await host.call('dialupModeSet', EXPERIENCES[choice.experience]);
+    // Only touch Dial-up Mode if the answer changed (a re-run keeps a custom setup).
+    if (!prefs.onboarded || choice.experience !== initialExperience) {
+      const settings = experienceSettings(choice.experience, catalog);
+      if (settings) await host.call('dialupModeSet', settings);
+    }
     dialog.close();
     running = false;
   };

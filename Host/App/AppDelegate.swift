@@ -26,7 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func openWindow() {
         let controller = BrowserWindowController()
         controller.onClose = { [weak self, weak controller] in
-            self?.windows.removeAll { $0 === controller }
+            // Defer: don't drop the last strong reference while the controller is still in windowWillClose.
+            DispatchQueue.main.async { self?.windows.removeAll { $0 === controller } }
         }
         windows.append(controller)
         controller.showWindow(nil)
