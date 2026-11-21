@@ -274,6 +274,9 @@ final class PageScriptTests: XCTestCase {
             visible = (result as? Bool) == true
         }
         XCTAssertTrue(visible, "a detached-then-inserted image must not stay hidden")
+        // The page script ran without a syntax error: its style sheet (incl. retro scrollbars) is in the page.
+        let css = try? await webView.evaluateJavaScript("document.getElementById('dialup-mode-style')?.textContent || ''") as? String
+        XCTAssertTrue(css?.contains("::-webkit-scrollbar-button:vertical:start:decrement") == true, "retro scrollbar CSS missing")
         _ = delegate
     }
 }

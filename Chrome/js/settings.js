@@ -54,7 +54,14 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
   panels.className = 'tab-panels';
   root.append(strip, panels);
 
-  const ctx = { draft, catalog, getCurrentUrl };
+  // Live preview: picking a skin restyles the whole browser right away; Cancel puts back
+  // whatever was last saved (OK/Apply keep it).
+  const previewSkin = (id) => {
+    if (!id || document.body.dataset.skin === id) return;
+    document.body.dataset.skin = id;
+    document.getElementById('skin-css').href = `skins/${id}.css`;
+  };
+  const ctx = { draft, catalog, getCurrentUrl, previewSkin };
   const byId = {};
   for (const [id, label, build] of tabs) {
     const tab = document.createElement('button');
@@ -102,6 +109,7 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
     onButton: async (value) => {
       if (value === 'apply') { await apply(); return false; }
       if (value === 'ok') await apply();
+      else previewSkin(baseline.prefs.skin); // Cancel / close box: undo the live preview
       current = null;
       return true;
     },
@@ -298,12 +306,12 @@ function startPageTab({ draft, catalog }) {
 
 // ---------- Appearance ----------
 
-function appearanceTab({ draft, catalog }) {
+function appearanceTab({ draft, catalog, previewSkin }) {
   const root = document.createElement('div');
   root.append(html`
     <fieldset>
       <legend>Skin</legend>
-      <p class="hint">Changes the whole browser: title bar, buttons, toolbars, menus and dialogs.</p>
+      <p class="hint">Changes the whole browser: title bar, buttons, toolbars, menus and dialogs. Click one to try it.</p>
       <div class="skin-cards"></div>
     </fieldset>
     <p class="hint">Want to make your own? Skins are plain CSS files in <code>Chrome/skins/</code>.</p>`);
@@ -321,7 +329,7 @@ function appearanceTab({ draft, catalog }) {
       <div class="skin-name">${skin.name}</div>`);
     cards.append(card);
   }
-  bind(root, draft);
+  bind(root, draft, (group, key) => { if (key === 'skin') previewSkin?.(draft.prefs.skin); });
   return root;
 }
 

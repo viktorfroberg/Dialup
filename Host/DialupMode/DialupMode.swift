@@ -290,20 +290,40 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         // Page touches. Safe set first; the rest are opt-in because they can change layouts.
         const svgArrow = (d) => `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='${d}' fill='%234d6185'/%3E%3C/svg%3E")`;
         const SCROLLBARS = {
-          luna: '::-webkit-scrollbar{width:17px!important;height:17px!important;background:#f3f1ec!important}'
-            + '::-webkit-scrollbar-track{background:#f3f1ec!important}'
-            + '::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#cad8fc,#bccdfa 45%,#aec2f8)!important;border:1px solid #93abe9!important;border-radius:3px!important;box-shadow:inset 1px 1px 0 #eef3ff!important}'
-            + '::-webkit-scrollbar-thumb:horizontal{background:linear-gradient(#cad8fc,#bccdfa 45%,#aec2f8)!important}'
-            + '::-webkit-scrollbar-thumb:vertical{background:repeating-linear-gradient(#eef3ff 0 1px,#8faaee 1px 2px) center/8px 8px no-repeat,linear-gradient(90deg,#cad8fc,#bccdfa 45%,#aec2f8)!important}'
-            + '::-webkit-scrollbar-thumb:vertical:hover{background:repeating-linear-gradient(#f4f8ff 0 1px,#8faaee 1px 2px) center/8px 8px no-repeat,linear-gradient(90deg,#d6e7ff,#c9daff 45%,#b9cdfb)!important}'
-            + '::-webkit-scrollbar-thumb:vertical:active{background:repeating-linear-gradient(#e2eaff 0 1px,#7b98e0 1px 2px) center/8px 8px no-repeat,linear-gradient(90deg,#b7c9f6,#a9bdf2 45%,#9ab0ee)!important}'
-            + '::-webkit-scrollbar-track{box-shadow:inset 1px 0 2px rgba(0,0,0,.08)!important}'
-            + '::-webkit-scrollbar-button:single-button{display:block!important;width:17px!important;height:17px!important;background-color:#cad8fc!important;border:1px solid #93abe9!important;border-radius:3px!important;background-repeat:no-repeat!important;background-position:center!important}'
-            + `::-webkit-scrollbar-button:single-button:vertical:decrement{background-image:${svgArrow('M0 6 4 2 8 6z')}!important}`
-            + `::-webkit-scrollbar-button:single-button:vertical:increment{background-image:${svgArrow('M0 2 4 6 8 2z')}!important}`
-            + `::-webkit-scrollbar-button:single-button:horizontal:decrement{background-image:${svgArrow('M6 0 2 4 6 8z')}!important}`
-            + `::-webkit-scrollbar-button:single-button:horizontal:increment{background-image:${svgArrow('M2 0 6 4 2 8z')}!important}`
+          // XP: light track, blue rounded thumb with a grip, blue arrow buttons at both ends.
+          // WebKit only draws buttons whose position is declared (start:decrement / end:increment).
+          luna: '::-webkit-scrollbar{width:17px!important;height:17px!important;background:#fdfdfa!important}'
+            + '::-webkit-scrollbar-track{background:linear-gradient(90deg,#f3f1ec,#fefefe 40%,#f7f6f2)!important;box-shadow:none!important}'
+            + '::-webkit-scrollbar-track:horizontal{background:linear-gradient(#f3f1ec,#fefefe 40%,#f7f6f2)!important}'
+            + '::-webkit-scrollbar-thumb{border:1px solid #6d8be0!important;border-radius:3px!important;box-shadow:inset 1px 1px 0 #f0f5ff,inset -1px -1px 0 #9cb3ee!important}'
+            + '::-webkit-scrollbar-thumb:vertical{background:repeating-linear-gradient(#f0f5ff 0 1px,#7f9de8 1px 2px) center/7px 8px no-repeat,linear-gradient(90deg,#bdd0fb,#a7bff8 55%,#9db6f5)!important}'
+            + '::-webkit-scrollbar-thumb:horizontal{background:repeating-linear-gradient(90deg,#f0f5ff 0 1px,#7f9de8 1px 2px) center/8px 7px no-repeat,linear-gradient(#bdd0fb,#a7bff8 55%,#9db6f5)!important}'
+            + '::-webkit-scrollbar-thumb:hover{filter:brightness(1.06)!important}'
+            + '::-webkit-scrollbar-thumb:active{filter:brightness(.94)!important}'
+            + '::-webkit-scrollbar-button{display:none!important}'
+            + '::-webkit-scrollbar-button:vertical:start:decrement,::-webkit-scrollbar-button:vertical:end:increment,'
+            + '::-webkit-scrollbar-button:horizontal:start:decrement,::-webkit-scrollbar-button:horizontal:end:increment'
+            + '{display:block!important;width:17px!important;height:17px!important;border:1px solid #6d8be0!important;border-radius:3px!important;'
+            + 'box-shadow:inset 1px 1px 0 #f0f5ff,inset -1px -1px 0 #9cb3ee!important;background-repeat:no-repeat!important;background-position:center!important}'
+            + `::-webkit-scrollbar-button:vertical:start:decrement{background:${svgArrow('M0 6 4 2 8 6z')} center no-repeat,linear-gradient(90deg,#bdd0fb,#a7bff8)!important}`
+            + `::-webkit-scrollbar-button:vertical:end:increment{background:${svgArrow('M0 2 4 6 8 2z')} center no-repeat,linear-gradient(90deg,#bdd0fb,#a7bff8)!important}`
+            + `::-webkit-scrollbar-button:horizontal:start:decrement{background:${svgArrow('M6 0 2 4 6 8z')} center no-repeat,linear-gradient(#bdd0fb,#a7bff8)!important}`
+            + `::-webkit-scrollbar-button:horizontal:end:increment{background:${svgArrow('M2 0 6 4 2 8z')} center no-repeat,linear-gradient(#bdd0fb,#a7bff8)!important}`
             + '::-webkit-scrollbar-corner{background:#f3f1ec!important}',
+          // Windows 98/2000: grey 3D buttons and thumb, dithered track.
+          classic: '::-webkit-scrollbar{width:16px!important;height:16px!important;background:#d4d0c8!important}'
+            + '::-webkit-scrollbar-track{background:repeating-conic-gradient(#d4d0c8 0 25%,#fff 0 50%) 0 0/2px 2px!important;box-shadow:none!important}'
+            + '::-webkit-scrollbar-thumb{background:#d4d0c8!important;border:1px solid!important;border-color:#dfdfdf #404040 #404040 #dfdfdf!important;border-radius:0!important;box-shadow:inset 1px 1px 0 #fff,inset -1px -1px 0 #808080!important}'
+            + '::-webkit-scrollbar-button{display:none!important}'
+            + '::-webkit-scrollbar-button:vertical:start:decrement,::-webkit-scrollbar-button:vertical:end:increment,'
+            + '::-webkit-scrollbar-button:horizontal:start:decrement,::-webkit-scrollbar-button:horizontal:end:increment'
+            + '{display:block!important;width:16px!important;height:16px!important;border:1px solid!important;border-color:#dfdfdf #404040 #404040 #dfdfdf!important;border-radius:0!important;box-shadow:inset 1px 1px 0 #fff,inset -1px -1px 0 #808080!important}'
+            + `::-webkit-scrollbar-button:vertical:start:decrement{background:${svgArrow('M0 6 4 2 8 6z').replace('%234d6185','%23000')} center no-repeat,#d4d0c8!important}`
+            + `::-webkit-scrollbar-button:vertical:end:increment{background:${svgArrow('M0 2 4 6 8 2z').replace('%234d6185','%23000')} center no-repeat,#d4d0c8!important}`
+            + `::-webkit-scrollbar-button:horizontal:start:decrement{background:${svgArrow('M6 0 2 4 6 8z').replace('%234d6185','%23000')} center no-repeat,#d4d0c8!important}`
+            + `::-webkit-scrollbar-button:horizontal:end:increment{background:${svgArrow('M2 0 6 4 2 8z').replace('%234d6185','%23000')} center no-repeat,#d4d0c8!important}`
+            + '::-webkit-scrollbar-button:active{border-color:#808080!important;box-shadow:none!important}'
+            + '::-webkit-scrollbar-corner{background:#d4d0c8!important}',
           aqua: '::-webkit-scrollbar{width:15px!important;height:15px!important;background:#ececec!important}'
             + '::-webkit-scrollbar-track{background:linear-gradient(90deg,#cfcfcf,#f2f2f2 40%,#fbfbfb)!important;box-shadow:inset 1px 0 2px rgba(0,0,0,.25)!important}'
             + '::-webkit-scrollbar-track:horizontal{background:linear-gradient(#cfcfcf,#f2f2f2 40%,#fbfbfb)!important}'
