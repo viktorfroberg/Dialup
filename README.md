@@ -108,7 +108,7 @@ NSWindow (full-size content, native buttons hidden)
 
 ## Make it yours
 
-**Skins are CSS.** Each skin is one file in [`Chrome/skins/`](Chrome/skins/) (`luna.css`, `aqua.css`, `classic.css`) on top of `Chrome/base.css`. `base.css` declares the variables (`--face`, `--rebar-bg`, `--icon-back`…) and lists the class names in its header comment. Copy a skin, change it, and add its id to `Preferences.skins` in `Host/App/Preferences.swift`.
+**Skins are CSS.** Each skin is one file in [`Chrome/skins/`](Chrome/skins/) (`luna.css`, `aqua.css`, `classic.css`) on top of `Chrome/base.css`. `base.css` declares the variables (`--face`, `--rebar-bg`, `--icon-back`…) and lists the class names in its header comment. Tweaking a built-in skin is just editing its CSS. Adding a brand-new skin today means copying one and registering its id in `Host/App/Preferences.swift` (plus a few per-skin touches in the wizard and page scrollbars). Installable user skins from a folder are planned; see [docs/EXTENDING-PROPOSAL.md](docs/EXTENDING-PROPOSAL.md).
 
 **Hack on the UI without Xcode.** The chrome runs in any browser with a fake host:
 
