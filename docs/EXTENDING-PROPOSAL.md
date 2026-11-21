@@ -54,7 +54,7 @@ On disk:
 - **`AddonRegistry` (Swift, new, `Host/Addons/`).** Scans the folders at launch and on change (FSEvents), validates manifests and feeds `Preferences.catalog`. `catalog.skins` gets user entries with `"user": true`, and `sanitize()` checks the registry instead of the static array.
 - **`DialupSchemeHandler.bundled()`** becomes `roots: ["chrome": [bundle], "skins": [bundle/skins, user/Skins], "toolbars": [user/Toolbars], "sdk": [bundle/sdk]]`. `resolve` switches to `resolvingSymlinksInPath()` for both the root and the candidate. Add a test next to `testRefusesTraversalAndUnknownAreas`.
 - **`.dialupaddon` = zip of one add-on folder.** Register the UTType in the Info.plist so a double-click opens Dialup. Dialup unzips into a temp folder, **rejects symlinks, absolute paths and files over 5 MB**, shows a retro confirmation dialog through `overlay.js`, then moves the folder into place.
-- **An "Add-ons" tab in Dialup Options** (`settings.js` `tabs` array). Sections for Skins, Toolbars, Sounds, Start Page, Page Styles & Scripts. Each row has a toggle, Remove, "Show in Finder" and Permissions… Footer buttons: **Get more…** (the gallery, §4), **Install from file…**, **Open Add-ons Folder**.
+- **An "Add-ons" tab in Dialup Options** (`settings.js` `tabs` array). Sections for Skins, Toolbars, Sounds, Start Page, Page Styles & Scripts. Each row has a toggle, Remove, "Show in Finder" and Permissions… Footer buttons: **Browse catalogs…** (optional subscriptions, §4), **Install from file…**, **Open Add-ons Folder**.
 - **New host commands:** `addonsList`, `addonSetEnabled {id, enabled}`, `addonRemove {id}`, `addonInstall` (native open panel), `addonReveal {id}`. New events: `addons` (registry changed) and `skinReloaded {id}`.
 - **Chrome CSP** in `index.html`:
   ```html
@@ -102,7 +102,12 @@ Rules: within v1, names are only ever added, never renamed. A rename bumps `skin
 
 **Hot reload for authors.** `AddonRegistry` watches the *active* skin's folder. On change it emits `skinReloaded`, and the chrome sets `href = …/skin.css?t=<now>`. `Cache-Control: no-cache` is already sent. Combined with the existing Web Inspector, authors can edit in an editor and see changes on save. For quick iteration without the app, the existing `mock-host.js` workflow can accept `?skin=path/to/folder`.
 
-**Security.** CSS only, no JS, enforced by CSP. A skin **can** fake the padlock or hide the address bar. We accept that and say so in the install dialog ("Skins change everything you see, including the security padlock. Install skins from people you trust."). Gallery review (§4) is the mitigation. Making security UI skin-proof would cost too much of the "everything is CSS" charm.
+**Security.** CSS only, no JS, enforced by CSP. **Decision: skins may restyle almost everything, but not the security indicators.**
+- The padlock lives in a protected component (a closed shadow root, `<dialup-security>`) that skin selectors can't reach. Skins may change only `--security-icon-size` and `--security-accent`; its icon and states (secure, mixed, none) are owned by the app.
+- When a skin is applied, the chrome checks that the padlock cell and the address field are visible, uncovered (`elementFromPoint` at their centres) and not shrunk below a minimum size. If not, the skin is **refused** with a plain message ("This skin hides security information, so Dialup won't use it"), and the previous skin stays.
+- The address field always shows the real URL including the scheme; skins can style the field but not its text content.
+- Skins can't ship lock-shaped images under protected names, and the install dialog states that skins can't change security information.
+This keeps "everything is CSS" for looks while making sure a pretty theme can't double as a phishing kit.
 
 ### 3.2 Toolbar add-ons ("toolbars")
 
@@ -173,14 +178,14 @@ dialup.theme();                    // a few skin colors/fonts, so bands match th
 ==/UserStyle== */
 body { font-size: 14px !important; }
 ```
-The host compiles enabled styles into one `WKUserScript` in a `dialup-userstyles` content world. The script checks `@match` against `location` and attaches a `<style>`, the same way `DialupModePage` already attaches `dialup-mode-style`. WebKit has no public per-URL user stylesheet API, so self-matching is the honest approach. The Add-ons tab also gets "Edit style for this site…", which opens a small dialog with a textarea. That's the Stylus experience without Stylus. Risk: the CSS sees the page but can't read it, apart from CSS exfiltration through `url()` on attribute selectors, which matters only for styles from strangers. Gallery styles get flagged if they contain remote `url()`.
+The host compiles enabled styles into one `WKUserScript` in a `dialup-userstyles` content world. The script checks `@match` against `location` and attaches a `<style>`, the same way `DialupModePage` already attaches `dialup-mode-style`. WebKit has no public per-URL user stylesheet API, so self-matching is the honest approach. The Add-ons tab also gets "Edit style for this site…", which opens a small dialog with a textarea. That's the Stylus experience without Stylus. Risk: the CSS sees the page but can't read it, apart from CSS exfiltration through `url()` on attribute selectors, which matters only for styles from strangers. The install dialog warns when a shared style loads anything remote via `url()`.
 
 **User scripts (yes, but gated).** User scripts are code with **full power over every site they match**, including password fields. Rules:
 - Off unless **Developer Mode** is turned on in the Add-ons tab, with an explanation.
 - `@match` is required and shown at install ("can read and change: news.ycombinator.com").
 - Each script runs in **its own** named `WKContentWorld` (`userscript-<id>`), so page JavaScript can't see or tamper with it, and scripts can't see each other.
 - No message handler at all in v1: no `GM_xmlhttpRequest` and no bridge. Scripts can only do what the page itself could do.
-- Not distributed through the gallery. Point people to Greasy Fork and make them choose deliberately.
+- Not installable from links or catalogs. Point people to Greasy Fork and make them choose deliberately.
 
 ### 3.4 Start page themes and widgets
 
@@ -204,7 +209,7 @@ The Dial-up Mode tab gets **Save as Preset…**, **Copy Share Code** and **Paste
 { "id": "win98-ish", "name": "Desktop '98", "version": "1.0.0", "type": "sounds",
   "sounds": { "click": "click.wav", "complete": "done.m4a", "modem": "handshake.m4a" } }
 ```
-Any sound that isn't listed falls back to the synthesized one. In `SoundEffects.buffer(for:)`, check the active pack first, then decode with `AVAudioFile` into the same cached `AVAudioPCMBuffer` path. Limits: 3 s per UI sound, 45 s for modem, 5 MB per pack. Licensing note in the docs and gallery rules: **no ripped OS sounds**, only original or CC-licensed recordings.
+Any sound that isn't listed falls back to the synthesized one. In `SoundEffects.buffer(for:)`, check the active pack first, then decode with `AVAudioFile` into the same cached `AVAudioPCMBuffer` path. Limits: 3 s per UI sound, 45 s for modem, 5 MB per pack. Licensing note in the docs and the install dialog: **no ripped OS sounds**, only original or CC-licensed recordings.
 
 ### 3.7 Search engines, and profile import/export
 
@@ -220,9 +225,9 @@ Keywords (`w spacejam` searches Wikipedia) go in `AddressResolver`. That's small
   "prefs": { "skin": "luna-olive", "searchEngine": "duckduckgo", "customEngines": [], "quickLinks": [] },
   "dialupMode": { "enabled": false, "connection": "modem56k" },
   "sounds": { "enabled": true, "pack": "win98-ish" },
-  "addons": [{ "id": "luna-olive", "version": "1.0.0", "source": "gallery" }] }
+  "addons": [{ "id": "luna-olive", "version": "1.0.0", "source": "https://example.org/luna-olive-1.0.0.dialupaddon" }] }
 ```
-- It contains **references** to add-ons, not their code. Import offers to fetch the missing ones from the gallery.
+- It contains **references** to add-ons, not their code. Import offers to fetch the missing ones from their original URLs.
 - No cookies, history or website data, ever.
 - Import goes straight through the existing tolerant `merging()` decoders.
 
@@ -243,27 +248,27 @@ The page boundary still holds: extensions run in WebKit's own extension contexts
 
 **Recommendation:** do it last, as "Experimental: load unpacked MV3 folder". Cover the main reason people want extensions (blocking ads) earlier with built-in `WKContentRuleList` blocking, which is native, fast and S–M effort. Keep the custom toolbar system anyway. Persistent inline rebar bands aren't a WebExtension concept, and they're the retro charm. The rule between the two: **toolbars never touch the page DOM, and WebExtensions never draw rebar bands.**
 
-## 4. Distribution: the Dialup Add-on Gallery
+## 4. Distribution: share anywhere, no central gallery
 
-Keep it hobby-sized: **one public GitHub repo plus GitHub Pages, no server and no accounts.**
+**Decision (owner):** sharing happens *outside* our repo. We don't run a store or approve add-ons. An add-on is a file, and people pass files around the way they did in 2003.
 
-- `dialup-addons/` holds one folder per add-on. Authors open a PR, and the owner reviews it (it's a hobby; a review is reading 50 lines of CSS).
-- A GitHub Action validates manifests, zips each add-on into `.dialupaddon`, computes its sha256, and writes `index.json`:
+- **The file is the unit.** A `.dialupaddon` is a zip with `manifest.json` at the root. Authors host it anywhere: a personal site, Neocities, a GitHub release, a forum post, an email. Double-clicking it opens Dialup's install dialog.
+- **Install links.** Any web page can offer a "Get it for Dialup" button: `dialup-install:https://example.neocities.org/luna-olive-1.0.0.dialupaddon`. Dialup downloads it, shows the install dialog and **always asks**: no silent installs, no installing from inside an iframe, and a click is required. The download is checked against an optional `#sha256=` fragment in the link.
+- **The install dialog is the trust UI.** It shows the name, author, type, a preview, the source host, and in plain words what the add-on can do. Trust follows **capability**, not origin:
+  - Data (skins, sound packs, presets, start page themes, search engines) can't run code. One click to install, one click to remove.
+  - Toolbars list their permissions ("read the current page's address", "talk to api.example.com") and need explicit consent. A new version that wants more permissions asks again.
+  - Page styles warn if they load anything remote (`url()` to another host).
+  - Page scripts and WebExtensions can't be installed this way, only from a local folder in Developer Mode.
+- **Community catalogs (optional, decentralized).** Anyone can publish a catalog: a static `catalog.json` listing add-ons with URLs and sha256 hashes, optionally signed with the catalog's own Ed25519 key. Users can **subscribe** to catalogs they trust (Settings → Add-ons → Catalogs…), which pins the key on first subscribe, much like webrings or old shareware archives. Dialup ships with **no catalog enabled by default**; if we publish one, it's just one of many.
   ```json
-  { "gallery": 1, "generated": "2026-11-21T10:00:00Z", "addons": [
-    { "id": "luna-olive", "type": "skin", "name": "Luna Olive", "version": "1.0.0", "author": "jane",
-      "preview": "luna-olive/preview.png", "url": "luna-olive-1.0.0.dialupaddon",
-      "sha256": "9f2c…", "permissions": [] } ] }
+  { "catalog": 1, "name": "Modem Lovers' Add-ons", "url": "https://example.org/catalog.json",
+    "addons": [ { "id": "luna-olive", "type": "skin", "name": "Luna Olive", "version": "1.0.0",
+                  "author": "jane", "url": "https://example.org/luna-olive-1.0.0.dialupaddon",
+                  "sha256": "9f2c…", "preview": "https://example.org/luna-olive.png", "permissions": [] } ] }
   ```
-- `index.json` is **signed with Ed25519** (minisign-style detached `index.json.sig`). The public key is compiled into the app, and verification takes about 10 lines with CryptoKit `Curve25519.Signing`. This protects against a hijacked Pages site or repo without needing per-author keys. Per-file sha256 values chain from the signed index.
-- **In the app:** "Get more…" opens a retro gallery dialog that fetches the index **only when opened**. No background polling and no telemetry. Updates are checked at the same moment. A new version that asks for new permissions needs consent again.
-- **Trust tiers, shown as badges:**
-  - Data (skins, sounds, presets, start themes, engines): fast review.
-  - Toolbars: code read, network hosts checked.
-  - User styles: allowed if there are no remote `url()`s.
-  - User scripts and WebExtensions: not hosted.
-- **Kill switch:** the index can carry `"revoked": ["id@version"]`, and the app disables those on the next gallery open.
-- **Manual install** of any `.dialupaddon` always works, with an "Unverified add-on" line in the confirmation dialog.
+- **No background traffic.** Catalogs are only fetched when the user opens the Add-ons browser or presses "Check for updates". No telemetry, accounts, ratings or comments.
+- **Sharing out is built in.** "Export…" on any installed or self-made skin, preset or page style writes a `.dialupaddon` the user can post anywhere. Presets also get short share codes for pasting into forums.
+- **Ids and updates.** An add-on's id is `author.name` (reverse-DNS style allowed). Installing a different author's add-on with the same id is treated as a different add-on, never as an update. Updates come only from the URL the add-on was installed from (or a subscribed catalog).
 
 ## 5. Roadmap
 
@@ -274,7 +279,7 @@ Keep it hobby-sized: **one public GitHub repo plus GitHub Pages, no server and n
 | **2. Add-ons tab** | Settings tab, `.dialupaddon` double-click install, sound packs, start page themes | M | Non-developers can install things |
 | **3. Toolbars** | Data-driven rebar, drag + Lock, View → Toolbars, SDK + broker, 4 bundled samples | L | The headline feature, on solid ground |
 | **4. Pages** | `WKContentRuleList` blocking; user styles + "Edit style for this site"; user scripts behind Developer Mode | M | Power-user asks, kept sandboxed |
-| **5. Gallery** | Repo + Action + signed index + in-app browser | M | Only once there are about 10 add-ons worth listing |
+| **5. Sharing** | `dialup-install:` links, Export as `.dialupaddon`, optional catalog subscriptions with pinned keys | M | Lets people share without us running anything |
 | **6. WebExtensions** | Experimental unpacked MV3 | L | Only if users ask after phase 4 |
 
 **Build first:** phase 0 plus user skins with `base` inheritance and hot reload. A day or two of work turns "Skins are plain CSS files in `Chrome/skins/`" (the current hint in `settings.js`, which points into the app bundle) into something real.
@@ -285,14 +290,14 @@ Keep it hobby-sized: **one public GitHub repo plus GitHub Pages, no server and n
 - **No add-on access to `host.call`, not even "read-only".** The broker maps a fixed menu, and new capabilities mean new named permissions.
 - **No remote code.** No toolbar that is just an `https://` URL, and no remote `script-src`. Reviewed code must equal running code.
 - **No build step, npm, or SDK package** for add-on authors. One folder, one JSON file, done.
-- **No background update checks or telemetry**, no accounts, no ratings or comments in the gallery.
+- **No background update checks or telemetry**, no accounts, no ratings or comments.
 - **Don't write our own ad-block engine or reimplement `chrome.*` APIs** in the custom system.
 - **Don't promise sync or password managers.** Export files and iCloud Drive are the honest answer.
 
 ### Open questions for the owner
 
-1. Will you personally review gallery PRs? If not, should the gallery list data add-ons only?
-2. Is it OK that skins can fake the padlock, given the warning plus review? Or should the status-bar security cell be drawn in a host-protected layer?
+1. ~~Central gallery?~~ **Decided:** no central gallery; sharing is decentralized (§4).
+2. ~~Can skins fake the padlock?~~ **Decided:** no; security indicators are protected and checked (§3.1).
 3. Spike needed: does WebKit honor a `Content-Security-Policy` **response header** from a `WKURLSchemeHandler` for sandboxed iframes? If not, inject a `<meta>` CSP when serving `band.html`, and reject add-on HTML that tries to override it.
 4. Should user scripts ship at all, or should we wait for WebExtensions and recommend Violentmonkey?
 5. Should manifests support localized names now (`"name": {"en": …, "sv": …}`), or wait?
