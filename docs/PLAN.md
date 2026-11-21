@@ -55,7 +55,7 @@ browser/
 ## Phases (commit per phase, `git init` in `~/hacks/browser`)
 0. **Spike: prove the risky parts (1–2 days).** Window + chrome view + one page view sized from insets. Address bar, back/forward/stop/reload, throbber, progress and hover-link text in the status bar. Cmd-L / Enter / Esc focus round-trip. One NSMenu popup from chrome (back-history dropdown).
    *Exit criteria:* no focus traps, live resize doesn't lag, typing in the page never triggers chrome shortcuts. If focus can't be made solid, fall back to SwiftUI-drawn chrome. Skins would then be JSON + 9-slice images, and toolbars would stay HTML in a sidebar.
-1. **Tabs:** TabStore, tab strip (hidden when there's 1 tab, a pref), Cmd-T/W/Shift-Cmd-[ ], `target=_blank`/`window.open` → new tab via `WKUIDelegate`, session restore with lazily created web views, multiple windows.
+1. **Tabs (with a choice):** a new `tabs` preference, asked in the Setup Wizard ("Tabs, like Firefox 1.0" or "One page per window, like 2001") and in Settings → General. With tabs off, ⌘T and target=_blank open cascading new windows and the tab strip is hidden. The tab strip is styled per skin. Also: TabStore, tab strip (hidden when there's 1 tab, a pref), Cmd-T/W/Shift-Cmd-[ ], `target=_blank`/`window.open` → new tab via `WKUIDelegate`, session restore with lazily created web views, multiple windows.
 2. **Skins:** registry, the two bundled skins, live switch, mock host, `skin-api.md`.
 3. **Toolbars:** registry, sandbox + permission gate, rebar layout, Search bar (multiple providers) and Links bar, `toolbar-api.md`.
 4. **Era features:** Favorites (menu, bar and sidebar), History sidebar, downloads (`WKDownload`) in the status bar, find in page, zoom, address autocomplete panel, element fullscreen enabled.
