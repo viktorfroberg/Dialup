@@ -45,8 +45,8 @@ The whole browser UI is plain HTML and CSS, with no build step. A skin is one CS
     <td align="center"><b>Setup Wizard</b> on first run</td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/start-page-luna.png" alt="The built-in start page in the Luna skin: modem logo, search box, favourites, webring and 88x31 buttons"></td>
-    <td><img src="docs/screenshots/start-page-aqua.png" alt="The same start page in the Aqua skin, with pinstripes and a glossy Search button"></td>
+    <td><img src="docs/screenshots/start-page-luna.png" alt="The built-in start page in the Luna skin: a 2004-style search page with search tabs, your favorites and a site of the day"></td>
+    <td><img src="docs/screenshots/start-page-aqua.png" alt="The same start page in the Aqua skin, with Aqua-style buttons"></td>
   </tr>
   <tr>
     <td align="center"><b>Start page</b>, hand-made at 800×600</td>
