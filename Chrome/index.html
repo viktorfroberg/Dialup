@@ -53,6 +53,7 @@
           <button class="tb" id="btn-home" data-tip="Home"><i class="ico ico-home"></i></button>
           <span class="tb-sep"></span>
           <button class="tb has-label" id="btn-favorites" data-tip="Favorites"><i class="ico ico-favorites"></i><span class="label">Favorites</span></button>
+          <button class="tb has-label" id="btn-wayback" data-tip="Wayback: see this page as it looked years ago"><i class="ico ico-wayback"></i><span class="label">Wayback</span></button>
           <span class="split" id="dialup-mode">
             <button class="tb has-label toggle" id="btn-dialup-mode" data-tip="Dial-up Mode: browse like it's 1999 (⇧⌘D)"><i class="ico ico-dialup-mode"></i><span class="label">Dial-up</span></button>
             <button class="tb drop" id="drop-dialup-mode" data-tip="Dial-up Mode settings"></button>
@@ -80,6 +81,12 @@
       <div class="band" id="band-links">
         <div class="links-bar" id="links-bar"></div>
       </div>
+    </div>
+
+    <!-- Tab strip (shown with 2+ tabs, when tabs are turned on) -->
+    <div id="tabstrip" hidden>
+      <div class="tabs-list" id="tabs-list"></div>
+      <button class="tab-new" id="tab-new" data-tip="New Tab (⌘T)"></button>
     </div>
   </header>
 

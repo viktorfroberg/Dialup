@@ -4,6 +4,7 @@ import { openSettings } from './settings.js';
 import { openWizard } from './wizard.js';
 import { initMenus, renderLinksBar } from './menus.js';
 import './tooltips.js';
+import { renderTabs } from './tabs.js';
 
 const $ = (id) => document.getElementById(id);
 const address = $('address');
@@ -153,6 +154,22 @@ $('addr-drop').addEventListener('mousedown', async (e) => {
   ];
   const picked = await showMenu(items.length ? items : [{ title: '(No recent addresses)', enabled: false }], box.left, box.bottom);
   if (picked) host.call('navigate', { input: picked });
+});
+
+// Wayback: see this page as the Wayback Machine saw it in a given year.
+$('btn-wayback').addEventListener('click', async (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  const ok = /^https?:/.test(tab.url || '');
+  const years = [1996, 1998, 2000, 2001, 2003, 2005, 2008, 2010, 2015];
+  const picked = await showMenu(ok ? [
+    { title: 'Show this page as it was in…', enabled: false },
+    ...years.map((y) => ({ id: `year:${y}`, title: String(y) })),
+    { separator: true },
+    { id: 'all', title: 'All snapshots…' },
+  ] : [{ title: 'Open a web page first', enabled: false }], r.left, r.bottom + 1);
+  if (!picked) return;
+  if (picked === 'all') host.call('navigate', { input: `https://web.archive.org/web/*/${tab.url}` });
+  else host.call('wayback', { year: Number(picked.split(':')[1]) });
 });
 
 // Search field (Mac-style skins)
@@ -332,6 +349,7 @@ const init = await host.call('ready');
 if (init?.tab) { tab = init.tab; render(); }
 renderWindowState(init?.window);
 renderDialupMode(init?.dialupMode ?? {});
+renderTabs(init?.tabs);
 applyPrefs(init?.prefs);
 soundsOn = init?.sounds !== false;
 renderSounds();

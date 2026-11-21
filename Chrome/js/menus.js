@@ -52,9 +52,14 @@ async function openMenu(title) {
 const menus = {
   file: () => [
     { id: 'action:newWindow', title: 'New Window' },
+    ...(ctx.getPrefs().tabs === false ? [] : [{ id: 'newTab', title: 'New Tab' }]),
     { id: 'location', title: 'Open Location…' },
     { separator: true },
-    { id: 'action:performClose', title: 'Close' },
+    ...(ctx.getPrefs().tabs === false ? [] : [{ id: 'closeTab', title: 'Close Tab' }]),
+    { id: 'action:performClose', title: 'Close Window' },
+    { separator: true },
+    { id: 'import', title: 'Import Bookmarks…' },
+    { id: 'export', title: 'Export Bookmarks…' },
   ],
   edit: () => [
     { id: 'action:cut', title: 'Cut' },
@@ -78,6 +83,7 @@ const menus = {
     { id: 'settings:general', title: 'Dialup Options…' },
     { id: 'wizard', title: 'Setup Wizard…' },
     { separator: true },
+    { id: 'wayback', title: 'Wayback Machine', enabled: /^https?:/.test(ctx.getTab().url || '') },
     { id: 'settings:privacy', title: 'Delete Browsing History…' },
     { id: 'sounds', title: 'Sounds', checked: ctx.getSounds() },
   ],
@@ -107,6 +113,11 @@ function run(id) {
   const [kind, arg] = id.split(':');
   const tab = ctx.getTab();
   if (kind === 'action') host.call('menuAction', { action: arg });
+  else if (kind === 'newTab') host.call('newTab');
+  else if (kind === 'closeTab') host.call('closeTab', { id: tab.id });
+  else if (kind === 'import') host.call('importBookmarks');
+  else if (kind === 'export') host.call('exportBookmarks');
+  else if (kind === 'wayback') host.call('navigate', { input: `https://web.archive.org/web/*/${tab.url}` });
   else if (kind === 'location') ctx.focusAddress();
   else if (kind === 'stop') host.call('stop');
   else if (kind === 'reload') host.call('reload');

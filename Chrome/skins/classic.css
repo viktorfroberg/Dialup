@@ -1,0 +1,559 @@
+/*
+ * Classic: a Windows 98/2000-era skin (think IE5 on a grey desktop).
+ * Face #d4d0c8, square two-pixel bevels everywhere, a navy-to-sky gradient caption,
+ * flat "coolbar" toolbar buttons that rise on hover and sink on press, etched rebar bands,
+ * double-line grippers, sunken status panes and navy menu highlights. No rounded corners.
+ * Everything is drawn with CSS (plus a few tiny pixel-art SVGs named classic-*).
+ */
+
+:root {
+  --font: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-size: 11px;
+  --text: #000;
+  --text-disabled: #808080;
+
+  --face: #d4d0c8;
+  --face-light: #fff;
+  --face-shadow: #808080;
+  --face-dark: #404040;
+
+  --rebar-bg: #d4d0c8;
+  --band-divider: #fff;
+  --band-divider-shadow: #808080;
+  --button-hover-bg: transparent;
+  --button-hover-border: transparent;
+  --button-active-bg: transparent;
+
+  --field-bg: #fff;
+  --field-border: #808080;
+
+  --status-bg: #d4d0c8;
+  --progress-fill: repeating-linear-gradient(90deg, #0a246a 0 8px, transparent 8px 10px);
+
+  --titlebar-height: 18px;
+  --titlebar-bg: linear-gradient(90deg, #0a246a, #a6caf0);
+  --titlebar-bg-inactive: linear-gradient(90deg, #808080, #c0c0c0);
+  --titlebar-text: #fff;
+  --titlebar-text-inactive: #d4d0c8;
+
+  --menu-bg: #d4d0c8;
+  --menu-border: #808080;
+  --menu-hover-bg: #0a246a;
+  --menu-hover-text: #fff;
+  --dialog-frame: #d4d0c8;
+  --frame: #d4d0c8;
+  --frame-inactive: #d4d0c8;
+  --menu-pick-delay: 0ms;
+  --tip-delay: 500ms;
+
+  /* The four-colour 3D edges (first shadow listed paints on top, so corners come out right) */
+  --bevel-raised:  inset -1px -1px #404040, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  --bevel-window:  inset -1px -1px #404040, inset 1px 1px #d4d0c8, inset -2px -2px #808080, inset 2px 2px #fff;
+  --bevel-sunken:  inset 1px 1px #808080, inset -1px -1px #fff, inset 2px 2px #404040, inset -2px -2px #d4d0c8;
+  --bevel-pressed: inset 1px 1px #404040, inset -1px -1px #fff, inset 2px 2px #808080, inset -2px -2px #dfdfdf;
+  --bevel-default: inset 0 0 0 1px #000, inset -2px -2px #404040, inset 2px 2px #fff, inset -3px -3px #808080, inset 3px 3px #dfdfdf;
+  --bevel-default-pressed: inset 0 0 0 1px #000, inset 0 0 0 2px #808080;
+
+  /* Pixel art */
+  --classic-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' shape-rendering='crispEdges'%3E%3Cpath fill='%23d4d0c8' d='M0 0h9v9H0z'/%3E%3Cpath fill='%23fff' d='M1 1h7v1H2v6H1z'/%3E%3Cpath fill='%23808080' d='M7 1h1v7H1V7h6z'/%3E%3Cpath fill='%23404040' d='M8 0h1v9H0V8h8z'/%3E%3C/svg%3E");
+  --classic-close: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1H0zM6 0h2v1H6zM1 1h2v1H1zM5 1h2v1H5zM2 2h4v1H2zM3 3h2v1H3zM2 4h4v1H2zM1 5h2v1H1zM5 5h2v1H5zM0 6h2v1H0zM6 6h2v1H6z'/%3E%3C/svg%3E");
+  --classic-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v1H6zM5 1h2v1H5zM0 2h1v1H0zM4 2h3v1H4zM0 3h2v1H0zM3 3h3v1H3zM0 4h5v1H0zM1 5h3v1H1zM2 6h1v1H2z'/%3E%3C/svg%3E");
+  --classic-grip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath stroke='%23fff' d='M11.5 .5L.5 11.5M11.5 4.5L4.5 11.5M11.5 8.5L8.5 11.5'/%3E%3Cpath stroke='%23808080' d='M11.5 1.5L1.5 11.5M11.5 2.5L2.5 11.5M11.5 5.5L5.5 11.5M11.5 6.5L6.5 11.5M11.5 9.5L9.5 11.5M11.5 10.5L10.5 11.5'/%3E%3C/svg%3E");
+  --classic-arrow: url(../img/classic-arrow.svg);
+  --classic-combo: url(../img/classic-combo.svg);
+}
+
+/* No rounded corners anywhere (radios stay round; the page-touches and skin previews keep theirs) */
+body *:not(input[type=radio]):not(.touches-preview *):not(.mini-window *) { border-radius: 0 !important; }
+
+/* ======================================================================
+   Window frame + caption
+   ====================================================================== */
+
+/* 4px raised sizing frame on all four sides (centre of the border-image is not filled,
+   so the page still shows through #viewport) */
+body {
+  border: 4px solid #d4d0c8;
+  border-image: var(--classic-frame) 4 / 4px;
+}
+body.inactive { border-color: #d4d0c8; }
+body.zoomed, body.fullscreen { border-width: 0; }
+body.zoomed #statusbar .sizer { visibility: hidden; }
+
+#titlebar {
+  height: var(--titlebar-height);
+  margin: 0 0 1px;
+  padding: 0 2px;
+  gap: 3px;
+  border-radius: 0;
+  background: var(--titlebar-bg);
+  color: var(--titlebar-text);
+  font: bold 11px var(--font);
+  text-shadow: none;
+}
+body.inactive #titlebar { background: var(--titlebar-bg-inactive); color: var(--titlebar-text-inactive); text-shadow: none; }
+#titlebar .app-icon { width: 16px; height: 16px; }
+
+/* Caption buttons: 16x14 grey squares, black glyphs, close set 2px apart */
+.caption-buttons { gap: 0; align-items: center; }
+.cap, .cap-close, .dialog-caps .cap {
+  width: 16px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow: var(--bevel-raised);
+  filter: none;
+  opacity: 1;
+}
+.cap-close { margin-left: 2px; }
+.cap:hover, body.inactive .cap { filter: none; opacity: 1; }
+.cap:active { filter: none; box-shadow: var(--bevel-pressed); }
+.cap:active::before, .cap:active::after { translate: 1px 1px; }
+
+.cap::before, .cap::after { content: none; }
+.cap-min::before {
+  content: "";
+  position: absolute;
+  left: 4px; top: 9px; bottom: auto;
+  width: 6px; height: 2px;
+  background: #000;
+  border: 0;
+}
+.cap-max::before {
+  content: "";
+  position: absolute;
+  left: 3px; top: 2px;
+  width: 9px; height: 9px;
+  background: transparent;
+  border: 1px solid #000;
+  border-top-width: 2px;
+  box-sizing: border-box;
+}
+body.zoomed .cap-max::before { left: 5px; top: 1px; width: 6px; height: 6px; }
+body.zoomed .cap-max::after {
+  content: "";
+  position: absolute;
+  left: 3px; top: 4px;
+  width: 6px; height: 6px;
+  background: #d4d0c8;
+  border: 1px solid #000;
+  border-top-width: 2px;
+  box-sizing: border-box;
+}
+.cap-close::before {
+  content: "";
+  position: absolute;
+  left: 4px; top: 3px;
+  width: 8px; height: 7px;
+  background: var(--classic-close) 0 0 / 8px 7px no-repeat;
+  border: 0;
+  transform: none;
+}
+.cap-close::after { content: none; }
+
+/* ======================================================================
+   Rebar: etched bands, double grippers, coolbar buttons
+   ====================================================================== */
+
+.rebar {
+  background: var(--rebar-bg);
+  border-top: 1px solid #808080;
+  border-bottom: 0;
+  padding-bottom: 2px;
+  box-shadow: inset 0 -1px #808080;
+}
+.band {
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+}
+.band:first-child { border-top: 1px solid #fff; }
+#band-address { box-shadow: 0 1px #fff; }
+
+#viewport { border-top: 1px solid #404040; }
+
+/* Gripper: two raised vertical bars */
+.gripper {
+  position: relative;
+  align-self: stretch;
+  width: 3px;
+  margin: 2px 7px 2px 1px;
+  border: 1px solid;
+  border-color: #fff #808080 #808080 #fff;
+  background: none;
+}
+.gripper::after {
+  content: "";
+  position: absolute;
+  left: 3px; top: -1px; bottom: -1px;
+  width: 3px;
+  border: 1px solid;
+  border-color: #fff #808080 #808080 #fff;
+}
+
+.band-label { color: #000; padding: 0 4px 0 1px; }
+
+/* Menu bar band: IE-style flat items, thin raised on hover, sunken while open */
+#band-menu { min-height: 22px; padding: 0 0 0 2px; }
+.menu-title {
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text);
+}
+.menu-title:hover, .menu-title.open { background: none; color: var(--text); }
+.menu-title:hover { border-color: #fff #808080 #808080 #fff; }
+.menu-title.open, .menu-title.open:hover { border-color: #808080 #fff #fff #808080; padding: 1px 5px 0 7px; }
+
+/* Throbber: grey cell with a sunken edge */
+#band-menu .throbber {
+  align-self: stretch;
+  width: 38px;
+  height: auto;
+  margin: 1px 2px 1px 4px;
+  border: 1px solid;
+  border-color: #808080 #fff #fff #808080;
+  background: #d4d0c8 url(../img/throbber.svg) center / 20px no-repeat;
+}
+
+/* Coolbar toolbar buttons */
+.tb {
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.tb:hover:not(:disabled),
+.split:hover .tb:not(:disabled) {
+  background: transparent;
+  border-color: #fff #808080 #808080 #fff;
+}
+.tb:active:not(:disabled),
+.split .tb:active:not(:disabled) {
+  background: transparent;
+  border-color: #808080 #fff #fff #808080;
+}
+.tb:active:not(:disabled) > .label { position: relative; left: 1px; top: 1px; }
+.tb:disabled { color: #808080; text-shadow: 1px 1px #fff; }
+.tb:disabled .ico { filter: grayscale(1) contrast(.5) brightness(1.15) opacity(.6) drop-shadow(1px 1px 0 #fff); }
+
+/* Checked toolbar button: sunken with the classic 50% dither */
+.tb.toggle.on,
+.tb.toggle.on:hover:not(:disabled),
+.tb.toggle.on:active:not(:disabled) {
+  background: repeating-conic-gradient(#fff 0 25%, #d4d0c8 0 50%) 0 0 / 2px 2px;
+  border-color: #808080 #fff #fff #808080;
+  box-shadow: none;
+}
+.tb.toggle.on .ico, .tb.toggle.on > .label { position: relative; left: 1px; top: 1px; }
+#dialup-mode .tb.toggle.on + .drop { border-color: transparent; }
+#dialup-mode:hover .tb.toggle.on + .drop:not(:disabled) { border-color: #fff #808080 #808080 #fff; }
+
+.tb.drop::after { border-top-color: #000; }
+.tb.drop:disabled::after { border-top-color: #808080; filter: drop-shadow(1px 1px 0 #fff); }
+
+.tb-sep { width: 1px; height: 22px; margin: 0 3px; background: #808080; box-shadow: 1px 0 0 #fff; }
+
+/* Address bar: sunken white combo box with a grey drop button */
+.address-box {
+  height: 22px;
+  padding: 2px 2px 2px 4px;
+  gap: 3px;
+  border: 0;
+  background: #fff;
+  box-shadow: var(--bevel-sunken);
+}
+.address-box input { font: 11px var(--font); color: #000; }
+.addr-drop {
+  position: relative;
+  align-self: stretch;
+  width: 16px;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow: var(--bevel-window);
+  flex: none;
+}
+.addr-drop::after {
+  content: "";
+  position: absolute;
+  left: 4px; top: 50%;
+  width: 7px; height: 4px;
+  margin-top: -2px;
+  border: 0;
+  background: var(--classic-arrow) 0 0 / 7px 4px no-repeat;
+}
+.addr-drop:hover { filter: none; }
+.addr-drop:active { box-shadow: inset 0 0 0 1px #808080; }
+.addr-drop:active::after { translate: 1px 1px; }
+.tb.go { height: 22px; }
+
+.links-chevron {
+  height: 22px;
+  border: 0;
+  border-left: 1px solid #808080;
+  box-shadow: inset 1px 0 0 #fff;
+  color: #000;
+}
+.links-chevron:hover { background: none; }
+
+/* ======================================================================
+   Status bar: sunken panes, navy block progress, diagonal size grip
+   ====================================================================== */
+
+#statusbar {
+  height: 22px;
+  gap: 2px;
+  padding: 2px 0 1px 0;
+  background: var(--status-bg);
+  border-top: 0;
+}
+#statusbar .cell { border: 1px solid; border-color: #808080 #fff #fff #808080; }
+#statusbar .progress { padding: 1px; }
+#statusbar .sizer {
+  width: 14px;
+  border: 0;
+  padding: 0;
+  clip-path: none;
+  background: var(--classic-grip) right 0 bottom 0 / 12px 12px no-repeat;
+}
+
+/* ======================================================================
+   Menus: grey with a raised window edge, navy highlight, slide-down
+   ====================================================================== */
+
+.menu {
+  min-width: 150px;
+  padding: 3px;
+  background: #d4d0c8;
+  border: 0;
+  box-shadow: var(--bevel-window);
+  animation: classic-menu-down 150ms ease-out;
+}
+.menu ~ .menu { animation-name: classic-menu-right; }  /* submenus unroll sideways */
+@keyframes classic-menu-down { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes classic-menu-right { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+
+.menu-item { height: 17px; padding: 0 6px 0 0; }
+.menu-item.active:not(.disabled) { background: #0a246a; color: #fff; }
+.menu-item.disabled { color: #808080; text-shadow: 1px 1px #fff; }
+.menu-item.disabled.active { background: #0a246a; text-shadow: none; }
+.menu-sep {
+  height: 0;
+  margin: 3px 1px;
+  background: none;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+}
+
+/* ======================================================================
+   Dialogs
+   ====================================================================== */
+
+.dialog-backdrop { background: transparent; }
+.dialog {
+  padding: 3px;
+  border: 0;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow: var(--bevel-window);
+  font: var(--font-size)/1.35 var(--font);
+}
+.dialog-titlebar {
+  height: 18px;
+  margin: 0;
+  padding: 0 2px 0 3px;
+  border-radius: 0;
+  background: var(--titlebar-bg);
+  color: var(--titlebar-text);
+  font: bold 11px var(--font);
+  text-shadow: none;
+}
+body.inactive .dialog-titlebar { background: var(--titlebar-bg-inactive); color: var(--titlebar-text-inactive); }
+.dialog.flash .dialog-titlebar { animation: classic-title-flash .14s steps(1) 6; }
+@keyframes classic-title-flash { 50% { background: var(--titlebar-bg-inactive); color: var(--titlebar-text-inactive); } }
+.dialog-caps { display: flex; align-items: center; }
+.dialog-caps .cap-close { margin-left: 0; }
+.dialog-cap-extra { display: none; }
+.dialog-body { padding: 10px 8px 4px; }
+.dialog-buttons { gap: 6px; padding: 6px 8px 8px; }
+
+/* Push buttons */
+.btn {
+  min-width: 75px;
+  height: 23px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  background: #d4d0c8;
+  color: #000;
+  font: var(--font-size) var(--font);
+  box-shadow: var(--bevel-raised);
+}
+.btn:hover:not(:disabled) { box-shadow: var(--bevel-raised); }
+.btn.primary,
+.btn.primary:hover:not(:disabled) { box-shadow: var(--bevel-default); }
+.btn:active:not(:disabled) { background: #d4d0c8; box-shadow: var(--bevel-pressed); padding: 2px 9px 0 11px; }
+.btn.primary:active:not(:disabled) { box-shadow: var(--bevel-default-pressed); }
+.btn:disabled { color: #808080; text-shadow: 1px 1px #fff; border: 0; }
+.btn:focus-visible, .btn.primary:focus-visible { outline: 1px dotted #000; outline-offset: -5px; }
+.btn.small { height: 21px; }
+.btn.tiny { width: 22px; height: 20px; padding: 0; }
+.btn.tiny:active:not(:disabled) { padding: 2px 0 0 2px; }
+
+/* Text fields and dropdowns: sunken white */
+.field {
+  height: 21px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+  box-shadow: var(--bevel-sunken);
+  font: var(--font-size) var(--font);
+}
+.field:disabled { background: #d4d0c8; color: #808080; }
+.dialog select.field, select.field {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 22px 0 4px;
+  background: #fff var(--classic-combo) right 2px top 2px / 16px 17px no-repeat;
+}
+.dialog select.field:disabled { background-color: #d4d0c8; }
+
+/* Classic checkboxes and radios: sunken white well, black mark */
+.dialog input[type=checkbox],
+.dialog input[type=checkbox]:hover:not(:disabled) {
+  width: 13px;
+  height: 13px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: var(--bevel-sunken);
+}
+.dialog input[type=checkbox]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 7px; height: 7px;
+  border: 0;
+  transform: none;
+  background: var(--classic-check) 0 0 / 7px 7px no-repeat;
+}
+.dialog input[type=radio],
+.dialog input[type=radio]:hover:not(:disabled) {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--bevel-sunken);
+}
+.dialog input[type=radio]:checked::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #000;
+}
+.dialog input[type=checkbox]:active:not(:disabled),
+.dialog input[type=radio]:active:not(:disabled) { background: #d4d0c8; }
+.dialog input[type=checkbox]:disabled, .dialog input[type=radio]:disabled { background: #d4d0c8; }
+.dialog input:focus-visible { outline: 1px dotted #000; outline-offset: 1px; }
+
+/* Tabs: raised classic tabs sitting on a raised panel */
+.tabs { gap: 0; padding-left: 2px; }
+.tab,
+.tab:hover {
+  height: 18px;
+  margin: 2px 0 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: #d4d0c8;
+  color: #000;
+  font: var(--font-size) var(--font);
+  box-shadow: inset 1px 1px #fff, inset -1px 0 #404040, inset -2px 0 #808080;
+}
+.tab.selected,
+.tab.selected:hover {
+  position: relative;
+  z-index: 2;
+  height: 22px;
+  margin: 0 -2px -2px;
+  padding: 0 8px 2px;
+  background: #d4d0c8;
+  box-shadow: inset 1px 1px #fff, inset -1px 0 #404040, inset -2px 0 #808080;
+}
+.tab:focus-visible { outline: 1px dotted #000; outline-offset: -4px; }
+.tab-panels {
+  border: 0;
+  background: #d4d0c8;
+  box-shadow: var(--bevel-window);
+  padding: 10px 12px;
+}
+
+/* Group boxes: etched rectangle, black caption */
+.settings fieldset {
+  border: 1px solid #808080;
+  border-radius: 0;
+  box-shadow: inset 1px 1px #fff, 1px 1px #fff;
+}
+.settings legend { color: #000; background: #d4d0c8; padding: 0 2px; }
+.settings .hint, .link-head, .wizard-card .hint, .wizard-option .hint { color: #404040; }
+
+/* Sunken previews */
+.trickle, .font-sample, .touches-preview, .option-card canvas { border: 1px solid; border-color: #808080 #fff #fff #808080; }
+.hard-badge { background: #800000; }
+
+/* Selection: dotted focus rectangle, black bullet */
+.skin-card .mini-window, .option-card, .wizard-card { border-radius: 0; }
+.skin-card input:checked + .mini-window, .option-card:has(input:checked), .wizard-card:has(input:checked) {
+  background: none;
+  border-color: transparent;
+  outline: 1px dotted #000;
+  outline-offset: -1px;
+}
+.option-card:has(input:checked) .option-title::before,
+.wizard-card:has(input:checked) .wizard-card-title::before { color: #000; }
+
+/* Skin preview card for this skin (only visible while Classic is active; base.css would need
+   the same rules for it to show up while another skin is selected) */
+.skin-classic .mini-titlebar { background: linear-gradient(90deg, #0a246a, #a6caf0); color: #fff; flex-direction: row-reverse; border-radius: 0; }
+.skin-classic .mini-titlebar i { background: #d4d0c8; border-radius: 0; box-shadow: inset -1px -1px #404040, inset 1px 1px #fff; }
+.skin-classic .mini-titlebar i:first-child { margin-left: 1px; }
+.skin-classic .mini-toolbar { background: #d4d0c8; }
+.skin-classic .mini-toolbar b { border-radius: 0; background: #0a246a; }
+.skin-classic .mini-toolbar em { border: 0; box-shadow: inset 1px 1px #808080, inset -1px -1px #fff; }
+.skin-classic .mini-page { border: 1px solid; border-color: #404040 #d4d0c8 #d4d0c8 #404040; }
+
+/* ======================================================================
+   Wizard + About
+   ====================================================================== */
+
+.wizard-banner { background: linear-gradient(#000080 0%, #0a246a 35%, #00707a 100%); }
+.wizard-brand { font: bold 22px var(--font); color: #fff; text-shadow: 1px 1px 0 #000; }
+.wizard-logo { filter: drop-shadow(1px 1px 0 #000); }
+.wizard-main { background: #fff; }
+.wizard.interior .wizard-main { background: #d4d0c8; }
+.wizard-footer { border-top: 1px solid #808080; box-shadow: inset 0 1px 0 #fff; }
+.wizard-header { background: #fff; border-bottom: 1px solid #808080; box-shadow: 0 1px 0 #fff; }
+
+.wizard-option { border: 1px solid transparent; border-radius: 0; }
+.wizard-option:has(input:checked) { border-color: transparent; background: none; outline: 1px dotted #000; outline-offset: -1px; }
+.wizard-option::before {
+  width: 12px; height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--bevel-sunken);
+}
+.wizard-option:has(input:checked)::before { background: radial-gradient(circle, #000 0 2px, #fff 2.5px); }
+
+.about-banner { background: linear-gradient(90deg, #0a246a, #a6caf0); color: #fff; }
+.about-name { font: bold 22px var(--font); color: #fff; text-shadow: 1px 1px 0 #000; }

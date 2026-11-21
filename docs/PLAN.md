@@ -25,14 +25,16 @@ NSWindow (titled, full-size content, native buttons hidden)
 - Dial-up Mode: image trickle-in with "(n items remaining)", dial-in sequence, 256-colour images, faint CRT, old fonts, page touches (safe ones on, risky ones opt-in), hard-mode whole-page filters.
 - Review round 1 fixes: detached images, start-page privacy and Customize lock, stale status, settings and wizard only send changed keys, address bar dirtiness, dialog key stack and focus trap, lifecycle, debug-only flags.
 
+## Done in review round 2
+
+- Authenticity pass for Luna and Aqua, original synthesized sounds, padlock and certificate dialog, portal start page.
+- Tabs with the wizard and Settings choice (tabs or one page per window), session restore with lazily loaded tabs, popups as tabs or cascading windows.
+- Wayback button, Classic (98/2000) skin, Favorites menu, Add to Favorites, bookmarks.html import/export.
+
 ## Next
 
-1. **Authenticity pass (from the UI review):**
-   - Luna: in-window menu bar (File/Edit/View/Favorites/Tools/Help), blue window frame, bigger toolbar, frame-based throbber, address combo arrow, Links bar.
-   - Aqua: one-row Safari-style toolbar with charcoal icons and a search field, bookmarks bar, Mac button order, preferences toolbar.
-   - Both: retro dropdowns and tooltips, era menu animations, status bar sequence, HTTPS padlock with a certificate dialog, original synthesized sounds, a modal-miss flash, a portal-style start page.
-2. **Tabs, with a choice:** a `tabs` preference asked in the Setup Wizard ("Tabs, like Firefox 1.0" or "One page per window, like 2001") and in Settings → General. With tabs off, ⌘T and target=_blank open cascading windows and the tab strip is hidden. The tab strip is styled per skin. Session restore.
-3. **Wayback button:** reload the current page from web.archive.org at a chosen year.
-4. **Classic (98/2000) skin**, later Platinum and a Communicator-style skin.
-5. **Favorites:** menu, Add to Favorites, organize, bookmarks.html import and export.
-6. **Later:** toolbar plugins (`Toolbars/<id>/manifest.json`, sandboxed iframes with a permission gate), Explorer-style sidebars, downloads, find, zoom, real throttling proxy, pop-up blocker, WKWebExtension.
+1. Toolbar plugins (`Toolbars/<id>/manifest.json`, sandboxed iframes with a permission gate), with draggable rebar bands and Lock the Toolbars.
+2. Explorer-style sidebars (Search, Favorites, History), history storage.
+3. Downloads, find in page, zoom, address autocomplete.
+4. More skins (Platinum, Communicator-style), and skin import.
+5. Real throttling proxy for Dial-up Mode, a pop-up blocker with an information bar, WKWebExtension.

@@ -11,13 +11,17 @@ struct Preferences: Codable, Equatable {
     var skin = "luna"
     /// Set once the first-run setup wizard has been finished or cancelled.
     var onboarded = false
+    /// Tabs like Firefox 1.0 (true), or one page per window like 2001 (false).
+    var tabs = true
+    /// Reopen last session's windows and tabs at launch.
+    var restoreSession = true
     /// "start" for the built-in start page, otherwise a URL.
     var homePage = "start"
     var searchEngine = "duckduckgo"
     var name = ""
     var quickLinks: [QuickLink] = Preferences.defaultLinks
 
-    static let skins: [(id: String, name: String)] = [("luna", "Luna (Windows, 2001)"), ("aqua", "Aqua (Mac, 2003)")]
+    static let skins: [(id: String, name: String)] = [("luna", "Luna (Windows, 2001)"), ("aqua", "Aqua (Mac, 2003)"), ("classic", "Classic (Windows, 1999)")]
     static let searchEngines: [(id: String, name: String, template: String)] = [
         ("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q=%s"),
         ("google", "Google", "https://www.google.com/search?q=%s"),
@@ -32,6 +36,7 @@ struct Preferences: Codable, Equatable {
         QuickLink(title: "Neocities", url: "https://neocities.org/"),
     ]
     static let startURL = URL(string: "dialup-start://home/")!
+    static let maxFavorites = 30
 
     init() {}
 
@@ -49,6 +54,8 @@ struct Preferences: Codable, Equatable {
         name = value(.name, d.name)
         quickLinks = value(.quickLinks, d.quickLinks)
         onboarded = value(.onboarded, d.onboarded)
+        tabs = value(.tabs, d.tabs)
+        restoreSession = value(.restoreSession, d.restoreSession)
         sanitize(fallback: d)
     }
 
@@ -61,7 +68,7 @@ struct Preferences: Codable, Equatable {
             let resolved = AddressResolver.resolveAddress(homePage)
             homePage = resolved.map(\.absoluteString) ?? "start"
         }
-        quickLinks = quickLinks.prefix(12).compactMap { link in
+        quickLinks = quickLinks.prefix(Self.maxFavorites).compactMap { link in
             let title = String(link.title.trimmingCharacters(in: .whitespaces).prefix(60))
             let raw = link.url.trimmingCharacters(in: .whitespaces).lowercased()
             if ["javascript:", "data:", "file:", "about:", "blob:"].contains(where: raw.hasPrefix) { return nil }
@@ -105,6 +112,7 @@ struct Preferences: Codable, Equatable {
             "dialupPresets": DialupModeSettings.presets.mapValues(\.dictionary),
             "connectionSpeeds": ["modem56k": 53_333, "isdn": 128_000, "dsl": 512_000, "off": 0],
             "pictureCapMs": DialupModePage.pictureCapMs,
+            "maxFavorites": maxFavorites,
         ]
     }
 }

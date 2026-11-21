@@ -38,9 +38,11 @@ enum MainMenu {
 
         submenu("File", [
             item("New Window", #selector(AppDelegate.newWindow(_:)), "n"),
+            item("New Tab", #selector(BrowserWindowController.newTab(_:)), "t"),
             item("Open Location…", #selector(BrowserWindowController.openLocation(_:)), "l"),
             .separator(),
-            item("Close Window", #selector(NSWindow.performClose(_:)), "w"),
+            item("Close Tab", #selector(BrowserWindowController.closeTabOrWindow(_:)), "w"),
+            item("Close Window", #selector(NSWindow.performClose(_:)), "w", [.command, .shift]),
         ])
 
         submenu("Edit", [
@@ -69,10 +71,19 @@ enum MainMenu {
             item("Home", #selector(BrowserWindowController.dialupHome(_:)), "h", [.command, .shift]),
         ])
 
+        var tabNumbers: [NSMenuItem] = []
+        for n in 1...9 {
+            let numbered = item("Tab \(n)", #selector(BrowserWindowController.selectTabByNumber(_:)), "\(n)")
+            numbered.tag = n
+            tabNumbers.append(numbered)
+        }
         let windowMenu = submenu("Window", [
             item("Minimize", #selector(NSWindow.performMiniaturize(_:)), "m"),
             item("Zoom", #selector(NSWindow.performZoom(_:))),
-        ])
+            .separator(),
+            item("Select Next Tab", #selector(BrowserWindowController.selectNextTab(_:)), "\t", .control),
+            item("Select Previous Tab", #selector(BrowserWindowController.selectPreviousTab(_:)), "\t", [.control, .shift]),
+        ] + tabNumbers)
         NSApp.windowsMenu = windowMenu
 
         let helpMenu = submenu("Help", [

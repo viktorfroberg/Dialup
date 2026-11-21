@@ -173,7 +173,9 @@ enum DialupModeRenderer {
         return filters
     }
 
-    static func apply(_ s: DialupModeSettings, to layoutView: BrowserLayoutView, page: WKWebView, pageScripts: DialupModePage) {
+    /// `page` is the visible tab (gets the window filters); `allPages` get the page script.
+    static func apply(_ s: DialupModeSettings, to layoutView: BrowserLayoutView, page: WKWebView,
+                      allPages: [WKWebView], pageScripts: DialupModePage) {
         let scale = layoutView.window?.backingScaleFactor ?? 2
         let target: NSView = s.includeChrome ? layoutView : page
         let other: NSView = s.includeChrome ? page : layoutView
@@ -183,7 +185,7 @@ enum DialupModeRenderer {
         target.contentFilters = filters(for: s, backingScale: scale)
         layoutView.scanlinesCoverChrome = s.includeChrome
         layoutView.scanlineView.isHidden = !(s.enabled && s.scanlines)
-        pageScripts.apply(s, to: page, skin: PreferencesStore.shared.preferences.skin)
+        pageScripts.apply(s, to: allPages.isEmpty ? [page] : allPages, skin: PreferencesStore.shared.preferences.skin)
     }
 }
 
@@ -243,14 +245,16 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
     /// Installs (and live-applies) the page script. No-op when nothing relevant changed, so
     /// unrelated preference or backing-scale changes don't reinstall scripts or reset a trickle.
     /// Note: live updates reach the main frame; iframes pick up changes on their next load.
-    func apply(_ s: DialupModeSettings, to webView: WKWebView, skin: String) {
+    func apply(_ s: DialupModeSettings, to webViews: [WKWebView], skin: String) {
+        guard let first = webViews.first else { return }
         // No dark mode in 2003: pages render in light appearance while retro page touches are on.
-        webView.appearance = (s.enabled && s.retroPage) ? NSAppearance(named: .aqua) : nil
+        for webView in webViews { webView.appearance = (s.enabled && s.retroPage) ? NSAppearance(named: .aqua) : nil }
         let source = Self.script(for: s, skin: skin)
         guard source != lastSource else { return }
         let wasInstalled = lastSource != nil
         lastSource = source
-        let controller = webView.configuration.userContentController
+        // All tabs of a window share one configuration, so one user content controller.
+        let controller = first.configuration.userContentController
         let others = controller.userScripts.filter { !$0.source.contains(Self.marker) }
         controller.removeAllUserScripts()
         others.forEach(controller.addUserScript)
@@ -259,7 +263,9 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
             controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart,
                                                   forMainFrameOnly: false, in: Self.world))
         }
-        webView.evaluateJavaScript(source, in: nil, in: Self.world, completionHandler: nil)
+        for webView in webViews {
+            webView.evaluateJavaScript(source, in: nil, in: Self.world, completionHandler: nil)
+        }
     }
 
     // Kept in one place so it's easy to tweak. `__CFG__` is replaced with the JSON config.

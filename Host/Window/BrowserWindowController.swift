@@ -1,7 +1,7 @@
 import AppKit
 import WebKit
 
-/// One browser window: a chrome web view (the HTML UI) plus the page web view.
+/// One browser window: a chrome web view (the HTML UI) plus one page web view per tab.
 @MainActor
 final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation, WKNavigationDelegate {
     /// Home page from preferences. `-HomePage <url>` on the command line overrides it (debugging).
@@ -12,23 +12,39 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     static let chromeURL = URL(string: "dialup://chrome/index.html")!
 
     var onClose: (() -> Void)?
+    /// Called when tabs or their URLs change, so the app can save the session.
+    var onSessionChange: (() -> Void)?
+
+    /// All open windows, so shared page handlers can find which window a web view belongs to.
+    private static let all = NSHashTable<BrowserWindowController>.weakObjects()
+
+    static func owner(of webView: WKWebView) -> BrowserWindowController? {
+        all.allObjects.first { $0.tabs.contains { $0.webView === webView } }
+    }
 
     private let layoutView = BrowserLayoutView()
     private let bridge = ChromeBridge()
     private let hoverHandler = HoverLinkHandler()
     private let dialupModePage = DialupModePage()
     private let chromeView: WKWebView
-    private let tab: Tab
+    private let pageConfiguration: WKWebViewConfiguration
+    private(set) var tabs: [Tab] = []
+    private var activeIndex = 0
+    private var tab: Tab { tabs[activeIndex] }
     private var chromeReady = false
     private var observers: [NSObjectProtocol] = []
 
-    init() {
+    /// - Parameters:
+    ///   - urls: tabs to open (restored sessions load lazily); empty = the home page.
+    ///   - popupConfiguration: for window.open with tabs off: the first tab must use WebKit's configuration.
+    init(urls: [URL] = [], activeIndex: Int = 0, popupConfiguration: WKWebViewConfiguration? = nil) {
         let chromeConfig = ChromeConfiguration.make(bridge: bridge, schemeHandler: .bundled())
         chromeView = WKWebView(frame: .zero, configuration: chromeConfig)
         chromeView.isInspectable = true
         // Transparent, so when menus/dialogs raise the chrome above the page, the page shows through.
         chromeView.setValue(false, forKey: "drawsBackground")
-        tab = Tab(configuration: PageConfiguration.make(hoverHandler: hoverHandler, dialupModePage: dialupModePage))
+        pageConfiguration = popupConfiguration
+            ?? PageConfiguration.make(hoverHandler: hoverHandler, dialupModePage: dialupModePage)
 
         // A real titled window (so ⌘W/⌘M, Mission Control, Stage Manager and resizing all work),
         // but the title bar and its buttons are drawn by the HTML chrome.
@@ -49,23 +65,36 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
         window.contentView = layoutView
         layoutView.chromeView = chromeView
-        layoutView.pageView = tab.webView
-        window.delegate = self
-        if !window.setFrameUsingName("DialupMain") { window.center() }
-        window.setFrameAutosaveName("DialupMain")
+        // New windows cascade from the current one; the first window remembers its frame.
+        if let key = NSApp.keyWindow, Self.all.count > 0 {
+            window.setFrame(key.frame, display: false)
+            window.setFrameTopLeftPoint(window.cascadeTopLeft(from: NSPoint(x: key.frame.minX, y: key.frame.maxY)))
+        } else {
+            if !window.setFrameUsingName("DialupMain") { window.center() }
+            window.setFrameAutosaveName("DialupMain")
+        }
+        Self.all.add(self)
 
         bridge.controller = self
         chromeView.navigationDelegate = self
-        hoverHandler.onHover = { [weak self] webView, url in
-            guard let self, webView === self.tab.webView else { return }
-            self.emit("hoverLink", ["url": url])
+        // These handlers belong to the page configuration, which a popup window may share with its
+        // opener, so route by web view instead of capturing this window.
+        hoverHandler.onHover = { webView, url in
+            BrowserWindowController.owner(of: webView)?.hoverChanged(on: webView, url: url)
         }
-        dialupModePage.onStatus = { [weak self] webView, remaining, total, url in
-            guard let self, webView === self.tab.webView else { return }
-            self.tab.setItems(remaining: remaining, total: total, url: url)
+        dialupModePage.onStatus = { webView, remaining, total, url in
+            BrowserWindowController.owner(of: webView)?.tabs.first { $0.webView === webView }?
+                .setItems(remaining: remaining, total: total, url: url)
         }
-        tab.onChange = { [weak self] in self?.tabDidChange() }
-        tab.onOpenSettings = { [weak self] section in self?.emit("openSettings", ["tab": section]) }
+
+        if popupConfiguration != nil {
+            _ = addTab(configuration: popupConfiguration, url: nil, select: true)
+        } else if urls.isEmpty {
+            _ = addTab(url: Self.homeURL, select: true)
+        } else {
+            for url in urls { _ = addTab(url: url, select: false, lazy: true) }
+            selectTab(at: min(max(0, activeIndex), tabs.count - 1))
+        }
         observers.append(NotificationCenter.default.addObserver(forName: PreferencesStore.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.preferencesDidChange() }
         })
@@ -75,10 +104,10 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         observers.append(NotificationCenter.default.addObserver(forName: DialupMode.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.dialupModeDidChange() }
         })
-        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView, pageScripts: dialupModePage)
+        applyDialupMode()
+        window.delegate = self // only now: delegate callbacks assume at least one tab
 
         chromeView.load(URLRequest(url: Self.chromeURL))
-        tab.webView.load(URLRequest(url: Self.homeURL))
         DebugSnapshot.scheduleIfRequested(chrome: chromeView, page: tab.webView, in: layoutView)
     }
 
@@ -88,7 +117,105 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     func windowWillClose(_ notification: Notification) {
         observers.forEach(NotificationCenter.default.removeObserver)
         observers.removeAll()
+        Self.all.remove(self)
         onClose?()
+    }
+
+    // MARK: Tabs
+
+    private var tabsEnabled: Bool { PreferencesStore.shared.preferences.tabs }
+
+    /// Creates a tab. `configuration` is only passed for WebKit-created popups.
+    @discardableResult
+    private func addTab(configuration: WKWebViewConfiguration? = nil, url: URL?, select: Bool, lazy: Bool = false) -> Tab {
+        let tab = Tab(configuration: configuration ?? pageConfiguration, pendingURL: lazy ? url : nil)
+        tab.onChange = { [weak self, weak tab] in
+            guard let self, let tab else { return }
+            self.tabDidChange(tab)
+        }
+        tab.onOpenSettings = { [weak self] section in self?.emit("openSettings", ["tab": section]) }
+        tab.onCreateWebView = { [weak self] configuration, _ in self?.openPopup(configuration: configuration) }
+        tab.onCloseRequest = { [weak self, weak tab] in
+            guard let self, let tab, let index = self.tabs.firstIndex(where: { $0 === tab }) else { return }
+            self.closeTab(at: index)
+        }
+        let insertAt = tabs.isEmpty ? 0 : activeIndex + 1
+        tabs.insert(tab, at: insertAt)
+        if !lazy, let url { tab.webView.load(URLRequest(url: url)) }
+        if select { selectTab(at: insertAt) } else if insertAt <= activeIndex && tabs.count > 1 { activeIndex += 1 }
+        emitTabs()
+        return tab
+    }
+
+    /// target=_blank / window.open: a new tab, or (tabs off) a new cascading window.
+    private func openPopup(configuration: WKWebViewConfiguration) -> WKWebView? {
+        if tabsEnabled {
+            return addTab(configuration: configuration, url: nil, select: true).webView
+        }
+        return (NSApp.delegate as? AppDelegate)?.openPopupWindow(configuration: configuration)
+    }
+
+    private func selectTab(at index: Int) {
+        guard tabs.indices.contains(index) else { return }
+        activeIndex = index
+        let tab = tabs[index]
+        tab.loadIfNeeded()
+        layoutView.pageView = tab.webView
+        applyDialupMode()
+        tabDidChange(tab)
+        emitTabs()
+        if window?.firstResponder !== chromeView { focusPage() }
+    }
+
+    private func closeTab(at index: Int) {
+        guard tabs.indices.contains(index) else { return }
+        if tabs.count == 1 { window?.performClose(nil); return }
+        let closing = tabs.remove(at: index)
+        closing.webView.stopLoading()
+        closing.webView.removeFromSuperview()
+        if index < activeIndex || activeIndex >= tabs.count { activeIndex = max(0, activeIndex - 1) }
+        selectTab(at: activeIndex)
+    }
+
+    private func tabIndex(_ args: [String: Any]) -> Int? {
+        guard let id = (args["id"] as? NSNumber)?.intValue else { return nil }
+        return tabs.firstIndex { $0.id == id }
+    }
+
+    private var tabsPayload: [String: Any] {
+        [
+            "enabled": tabsEnabled,
+            "active": tab.id,
+            "tabs": tabs.map { ["id": $0.id, "title": String($0.displayTitle.prefix(120)), "loading": $0.webView.isLoading] as [String: Any] },
+        ]
+    }
+
+    private var lastTabsJSON = ""
+
+    private func emitTabs() {
+        guard !tabs.isEmpty else { return }
+        let payload = tabsPayload
+        let json = (try? JSONSerialization.data(withJSONObject: payload)).flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        guard json != lastTabsJSON else { return }
+        lastTabsJSON = json
+        emit("tabs", payload)
+        onSessionChange?()
+    }
+
+    /// For session restore: this window's tab URLs and which one is active.
+    var session: (urls: [URL], active: Int) {
+        (tabs.compactMap(\.sessionURL), activeIndex)
+    }
+
+    private func hoverChanged(on webView: WKWebView, url: String) {
+        guard webView === tab.webView else { return }
+        emit("hoverLink", ["url": url])
+    }
+
+    private func applyDialupMode() {
+        guard !tabs.isEmpty else { return }
+        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView,
+                                 allPages: tabs.map(\.webView), pageScripts: dialupModePage)
     }
 
     // MARK: Window state → chrome (title bar look)
@@ -133,9 +260,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     // MARK: Dial-up mode
 
     private func dialupModeDidChange() {
-        let settings = DialupMode.shared.settings
-        DialupModeRenderer.apply(settings, to: layoutView, page: tab.webView, pageScripts: dialupModePage)
-        emit("dialupMode", settings.dictionary)
+        applyDialupMode()
+        emit("dialupMode", DialupMode.shared.settings.dictionary)
     }
 
     // MARK: Preferences
@@ -146,8 +272,9 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     private func preferencesDidChange() {
         emit("prefs", preferencesPayload)
-        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView, pageScripts: dialupModePage) // skin-specific scrollbars
-        if tab.isShowingStartPage { tab.webView.reload() }
+        applyDialupMode() // skin-specific scrollbars
+        for tab in tabs where tab.isShowingStartPage { tab.webView.reload() }
+        emitTabs()
     }
 
     static let soundsDidChange = Notification.Name("DialupSoundsDidChange")
@@ -207,6 +334,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             return [
                 "apiVersion": ChromeBridge.apiVersion,
                 "tab": tab.state,
+                "tabs": tabsPayload,
                 "window": lastWindowState,
                 "dialupMode": DialupMode.shared.settings.dictionary,
                 "prefs": preferencesPayload,
@@ -247,12 +375,29 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             if let url = args["url"] as? String {
                 var prefs = PreferencesStore.shared.preferences
                 let title = (args["title"] as? String) ?? url
-                if prefs.quickLinks.count < 12, !prefs.quickLinks.contains(where: { $0.url == url }) {
+                if prefs.quickLinks.count < Preferences.maxFavorites, !prefs.quickLinks.contains(where: { $0.url == url }) {
                     prefs.quickLinks.append(QuickLink(title: title, url: url))
                     prefs.sanitize()
                     PreferencesStore.shared.preferences = prefs
                 }
             }
+        case "newTab":
+            let url = (args["url"] as? String).flatMap { AddressResolver.resolve($0) } ?? Self.homeURL
+            if tabsEnabled { addTab(url: url, select: true) } else { (NSApp.delegate as? AppDelegate)?.openWindow(urls: [url]) }
+        case "closeTab":
+            if let index = tabIndex(args) { closeTab(at: index) }
+        case "selectTab":
+            if let index = tabIndex(args) { selectTab(at: index) }
+        case "wayback":
+            // Reload the current page as the Wayback Machine saw it around the chosen year.
+            if let year = (args["year"] as? NSNumber)?.intValue, (1996...2030).contains(year),
+               let current = tab.sessionURL, ["http", "https"].contains(current.scheme ?? ""),
+               let url = URL(string: "https://web.archive.org/web/\(year)0601000000/\(current.absoluteString)") {
+                SoundEffects.shared.play(.click)
+                tab.webView.load(URLRequest(url: url))
+            }
+        case "importBookmarks": importBookmarks()
+        case "exportBookmarks": exportBookmarks()
         case "prefsGet": return preferencesPayload
         case "prefsSet":
             PreferencesStore.shared.preferences = PreferencesStore.shared.preferences.merging(args)
@@ -333,9 +478,12 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         )
     }
 
-    private func tabDidChange() {
-        window?.title = "\(tab.displayTitle) – Dialup"
-        emit("tab", tab.state)
+    private func tabDidChange(_ changed: Tab) {
+        if changed === tab {
+            window?.title = "\(tab.displayTitle) – Dialup"
+            emit("tab", tab.state)
+        }
+        emitTabs()
     }
 
     private func focusPage() {
@@ -389,6 +537,16 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         emit("focusAddress", [:])
     }
 
+    @objc func newTab(_ sender: Any?) {
+        if tabsEnabled { addTab(url: Self.homeURL, select: true) } else { (NSApp.delegate as? AppDelegate)?.newWindow(nil) }
+    }
+
+    /// ⌘W closes the current tab; the last tab closes the window.
+    @objc func closeTabOrWindow(_ sender: Any?) { closeTab(at: activeIndex) }
+    @objc func selectNextTab(_ sender: Any?) { selectTab(at: (activeIndex + 1) % tabs.count) }
+    @objc func selectPreviousTab(_ sender: Any?) { selectTab(at: (activeIndex - 1 + tabs.count) % tabs.count) }
+    @objc func selectTabByNumber(_ sender: NSMenuItem) { selectTab(at: min(sender.tag, tabs.count) - 1) }
+
     @objc func dialupBack(_ sender: Any?) { tab.webView.goBack() }
     @objc func dialupForward(_ sender: Any?) { tab.webView.goForward() }
     @objc func dialupReload(_ sender: Any?) { tab.webView.reload() }
@@ -410,12 +568,53 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         case #selector(dialupBack(_:)): tab.webView.canGoBack
         case #selector(dialupForward(_:)): tab.webView.canGoForward
         case #selector(dialupStop(_:)): tab.webView.isLoading
+        case #selector(selectNextTab(_:)), #selector(selectPreviousTab(_:)): tabs.count > 1
+        case #selector(selectTabByNumber(_:)): menuItem.tag <= tabs.count
         case #selector(toggleDialupMode(_:)):
             {
                 menuItem.state = DialupMode.shared.settings.enabled ? .on : .off
                 return true
             }()
         default: true
+        }
+    }
+
+    // MARK: Bookmarks (Netscape bookmark file format, as every browser of the era exported)
+
+    private func importBookmarks() {
+        guard let window else { return }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.html]
+        panel.message = "Choose a bookmarks file (bookmarks.html) exported from another browser."
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            MainActor.assumeIsolated {
+                let html = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+                let imported = Bookmarks.parse(html)
+                var prefs = PreferencesStore.shared.preferences
+                var added = 0
+                for link in imported where !prefs.quickLinks.contains(where: { $0.url == link.url }) {
+                    guard prefs.quickLinks.count < Preferences.maxFavorites else { break }
+                    prefs.quickLinks.append(link)
+                    added += 1
+                }
+                prefs.sanitize()
+                PreferencesStore.shared.preferences = prefs
+                self?.emit("bookmarksImported", ["added": added, "found": imported.count])
+            }
+        }
+    }
+
+    private func exportBookmarks() {
+        guard let window else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.html]
+        panel.nameFieldStringValue = "bookmarks.html"
+        panel.beginSheetModal(for: window) { response in
+            guard response == .OK, let url = panel.url else { return }
+            MainActor.assumeIsolated {
+                try? Bookmarks.export(PreferencesStore.shared.preferences.quickLinks).write(to: url, atomically: true, encoding: .utf8)
+            }
         }
     }
 

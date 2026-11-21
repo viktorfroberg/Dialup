@@ -28,7 +28,9 @@ enum DebugSnapshot {
         #endif
     }
 
-    private static func write(chrome: WKWebView, page: WKWebView, container: NSView, to url: URL) async {
+    private static func write(chrome: WKWebView, page initialPage: WKWebView, container: NSView, to url: URL) async {
+        // The visible tab may have changed since the snapshot was scheduled.
+        let page = ((container as? BrowserLayoutView)?.pageView as? WKWebView) ?? initialPage
         guard let chromeImage = try? await chrome.takeSnapshot(configuration: nil) else {
             NSLog("Dialup snapshot: chrome snapshot failed")
             return

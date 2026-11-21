@@ -1,13 +1,16 @@
 // "Dialup Options": the settings dialog. Tabs: General, Start Page, Appearance, Dial-up Mode, Privacy.
 // Edits go to a draft. Apply/OK send it to the host; Cancel throws it away.
 
-import { host } from './host.js';
+import { host, onEvent } from './host.js';
 import { openDialog, confirmBox } from './overlay.js';
 
 const SAMPLE = 'img/sample.svg';
 const PICTURE_BYTES = 40 * 1024; // "a typical 40 KB photo"
 
 let current = null;  // the open dialog, so ⌘, twice doesn't stack dialogs
+
+// After importing bookmarks, pull the new favourites into an open Settings dialog.
+onEvent('bookmarksImported', ({ added, found }) => current?.onImported?.(added, found));
 let opening = false; // set before the first await, so a quick second ⌘, is ignored
 let pendingTab = null;
 
@@ -103,7 +106,17 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
       return true;
     },
   });
-  current = { select };
+  current = {
+    select,
+    onImported: async (added, found) => {
+      const fresh = await host.call('prefsGet');
+      baseline.prefs.quickLinks = structuredClone(fresh.quickLinks);
+      draft.prefs.quickLinks = structuredClone(fresh.quickLinks);
+      byId.startpage.panel.replaceChildren(byId.startpage.build(ctx));
+      const note = byId.startpage.panel.querySelector('#import-result');
+      if (note) note.textContent = `Imported ${added} of ${found} bookmarks.`;
+    },
+  };
   dialog.recentre();
 }
 
@@ -161,6 +174,16 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
             <input type="text" class="field grow" id="home-url" spellcheck="false" placeholder="https://www.example.com/">
             <button class="btn small" id="use-current">Use Current</button>
           </div>
+        </div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Browsing</legend>
+      <div class="icon-row">
+        <div class="big-icon icon-tabs"></div>
+        <div class="grow">
+          <label class="choice"><input type="checkbox" data-bind="prefs.tabs"> Open pages in tabs <span class="hint">like Firefox 1.0 (off: one page per window, like 2001)</span></label>
+          <label class="choice"><input type="checkbox" data-bind="prefs.restoreSession"> Reopen my windows and tabs from last time</label>
         </div>
       </div>
     </fieldset>
@@ -225,12 +248,15 @@ function startPageTab({ draft, catalog }) {
   root.append(html`
     <fieldset>
       <legend>My Favorite Sites</legend>
-      <p class="hint">These links appear on your Start Page. Up to 12.</p>
+      <p class="hint">These links appear on your Start Page, the Favorites menu and the Links bar. Up to <span id="max-favs">30</span>.</p>
       <div class="link-table">
         <div class="link-head"><span>Name</span><span>Address</span><span></span></div>
         <div class="link-rows"></div>
       </div>
-      <div class="row"><button class="btn small" id="add-link">Add Site</button><span class="grow"></span><button class="btn small" id="reset-links">Restore Defaults</button></div>
+      <div class="row"><button class="btn small" id="add-link">Add Site</button><span class="grow"></span>
+        <button class="btn small" id="import-links">Import…</button><button class="btn small" id="export-links">Export…</button>
+        <button class="btn small" id="reset-links">Restore Defaults</button></div>
+      <p class="hint" id="import-result"></p>
     </fieldset>
     <p class="hint">Tip: the Start Page also greets you by name (General tab) and searches with your chosen search engine.</p>`);
   const rowsEl = root.querySelector('.link-rows');
@@ -251,13 +277,17 @@ function startPageTab({ draft, catalog }) {
       remove.addEventListener('click', () => { draft.prefs.quickLinks.splice(i, 1); render(); });
       rowsEl.append(row);
     });
-    root.querySelector('#add-link').disabled = draft.prefs.quickLinks.length >= 12;
+    root.querySelector('#add-link').disabled = draft.prefs.quickLinks.length >= (catalog.maxFavorites || 30);
   };
   root.querySelector('#add-link').addEventListener('click', () => {
     draft.prefs.quickLinks.push({ title: '', url: '' });
     render();
     rowsEl.lastElementChild?.querySelector('input')?.focus();
   });
+  root.querySelector('#max-favs').textContent = catalog.maxFavorites || 30;
+  // Import/export use the bookmarks.html format every browser understands.
+  root.querySelector('#import-links').addEventListener('click', () => host.call('importBookmarks'));
+  root.querySelector('#export-links').addEventListener('click', () => host.call('exportBookmarks'));
   root.querySelector('#reset-links').addEventListener('click', () => {
     draft.prefs.quickLinks = structuredClone(defaults);
     render();

@@ -25,7 +25,8 @@ export async function openWizard() {
   const original = { skin: prefs.skin };
   // First run recommends early broadband; a re-run starts from the current setup.
   const initialExperience = prefs.onboarded ? currentExperience(dialup) : 'broadband';
-  const choice = { skin: prefs.skin || 'luna', experience: initialExperience, name: prefs.name || '', searchEngine: prefs.searchEngine || 'duckduckgo' };
+  const choice = { skin: prefs.skin || 'luna', experience: initialExperience, tabs: prefs.tabs === false ? 'windows' : 'tabs',
+    name: prefs.name || '', searchEngine: prefs.searchEngine || 'duckduckgo' };
   const engines = prefs.catalog?.searchEngines || [{ id: 'duckduckgo', name: 'DuckDuckGo' }];
 
   const root = document.createElement('div');
@@ -56,6 +57,7 @@ export async function openWizard() {
       <div class="wizard-cards">
         ${card('skin', 'luna', 'Windows style', 'Blue title bar, buttons on the right. The classic 2001 look.', 'skin-luna')}
         ${card('skin', 'aqua', 'Mac style', 'Brushed metal and glossy buttons on the left. Very 2003.', 'skin-aqua')}
+        ${card('skin', 'classic', 'Classic', 'Grey 3D bevels and a navy title bar. Pure 1999.', 'skin-classic')}
       </div>
       <p class="hint">Click one to try it. The window behind this wizard changes right away.</p>`,
     () => `
@@ -67,6 +69,14 @@ export async function openWizard() {
         ${option('experience', 'full', 'The full 1999 experience', '56k modem: pictures load line by line, old fonts, CRT lines.')}
       </div>
       <p class="hint">Switch any time with the <b>Dial-up</b> button in the toolbar.</p>`,
+    () => `
+      <h1>How do you like your windows?</h1>
+      <p>Browsers of the time disagreed: some opened every page in its own window, others had tabs.</p>
+      <div class="wizard-options">
+        ${option('tabs', 'tabs', 'Tabs, like Firefox 1.0', 'Many pages in one window. ⌘T opens a new tab. Recommended.')}
+        ${option('tabs', 'windows', 'One page per window, like 2001', 'New pages open in their own cascading windows. Very authentic, a bit chaotic.')}
+      </div>
+      <p class="hint">You can change this later in Settings → General.</p>`,
     () => `
       <h1>Tell us about yourself</h1>
       <p>Your Start Page will greet you and search with your favourite search engine.</p>
@@ -81,8 +91,9 @@ export async function openWizard() {
       <h1>Completing the Dialup Setup Wizard</h1>
       <p>You have successfully completed the Dialup Setup Wizard. You chose:</p>
       <ul class="wizard-summary">
-        <li>Look: <b>${choice.skin === 'aqua' ? 'Mac style (Aqua)' : 'Windows style (Luna)'}</b></li>
+        <li>Look: <b>${{ aqua: 'Mac style (Aqua)', classic: 'Classic (1999)' }[choice.skin] || 'Windows style (Luna)'}</b></li>
         <li>Browsing: <b>${{ looks: 'Just the looks', broadband: 'Early broadband (2003)', full: 'The full 1999 experience' }[choice.experience]}</b></li>
+        <li>Windows: <b>${choice.tabs === 'tabs' ? 'Tabs' : 'One page per window'}</b></li>
         <li>Search: <b>${escape(engines.find((e) => e.id === choice.searchEngine)?.name || 'DuckDuckGo')}</b></li>
       </ul>
       <p class="wizard-continue">To close this wizard and start surfing, click Finish.</p>`,
@@ -123,7 +134,7 @@ export async function openWizard() {
   };
 
   const finish = async () => {
-    await host.call('prefsSet', { skin: choice.skin, name: choice.name, searchEngine: choice.searchEngine, onboarded: true });
+    await host.call('prefsSet', { skin: choice.skin, name: choice.name, searchEngine: choice.searchEngine, tabs: choice.tabs === 'tabs', onboarded: true });
     // Only touch Dial-up Mode if the answer changed (a re-run keeps a custom setup).
     if (!prefs.onboarded || choice.experience !== initialExperience) {
       const settings = experienceSettings(choice.experience, catalog);

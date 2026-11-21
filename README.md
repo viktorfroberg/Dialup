@@ -51,6 +51,8 @@ build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp
       square corners (safe, on) + no shadows / no animations / underlined links (opt-in)
    ✅ Authenticity pass: Luna menu bar/frame/throbber/Links, Aqua Safari-style toolbar + bookmarks bar + search,
       retro dropdowns/tooltips/menus, padlock + certificate dialog, original synthesized sounds, portal start page
+   ✅ Tabs (or one page per window, chosen in the wizard), session restore, Wayback button, Classic skin,
+      Favorites (Add to Favorites, menu, Links bar) with bookmarks.html import/export
    Next for dial-up mode: modem/click sounds, optional real network throttling, 800×600 window
 1. Tabs, session restore, multiple windows
 2. Skins (`Skins/<id>/skin.json + skin.css`)

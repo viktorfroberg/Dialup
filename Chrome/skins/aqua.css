@@ -372,3 +372,22 @@ body, body.inactive { border: 0; }
 /* Wizard header band on pinstripes */
 .wizard-header { background: rgba(255, 255, 255, .6); border-bottom-color: #c4c4c4; box-shadow: none; }
 .wizard.interior .wizard-main { background: transparent; }
+
+/* Tabs on Aqua: metal tabs hanging under the toolbar */
+#tabstrip { background: linear-gradient(#bdbdbd, #a9a9a9); border-bottom: 1px solid #6f6f6f; padding: 0 8px; gap: 0; align-items: stretch; }
+.tabs-list { gap: 0; align-items: stretch; }
+.tab-item, .tab-item.active {
+  height: 22px; margin: 0; border: 0; border-left: 1px solid #8a8a8a; border-radius: 0;
+  background: linear-gradient(#c9c9c9, #b4b4b4); box-shadow: none; justify-content: center;
+  font: 11px var(--font); color: #2a2a2a; text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+.tab-item:last-child { border-right: 1px solid #8a8a8a; }
+.tab-item.active { background: linear-gradient(#e8e8e8, #d2d2d2); color: #000; }
+.tab-item:hover { box-shadow: none; filter: brightness(1.04); }
+.tab-icon { display: none; }
+.tab-close { order: -1; opacity: 0; }
+.tab-item:hover .tab-close { opacity: .8; }
+.tab-close:hover { background: #8a8a8a; border-color: transparent; border-radius: 50%; }
+.tab-new { margin: 2px 0 2px 4px; }
+:root { --icon-wayback: url(../img/aqua-wayback.svg); }
+#btn-wayback .label { display: none; }

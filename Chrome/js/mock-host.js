@@ -20,11 +20,12 @@ export function createMockHost(dialup) {
   const prefs = {
     skin: new URLSearchParams(location.search).get('skin') || 'luna',
     onboarded: new URLSearchParams(location.search).has('onboarded'),
+    tabs: true, restoreSession: true,
     homePage: 'start', searchEngine: 'duckduckgo', name: '',
     quickLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
     // Mirrors Preferences.catalog in Host/App/Preferences.swift (the real source of truth).
     catalog: {
-      skins: [{ id: 'luna', name: 'Luna (Windows, 2001)' }, { id: 'aqua', name: 'Aqua (Mac, 2003)' }],
+      skins: [{ id: 'luna', name: 'Luna (Windows, 2001)' }, { id: 'aqua', name: 'Aqua (Mac, 2003)' }, { id: 'classic', name: 'Classic (Windows, 1999)' }],
       searchEngines: [{ id: 'duckduckgo', name: 'DuckDuckGo' }, { id: 'google', name: 'Google' }, { id: 'bing', name: 'Bing' }, { id: 'wikipedia', name: 'Wikipedia' }],
       defaultLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
       connectionSpeeds: { modem56k: 53333, isdn: 128000, dsl: 512000, off: 0 },
@@ -80,7 +81,7 @@ export function createMockHost(dialup) {
   };
 
   const commands = {
-    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, dialupMode: { ...dialupMode }, prefs: structuredClone(prefs) }; },
+    ready: () => { queueMicrotask(showPlaceholder); return { apiVersion: 1, tab: { ...tab }, window: { ...win }, dialupMode: { ...dialupMode }, prefs: structuredClone(prefs), sounds: true, tabs: { enabled: true, active: 1, tabs: [{ id: 1, title: 'Wikipedia' }] } }; },
     setInsets: () => null,
     navigate: ({ input }) => { if (input?.trim()) go(resolve(input)); return null; },
     back: () => { if (index > 0) { index--; fakeLoad(); } return null; },
@@ -94,6 +95,18 @@ export function createMockHost(dialup) {
       return list.map((url, i) => ({ offset: (i + 1) * (direction === 'forward' ? 1 : -1), title: new URL(url).host, url }));
     },
     goHistory: ({ offset }) => { index = Math.max(0, Math.min(history.length - 1, index + offset)); fakeLoad(); return null; },
+    newTab: () => null,
+    closeTab: () => null,
+    selectTab: () => null,
+    wayback: () => null,
+    importBookmarks: () => null,
+    exportBookmarks: () => null,
+    menuAction: () => null,
+    search: () => null,
+    securityInfo: () => null,
+    sound: () => null,
+    soundSet: () => null,
+    addFavorite: () => null,
     prefsGet: () => structuredClone(prefs),
     prefsSet: (patch) => { Object.assign(prefs, patch, { catalog: prefs.catalog }); emit('prefs', structuredClone(prefs)); return null; },
     overlay: () => null,

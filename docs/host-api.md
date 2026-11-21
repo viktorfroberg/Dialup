@@ -14,7 +14,7 @@ Only the chrome's **main frame** on a `dialup://` origin can call the host. Ifra
 
 | cmd | args | returns |
 |---|---|---|
-| `ready` | – | `{ apiVersion, tab, window, dialupMode, prefs, sounds }`. Call once at startup; events only flow after this |
+| `ready` | – | `{ apiVersion, tab, tabs, window, dialupMode, prefs, sounds }`. Call once at startup; events only flow after this |
 | `setInsets` | `{ top, left, right, bottom }` CSS px | – positions the page view |
 | `navigate` | `{ input }` URL, bare host or search text | – |
 | `back` / `forward` / `reload` / `stop` / `home` | – | – |
@@ -27,11 +27,15 @@ Only the chrome's **main frame** on a `dialup://` origin can call the host. Ifra
 | `dialupModeGet` | – | dial-up mode settings `{ enabled, connection, colors, resolution, scanlines, oldFonts, includeChrome, retroPage, squareCorners, noShadows, noAnimations, underlineLinks }` |
 | `dialupModeSet` | any subset of the settings | – applies to all windows |
 | `dialupModePreset` | `{ id: '1998' \| '2003' }` | – |
-| `prefsGet` | – | preferences `{ skin, homePage, searchEngine, name, quickLinks, onboarded, catalog }`. `catalog` is the single source for lists and constants: `skins`, `searchEngines`, `defaultLinks`, `dialupPresets`, `connectionSpeeds`, `pictureCapMs` |
+| `prefsGet` | – | preferences `{ skin, homePage, searchEngine, name, quickLinks, onboarded, tabs, restoreSession, catalog }`. `catalog` is the single source for lists and constants: `skins`, `searchEngines`, `defaultLinks`, `dialupPresets`, `connectionSpeeds`, `pictureCapMs` |
 | `prefsSet` | any subset of the preferences | – validated and applied to all windows |
 | `overlay` | `{ open }` | – raises the transparent chrome above the page while a menu/dialog is open (see `js/overlay.js`) |
 | `clearData` | `{ what: 'cache' \| 'all' }` | – clears website data |
 | `log` | `{ message }` | – writes to the app log |
+| `newTab` | `{ url? }` | – a new tab (or a new window when tabs are off) |
+| `closeTab` / `selectTab` | `{ id }` | – closing the last tab closes the window |
+| `wayback` | `{ year }` | – reloads the current page from web.archive.org around that year |
+| `importBookmarks` / `exportBookmarks` | – | – native open/save panel; bookmarks.html format. Import result arrives as the `bookmarksImported` event |
 | `menuAction` | `{ action }` one of `newWindow, performClose, cut, copy, paste, selectAll, toggleFullScreen` | – sent to the responder chain (from the chrome's own menu bar) |
 | `search` | `{ query }` | – searches with the preferred engine |
 | `securityInfo` | – | `{ host, secure, subject, issuer }` for HTTPS pages, else null |
@@ -52,6 +56,8 @@ Only the chrome's **main frame** on a `dialup://` origin can call the host. Ifra
 | `openSettings` | `{ tab }`. Sent on ⌘, and from the start page's Customize link (only when the start page itself asks) |
 | `openWizard` | – sent from Help → Setup Wizard… |
 | `sounds` | `{ enabled }` |
+| `tabs` | `{ enabled, active, tabs: [{ id, title, loading }] }` |
+| `bookmarksImported` | `{ added, found }` |
 | `dialupMode` | dial-up mode settings. The chrome sets body class `dialup-mode` |
 
 ## Keyboard

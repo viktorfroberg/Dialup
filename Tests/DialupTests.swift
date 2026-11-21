@@ -245,7 +245,7 @@ final class PageScriptTests: XCTestCase {
         var settings = DialupModeSettings()
         settings.enabled = true
         settings.connection = .dsl
-        page.apply(settings, to: webView, skin: "luna")
+        page.apply(settings, to: [webView], skin: "luna")
 
         let loaded = expectation(description: "loaded")
         let delegate = LoadDelegate { loaded.fulfill() }
@@ -276,4 +276,27 @@ private final class LoadDelegate: NSObject, WKNavigationDelegate {
     let done: () -> Void
     init(_ done: @escaping () -> Void) { self.done = done }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { done() }
+}
+
+final class BookmarksTests: XCTestCase {
+    func testRoundTripAndFiltering() {
+        let html = """
+        <DL><p><DT><H3>Folder</H3><DL><p>
+        <DT><A HREF="https://example.com/a?x=1&amp;y=2" ADD_DATE="1">Example &amp; Co</A>
+        <DT><A HREF="javascript:alert(1)">Bad</A>
+        <DT><a href="http://old.example/">Old <b>site</b></a>
+        </DL><p></DL>
+        """
+        let parsed = Bookmarks.parse(html)
+        XCTAssertEqual(parsed, [
+            QuickLink(title: "Example & Co", url: "https://example.com/a?x=1&y=2"),
+            QuickLink(title: "Old site", url: "http://old.example/"),
+        ])
+        XCTAssertEqual(Bookmarks.parse(Bookmarks.export(parsed)), parsed)
+    }
+
+    func testTabsPreferenceDefaults() {
+        XCTAssertTrue(Preferences().tabs)
+        XCTAssertFalse(Preferences().merging(["tabs": false]).tabs)
+    }
 }

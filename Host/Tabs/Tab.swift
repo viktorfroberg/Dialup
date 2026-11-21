@@ -4,7 +4,16 @@ import WebKit
 /// One page: wraps a WKWebView and reports its state to whoever listens.
 @MainActor
 final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
+    private static var nextID = 1
+    let id: Int
     let webView: WKWebView
+    /// Restored tabs load lazily: the URL is kept here until the tab is first shown.
+    private(set) var pendingURL: URL?
+    /// target=_blank / window.open: the window decides (new tab or new window). Must return a web
+    /// view created with the given configuration, or nil to load in this tab instead.
+    var onCreateWebView: ((WKWebViewConfiguration, WKNavigationAction) -> WKWebView?)?
+    /// The page called window.close().
+    var onCloseRequest: (() -> Void)?
     var onChange: (() -> Void)?
     /// The start page's "Customize" link asks to open settings at a given tab.
     var onOpenSettings: ((String) -> Void)?
@@ -15,7 +24,10 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     private(set) var items: (remaining: Int, total: Int, url: String)?
     private var observations: [NSKeyValueObservation] = []
 
-    init(configuration: WKWebViewConfiguration) {
+    init(configuration: WKWebViewConfiguration, pendingURL: URL? = nil) {
+        id = Self.nextID
+        Self.nextID += 1
+        self.pendingURL = pendingURL
         webView = WKWebView(frame: .zero, configuration: configuration)
         super.init()
         webView.navigationDelegate = self
@@ -52,7 +64,8 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
     /// Snapshot sent to the chrome as the `tab` event.
     var state: [String: Any] {
         [
-            "url": String(Self.displayURL(webView.url).prefix(4096)),
+            "id": id,
+            "url": String(Self.displayURL(webView.url ?? pendingURL).prefix(4096)),
             "title": String((webView.title ?? "").prefix(300)),
             "secure": webView.url?.scheme == "https" && webView.hasOnlySecureContent,
             "loading": webView.isLoading,
@@ -72,6 +85,16 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     var isShowingStartPage: Bool { webView.url?.scheme == StartPageSchemeHandler.scheme }
 
+    /// The URL to remember for session restore.
+    var sessionURL: URL? { webView.url ?? pendingURL }
+
+    /// Loads a restored tab's URL the first time it's shown.
+    func loadIfNeeded() {
+        guard let url = pendingURL else { return }
+        pendingURL = nil
+        webView.load(URLRequest(url: url))
+    }
+
     func setItems(remaining: Int, total: Int, url: String) {
         items = total > 0 ? (remaining, total, url) : nil
         scheduleChange()
@@ -79,7 +102,8 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     var displayTitle: String {
         if let title = webView.title, !title.isEmpty { return title }
-        if isShowingStartPage { return "Start Page" }
+        if isShowingStartPage || pendingURL == Preferences.startURL { return "Start Page" }
+        if let pendingURL { return pendingURL.host ?? pendingURL.absoluteString }
         return webView.url?.host ?? "Untitled"
     }
 
@@ -157,11 +181,15 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     // MARK: UI
 
-    /// target=_blank / window.open: no tabs yet (phase 1), so open in the same view.
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        if let created = onCreateWebView?(configuration, navigationAction) { return created }
         webView.load(navigationAction.request)
         return nil
+    }
+
+    func webViewDidClose(_ webView: WKWebView) {
+        onCloseRequest?()
     }
 
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
