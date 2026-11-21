@@ -14,9 +14,15 @@ import Foundation
         case click, complete, error, ding, modem
     }
 
+    /// Posted when `isEnabled` changes, so every window can tell its chrome (`sounds` event).
+    static let didChange = Notification.Name("DialupSoundsDidChange")
     private static let defaultsKey = "SoundsEnabled"
     nonisolated private static let sampleRate: Double = 44_100
     private static let masterVolume: Float = 0.25
+    /// The modem sits a bit lower than the UI blips.
+    private static let modemVolume: Float = 0.7
+    /// Player nodes for overlapping short sounds.
+    private static let poolSize = 3
 
     /// Persisted in UserDefaults ("SoundsEnabled"), defaults to true.
     var isEnabled: Bool {
@@ -24,6 +30,7 @@ import Foundation
         set {
             UserDefaults.standard.set(newValue, forKey: Self.defaultsKey)
             if !newValue { stopModem() }
+            NotificationCenter.default.post(name: Self.didChange, object: self)
         }
     }
 
@@ -104,13 +111,13 @@ import Foundation
         guard !engineFailed, let format else { return false }
         if engine == nil {
             let e = AVAudioEngine()
-            let nodes = (0..<3).map { _ in AVAudioPlayerNode() }
+            let nodes = (0..<Self.poolSize).map { _ in AVAudioPlayerNode() }
             let modem = AVAudioPlayerNode()
             for node in nodes + [modem] {
                 e.attach(node)
                 e.connect(node, to: e.mainMixerNode, format: format)
             }
-            modem.volume = 0.7 // the modem sits a bit lower than the UI blips
+            modem.volume = Self.modemVolume
             e.mainMixerNode.outputVolume = Self.masterVolume
             e.prepare()
             engine = e; pool = nodes; modemNode = modem
@@ -138,6 +145,7 @@ import Foundation
         guard let format, !samples.isEmpty,
               let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)),
               let channel = buf.floatChannelData?[0] else { return nil }
+        // baseAddress is non-nil: `samples` was checked to be non-empty above.
         samples.withUnsafeBufferPointer { channel.update(from: $0.baseAddress!, count: samples.count) }
         buf.frameLength = AVAudioFrameCount(samples.count)
         return buf

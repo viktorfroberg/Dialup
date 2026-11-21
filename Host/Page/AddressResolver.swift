@@ -3,17 +3,29 @@ import Foundation
 /// Turns whatever was typed in the address bar into a URL: a full URL,
 /// a bare host ("example.com", "localhost:3000") or a search query.
 enum AddressResolver {
-    static let defaultSearchTemplate = "https://duckduckgo.com/?q=%s"
+    static let defaultSearchTemplate = SearchEngine.duckduckgo.template
+
+    /// What the address bar shows for the start page, and what typing it opens.
+    static let startPageAliases: Set<String> = ["about:home", "about:start"]
 
     private static let passthroughPrefixes = ["http://", "https://", "file://", "about:", "data:"]
-    private static let queryAllowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+    /// RFC 3986 "unreserved" characters (ASCII only); everything else in a query is percent-encoded.
+    private static let queryAllowed = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
 
-    static func resolve(_ raw: String, searchTemplate: String = defaultSearchTemplate) -> URL? {
+    /// Address-bar input → URL. `startURL`, if given, is what `about:home`/`about:start` open.
+    static func resolve(_ raw: String, searchTemplate: String = defaultSearchTemplate, startURL: URL? = nil) -> URL? {
         let input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else { return nil }
-        if let url = resolveAddress(input) { return url }
-        guard let query = input.addingPercentEncoding(withAllowedCharacters: queryAllowed) else { return nil }
-        return URL(string: searchTemplate.replacingOccurrences(of: "%s", with: query))
+        if let startURL, startPageAliases.contains(input.lowercased()) { return startURL }
+        return resolveAddress(input) ?? searchURL(for: input, template: searchTemplate)
+    }
+
+    /// The search results URL for `query`: `%s` in `template` becomes the percent-encoded query.
+    static func searchURL(for query: String, template: String = defaultSearchTemplate) -> URL? {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let encoded = trimmed.addingPercentEncoding(withAllowedCharacters: queryAllowed) else { return nil }
+        return URL(string: template.replacingOccurrences(of: "%s", with: encoded))
     }
 
     /// Like `resolve`, but returns nil instead of falling back to a search.

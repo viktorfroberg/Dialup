@@ -5,21 +5,28 @@ import WebKit
 /// composites the chrome and page web views into one PNG, so the look can be checked
 /// without Screen Recording permission. It uses WebKit's own snapshot API.
 /// `-DialupChromeEval "<js>"` runs JavaScript in the chrome 2 s before the snapshot (e.g. open a dialog).
+/// Debug builds only.
 @MainActor
 enum DebugSnapshot {
+    private static let defaultDelay = 5.0
+    /// How long before the snapshot `-DialupChromeEval` runs, so the chrome can react.
+    private static let evalLeadTime = 2.0
+
     static func scheduleIfRequested(chrome: WKWebView, page: WKWebView, in container: NSView) {
         #if DEBUG
         guard let path = UserDefaults.standard.string(forKey: "DialupSnapshot") else { return }
         let delay = UserDefaults.standard.double(forKey: "DialupSnapshotDelay")
         let eval = UserDefaults.standard.string(forKey: "DialupChromeEval")
         Task { @MainActor in
-            let total = delay > 0 ? delay : 5
+            let total = delay > 0 ? delay : defaultDelay
             if let eval {
-                try? await Task.sleep(for: .seconds(max(0.5, total - 2)))
-                chrome.evaluateJavaScript(eval) { _, error in
-                    if let error { NSLog("Dialup chrome eval failed: %@", error.localizedDescription) }
+                try? await Task.sleep(for: .seconds(max(0.5, total - evalLeadTime)))
+                do {
+                    _ = try await chrome.evaluateJavaScript(eval, contentWorld: .page) // this overload tolerates an undefined result
+                } catch {
+                    NSLog("Dialup chrome eval failed: %@", error.localizedDescription)
                 }
-                try? await Task.sleep(for: .seconds(2))
+                try? await Task.sleep(for: .seconds(evalLeadTime))
             } else {
                 try? await Task.sleep(for: .seconds(total))
             }
@@ -28,6 +35,7 @@ enum DebugSnapshot {
         #endif
     }
 
+    #if DEBUG
     private static func write(chrome: WKWebView, page initialPage: WKWebView, container: NSView, to url: URL) async {
         // The visible tab may have changed since the snapshot was scheduled.
         let page = ((container as? BrowserLayoutView)?.pageView as? WKWebView) ?? initialPage
@@ -59,7 +67,7 @@ enum DebugSnapshot {
         // Window-level Core Image filters (dial-up mode) aren't part of WebKit snapshots,
         // so apply the same filters here to preview the result.
         var output = rep
-        let settings = DialupMode.shared.settings
+        let settings = DialupModeStore.shared.settings
         let filters = DialupModeRenderer.filters(for: settings, backingScale: scale)
         if !filters.isEmpty, let full = CIImage(bitmapImageRep: rep) {
             // Filter the whole window, or only the page rect (CI coordinates: bottom-left origin, pixels).
@@ -80,4 +88,5 @@ enum DebugSnapshot {
             NSLog("Dialup snapshot failed: %@", error.localizedDescription)
         }
     }
+    #endif
 }

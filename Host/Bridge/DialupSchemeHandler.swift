@@ -16,9 +16,11 @@ final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
         self.acceptedScheme = scheme
     }
 
+    /// The app bundle's resources folder. Force-unwrapped: an app bundle always has one.
+    static var bundleResources: URL { Bundle.main.resourceURL! }
+
     static func bundled() -> DialupSchemeHandler {
-        let resources = Bundle.main.resourceURL!
-        return DialupSchemeHandler(roots: ["chrome": [resources.appendingPathComponent("Chrome")]])
+        DialupSchemeHandler(roots: ["chrome": [bundleResources.appendingPathComponent("Chrome")]])
     }
 
     func webView(_ webView: WKWebView, start task: any WKURLSchemeTask) {
@@ -28,13 +30,14 @@ final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
             task.didFailWithError(URLError(.fileDoesNotExist))
             return
         }
-        let response = HTTPURLResponse(
-            url: url, statusCode: 200, httpVersion: "HTTP/1.1",
-            headerFields: [
-                "Content-Type": Self.mimeType(forExtension: file.pathExtension),
-                "Cache-Control": "no-cache",
-            ]
-        )!
+        Self.respond(task, url: url, mime: Self.mimeType(forExtension: file.pathExtension), data: data)
+    }
+
+    /// Answers a scheme task with a 200 response (never cached, so edits show on reload).
+    static func respond(_ task: any WKURLSchemeTask, url: URL, mime: String, data: Data) {
+        // HTTPURLResponse's initializer only fails for malformed input; these values are fixed and valid.
+        let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1",
+                                       headerFields: ["Content-Type": mime, "Cache-Control": "no-cache"])!
         task.didReceive(response)
         task.didReceive(data)
         task.didFinish()

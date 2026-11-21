@@ -5,6 +5,15 @@ import WebKit
 @MainActor
 final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
     private static var nextID = 1
+    /// Caps on what's sent to the chrome, so a hostile page can't flood it.
+    private static let maxStateURLLength = 4096
+    private static let maxStateTitleLength = 300
+    /// A second crash within this many seconds stops the automatic reload.
+    private static let crashLoopInterval: TimeInterval = 10
+    /// WebKitErrorFrameLoadInterruptedByPolicyChange (e.g. a navigation that became a download).
+    private static let frameLoadInterruptedCode = 102
+
+    /// Unique per launch; the chrome refers to tabs by this (`closeTab`, `selectTab`).
     let id: Int
     let webView: WKWebView
     /// Restored tabs load lazily: the URL is kept here until the tab is first shown.
@@ -45,6 +54,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
     }
 
     private func watch<Value>(_ keyPath: KeyPath<WKWebView, Value>) {
+        // WKWebView's KVO fires on the main thread, so the hop can be synchronous.
         observations.append(webView.observe(keyPath, options: []) { [weak self] _, _ in
             MainActor.assumeIsolated { self?.scheduleChange() }
         })
@@ -67,8 +77,8 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
     var state: [String: Any] {
         [
             "id": id,
-            "url": String(Self.displayURL(webView.url ?? pendingURL).prefix(4096)),
-            "title": String((webView.title ?? "").prefix(300)),
+            "url": String(Self.displayURL(webView.url ?? pendingURL).prefix(Self.maxStateURLLength)),
+            "title": String((webView.title ?? "").prefix(Self.maxStateTitleLength)),
             "secure": webView.url?.scheme == "https" && webView.hasOnlySecureContent,
             "loading": webView.isLoading,
             "progress": webView.estimatedProgress,
@@ -152,6 +162,9 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
 
     // MARK: Downloads (to ~/Downloads, never overwriting)
 
+    /// `state` in the `download` event.
+    enum DownloadState: String { case downloading, done, failed }
+
     private var downloadObservations: [ObjectIdentifier: NSKeyValueObservation] = [:]
     private var downloadNames: [ObjectIdentifier: String] = [:]
     private var downloadPaths: [ObjectIdentifier: URL] = [:]
@@ -164,35 +177,36 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
         downloadNames[id] = destination.lastPathComponent
         downloadPaths[id] = destination
         downloadObservations[id] = download.progress.observe(\.fractionCompleted) { [weak self] progress, _ in
+            // Progress may be updated off the main thread, so hop rather than assume.
             let fraction = progress.fractionCompleted
-            MainActor.assumeIsolated { self?.downloadChanged(id, state: "downloading", fraction: fraction) }
+            Task { @MainActor in self?.downloadChanged(id, state: .downloading, fraction: fraction) }
         }
-        downloadChanged(id, state: "downloading", fraction: 0)
+        downloadChanged(id, state: .downloading, fraction: 0)
         return destination
     }
 
     func downloadDidFinish(_ download: WKDownload) {
         let id = ObjectIdentifier(download)
-        downloadChanged(id, state: "done", fraction: 1)
+        downloadChanged(id, state: .done, fraction: 1)
         SoundEffects.shared.play(.complete)
         forget(id)
     }
 
     func download(_ download: WKDownload, didFailWithError error: any Error, resumeData: Data?) {
         let id = ObjectIdentifier(download)
-        downloadChanged(id, state: "failed", fraction: 0)
+        downloadChanged(id, state: .failed, fraction: 0)
         SoundEffects.shared.play(.error)
         forget(id)
     }
 
-    private func downloadChanged(_ id: ObjectIdentifier, state: String, fraction: Double) {
+    private func downloadChanged(_ id: ObjectIdentifier, state: DownloadState, fraction: Double) {
         let name = downloadNames[id] ?? "file"
         statusText = switch state {
-        case "done": "Download complete: \(name)"
-        case "failed": "Download failed: \(name)"
-        default: "Downloading \(name)… \(Int(fraction * 100))%"
+        case .done: "Download complete: \(name)"
+        case .failed: "Download failed: \(name)"
+        case .downloading: "Downloading \(name)… \(Int(fraction * 100))%"
         }
-        onDownload?(["name": name, "fraction": fraction, "state": state, "path": downloadPaths[id]?.path ?? ""])
+        onDownload?(["name": name, "fraction": fraction, "state": state.rawValue, "path": downloadPaths[id]?.path ?? ""])
         scheduleChange()
     }
 
@@ -254,7 +268,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         // Reload once; if it crashes again right away, stop instead of looping.
-        if let lastCrash, Date().timeIntervalSince(lastCrash) < 10 {
+        if let lastCrash, Date().timeIntervalSince(lastCrash) < Self.crashLoopInterval {
             statusText = "The page crashed again. Click Refresh to try once more."
             scheduleChange()
             return
@@ -267,7 +281,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
 
     private static func isBenign(_ error: NSError) -> Bool {
         (error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled)
-            || (error.domain == "WebKitErrorDomain" && error.code == 102) // frame load interrupted (e.g. download)
+            || (error.domain == "WebKitErrorDomain" && error.code == frameLoadInterruptedCode)
     }
 
     // MARK: UI

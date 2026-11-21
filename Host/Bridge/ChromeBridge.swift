@@ -1,7 +1,14 @@
 import Foundation
 import WebKit
 
-/// Receives `host.call(cmd, args)` from the chrome UI and replies.
+/// Whatever carries out the chrome's commands (a browser window).
+@MainActor
+protocol HostCommandHandling: AnyObject {
+    /// Performs the command; the result (a JSON-compatible value or nil) is the reply.
+    func perform(_ command: HostCommand) -> Any?
+}
+
+/// Receives `host.call(cmd, args)` from the chrome UI, parses it into a `HostCommand` and replies.
 /// Accepts messages only from the chrome's main frame on the dialup:// origin,
 /// so iframes (later: toolbar plugins) can never call the host directly.
 @MainActor
@@ -9,7 +16,7 @@ final class ChromeBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let handlerName = "host"
     static let apiVersion = 1
 
-    weak var controller: BrowserWindowController?
+    weak var handler: (any HostCommandHandling)?
 
     /// Only the chrome document itself (main frame, dialup:// origin) may talk to the host.
     nonisolated static func accepts(isMainFrame: Bool, originProtocol: String) -> Bool {
@@ -28,13 +35,20 @@ final class ChromeBridge: NSObject, WKScriptMessageHandlerWithReply {
             replyHandler(nil, "rejected message")
             return
         }
-        guard let controller else {
+        guard let handler else {
             replyHandler(nil, "no window")
             return
         }
-        let args = body["args"] as? [String: Any] ?? [:]
-        let result = controller.handle(cmd, args)
-        replyHandler(result ?? NSNull(), nil)
+        let command: HostCommand
+        do {
+            command = try HostCommand(cmd, body["args"] as? [String: Any] ?? [:])
+        } catch {
+            // Logged, not rejected: the chrome has always treated a bad call as a no-op (null reply).
+            NSLog("Dialup: ignored host command: %@", String(describing: error))
+            replyHandler(NSNull(), nil)
+            return
+        }
+        replyHandler(handler.perform(command) ?? NSNull(), nil)
     }
 }
 

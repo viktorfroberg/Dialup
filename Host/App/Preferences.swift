@@ -1,14 +1,54 @@
 import Foundation
 
+/// A favorite: one entry in the Favorites menu, the Links bar and the start page.
+/// Called a "quick link" in the persisted JSON and the host API (`quickLinks`).
 struct QuickLink: Codable, Equatable {
     var title: String
     var url: String
 }
 
+/// A built-in skin. The raw value is the skin's id: `Chrome/skins/<id>.css` and
+/// `Resources/SkinIcons/<id>.png`.
+enum Skin: String, CaseIterable, Codable {
+    case luna, aqua, classic
+
+    var displayName: String {
+        switch self {
+        case .luna: "Luna (Windows, 2001)"
+        case .aqua: "Aqua (Mac, 2003)"
+        case .classic: "Classic (Windows, 1999)"
+        }
+    }
+}
+
+enum SearchEngine: String, CaseIterable, Codable {
+    case duckduckgo, google, bing, wikipedia
+
+    var displayName: String {
+        switch self {
+        case .duckduckgo: "DuckDuckGo"
+        case .google: "Google"
+        case .bing: "Bing"
+        case .wikipedia: "Wikipedia"
+        }
+    }
+
+    /// Search URL with `%s` where the percent-encoded query goes.
+    var template: String {
+        switch self {
+        case .duckduckgo: "https://duckduckgo.com/?q=%s"
+        case .google: "https://www.google.com/search?q=%s"
+        case .bing: "https://www.bing.com/search?q=%s"
+        case .wikipedia: "https://en.wikipedia.org/w/index.php?search=%s"
+        }
+    }
+}
+
 /// Browser preferences ("profile"): skin, home page, search engine, start page content.
-/// Persisted in UserDefaults; decoding is tolerant so old or odd values never wipe settings.
-struct Preferences: Codable, Equatable {
-    var skin = "luna"
+/// Persisted in UserDefaults as JSON; decoding is tolerant (see `PatchableSettings`), so old or
+/// odd values never wipe settings. Enums encode as their raw string, so the JSON is plain strings.
+struct Preferences: PatchableSettings {
+    var skin = Skin.luna
     /// Set once the first-run setup wizard has been finished or cancelled.
     var onboarded = false
     /// Tabs like Firefox 1.0 (true), or one page per window like 2001 (false).
@@ -17,19 +57,21 @@ struct Preferences: Codable, Equatable {
     var restoreSession = true
     /// Block ads and trackers (native content rule list, see AdBlocker).
     var blockAds = true
-    /// "start" for the built-in start page, otherwise a URL.
-    var homePage = "start"
-    var searchEngine = "duckduckgo"
+    /// `startPageHome` for the built-in start page, otherwise a URL.
+    var homePage = Preferences.startPageHome
+    var searchEngine = SearchEngine.duckduckgo
+    /// The user's name, shown on the start page.
     var name = ""
+    /// The favorites.
     var quickLinks: [QuickLink] = Preferences.defaultLinks
 
-    static let skins: [(id: String, name: String)] = [("luna", "Luna (Windows, 2001)"), ("aqua", "Aqua (Mac, 2003)"), ("classic", "Classic (Windows, 1999)")]
-    static let searchEngines: [(id: String, name: String, template: String)] = [
-        ("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q=%s"),
-        ("google", "Google", "https://www.google.com/search?q=%s"),
-        ("bing", "Bing", "https://www.bing.com/search?q=%s"),
-        ("wikipedia", "Wikipedia", "https://en.wikipedia.org/w/index.php?search=%s"),
-    ]
+    /// `homePage` value meaning "the built-in start page".
+    static let startPageHome = "start"
+    /// Force-unwrapped: a constant, valid URL.
+    static let startURL = URL(string: "dialup-start://home/")!
+    static let maxFavorites = 30
+    static let maxNameLength = 40
+    static let maxFavoriteTitleLength = 60
     static let defaultLinks = [
         QuickLink(title: "Wikipedia", url: "https://www.wikipedia.org/"),
         QuickLink(title: "Hacker News", url: "https://news.ycombinator.com/"),
@@ -37,89 +79,81 @@ struct Preferences: Codable, Equatable {
         QuickLink(title: "Space Jam (1996)", url: "https://www.spacejam.com/1996/"),
         QuickLink(title: "Neocities", url: "https://neocities.org/"),
     ]
-    static let startURL = URL(string: "dialup-start://home/")!
-    static let maxFavorites = 30
+    /// Favorites with these schemes are dropped: only real web pages may be saved.
+    private static let forbiddenLinkPrefixes = ["javascript:", "data:", "file:", "about:", "blob:"]
 
     init() {}
 
-    static let fallbackKey = CodingUserInfoKey(rawValue: "fallback")!
-
     init(from decoder: any Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        let d = decoder.userInfo[Self.fallbackKey] as? Preferences ?? Preferences()
-        func value<T: Decodable>(_ key: CodingKeys, _ fallback: T) -> T {
-            ((try? c.decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
-        }
-        skin = value(.skin, d.skin)
-        homePage = value(.homePage, d.homePage)
-        searchEngine = value(.searchEngine, d.searchEngine)
-        name = value(.name, d.name)
-        quickLinks = value(.quickLinks, d.quickLinks)
-        onboarded = value(.onboarded, d.onboarded)
-        tabs = value(.tabs, d.tabs)
-        restoreSession = value(.restoreSession, d.restoreSession)
-        blockAds = value(.blockAds, d.blockAds)
-        sanitize(fallback: d)
+        let c = try TolerantContainer(decoder, keyedBy: CodingKeys.self)
+        let d = Self.fallback(for: decoder)
+        skin = c.value(.skin, or: d.skin)
+        homePage = c.value(.homePage, or: d.homePage)
+        searchEngine = c.value(.searchEngine, or: d.searchEngine)
+        name = c.value(.name, or: d.name)
+        quickLinks = c.value(.quickLinks, or: d.quickLinks)
+        onboarded = c.value(.onboarded, or: d.onboarded)
+        tabs = c.value(.tabs, or: d.tabs)
+        restoreSession = c.value(.restoreSession, or: d.restoreSession)
+        blockAds = c.value(.blockAds, or: d.blockAds)
+        sanitize()
     }
 
-    /// Keeps values in range: known skin/engine, sane lengths, only http(s) links.
-    mutating func sanitize(fallback: Preferences = Preferences()) {
-        if !Self.skins.contains(where: { $0.id == skin }) { skin = fallback.skin }
-        if !Self.searchEngines.contains(where: { $0.id == searchEngine }) { searchEngine = fallback.searchEngine }
-        name = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))
-        if homePage != "start" {
-            let resolved = AddressResolver.resolveAddress(homePage)
-            homePage = resolved.map(\.absoluteString) ?? "start"
+    /// Keeps values in range: sane lengths, a resolvable home page, only http(s) favorites.
+    /// (Unknown skins and search engines already fall back while decoding.)
+    mutating func sanitize() {
+        name = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxNameLength))
+        if homePage != Self.startPageHome {
+            homePage = AddressResolver.resolveAddress(homePage)?.absoluteString ?? Self.startPageHome
         }
-        quickLinks = quickLinks.prefix(Self.maxFavorites).compactMap { link in
-            let title = String(link.title.trimmingCharacters(in: .whitespaces).prefix(60))
-            let raw = link.url.trimmingCharacters(in: .whitespaces).lowercased()
-            if ["javascript:", "data:", "file:", "about:", "blob:"].contains(where: raw.hasPrefix) { return nil }
-            guard let url = AddressResolver.resolveAddress(link.url), ["http", "https"].contains(url.scheme ?? "") else { return nil }
-            return QuickLink(title: title.isEmpty ? (url.host ?? url.absoluteString) : title, url: url.absoluteString)
-        }
+        quickLinks = quickLinks.prefix(Self.maxFavorites).compactMap(Self.sanitized)
     }
 
-    var searchTemplate: String {
-        Self.searchEngines.first { $0.id == searchEngine }?.template ?? AddressResolver.defaultSearchTemplate
+    private static func sanitized(_ link: QuickLink) -> QuickLink? {
+        let title = String(link.title.trimmingCharacters(in: .whitespaces).prefix(maxFavoriteTitleLength))
+        let raw = link.url.trimmingCharacters(in: .whitespaces).lowercased()
+        if forbiddenLinkPrefixes.contains(where: raw.hasPrefix) { return nil }
+        guard let url = AddressResolver.resolveAddress(link.url), ["http", "https"].contains(url.scheme ?? "") else { return nil }
+        return QuickLink(title: title.isEmpty ? (url.host ?? url.absoluteString) : title, url: url.absoluteString)
     }
 
-    var searchEngineName: String {
-        Self.searchEngines.first { $0.id == searchEngine }?.name ?? "DuckDuckGo"
-    }
+    var searchTemplate: String { searchEngine.template }
 
     var homeURL: URL {
-        homePage == "start" ? Self.startURL : (URL(string: homePage) ?? Self.startURL)
+        homePage == Self.startPageHome ? Self.startURL : (URL(string: homePage) ?? Self.startURL)
     }
 
-    var dictionary: [String: Any] {
-        (try? JSONSerialization.jsonObject(with: JSONEncoder().encode(self))) as? [String: Any] ?? [:]
-    }
-
-    func merging(_ patch: [String: Any]) -> Preferences {
-        var dict = dictionary
-        for (key, value) in patch where dict[key] != nil { dict[key] = value }
-        let decoder = JSONDecoder()
-        decoder.userInfo[Self.fallbackKey] = self
-        guard let data = try? JSONSerialization.data(withJSONObject: dict),
-              let merged = try? decoder.decode(Preferences.self, from: data) else { return self }
-        return merged
+    /// Adds favorites that aren't saved yet (by URL), up to `maxFavorites`.
+    /// Returns how many were added.
+    @discardableResult
+    mutating func addFavorites(_ links: [QuickLink]) -> Int {
+        var added = 0
+        for link in links where !quickLinks.contains(where: { $0.url == link.url }) {
+            guard quickLinks.count < Self.maxFavorites else { break }
+            quickLinks.append(link)
+            added += 1
+        }
+        sanitize()
+        return added
     }
 
     /// Single source of truth for lists and constants the chrome needs (settings, wizard, mock).
     static var catalog: [String: Any] {
         [
-            "skins": skins.map { ["id": $0.id, "name": $0.name] },
-            "searchEngines": searchEngines.map { ["id": $0.id, "name": $0.name] },
+            "skins": Skin.allCases.map { ["id": $0.rawValue, "name": $0.displayName] },
+            "searchEngines": SearchEngine.allCases.map { ["id": $0.rawValue, "name": $0.displayName] },
             "defaultLinks": defaultLinks.map { ["title": $0.title, "url": $0.url] },
             "dialupPresets": DialupModeSettings.presets.mapValues(\.dictionary),
-            "connectionSpeeds": ["modem56k": 53_333, "isdn": 128_000, "dsl": 512_000, "off": 0],
-            "pictureCapMs": DialupModePage.pictureCapMs,
+            "connectionSpeeds": Dictionary(uniqueKeysWithValues: DialupModeSettings.Connection.allCases.map {
+                ($0.rawValue, $0.bitsPerSecond)
+            }),
+            "pictureCapMs": DialupModePageScript.pictureCapMs,
             "maxFavorites": maxFavorites,
         ]
     }
 }
 
+/// The app-wide preferences, persisted in UserDefaults. Posts `didChange` on every change.
 @MainActor
 final class PreferencesStore {
     static let shared = PreferencesStore()
@@ -137,11 +171,7 @@ final class PreferencesStore {
     }
 
     private init() {
-        if let data = UserDefaults.standard.data(forKey: Self.defaultsKey),
-           let saved = try? JSONDecoder().decode(Preferences.self, from: data) {
-            preferences = saved
-        } else {
-            preferences = Preferences()
-        }
+        preferences = UserDefaults.standard.data(forKey: Self.defaultsKey)
+            .flatMap { try? JSONDecoder().decode(Preferences.self, from: $0) } ?? Preferences()
     }
 }

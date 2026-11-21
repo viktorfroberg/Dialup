@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import WebKit
 
@@ -6,8 +7,6 @@ import WebKit
 /// ad containers are hidden. The domain list is our own (domain names, not a copied filter list).
 @MainActor
 enum AdBlocker {
-    static let identifier = "dialup-adblock-v1"
-
     static let domains = [
         // ad serving and exchanges
         "doubleclick.net", "googlesyndication.com", "googleadservices.com", "adservice.google.com",
@@ -34,42 +33,85 @@ enum AdBlocker {
         "[data-ad-slot]", "[data-ad-unit]",
     ]
 
+    /// A content-blocker `url-filter` matching `domain` and all its subdomains, any scheme and port,
+    /// and nothing else (not `notdoubleclick.net`, not `doubleclick.net.example.com`).
+    static func urlFilter(for domain: String) -> String {
+        let escaped = domain.replacingOccurrences(of: ".", with: "\\.")
+        return "^[^:]+://([^/:]+\\.)?\(escaped)[/:]"
+    }
+
     static var rulesJSON: String {
         var rules: [[String: Any]] = domains.map { domain in
-            let escaped = domain.replacingOccurrences(of: ".", with: "\\.")
-            return ["trigger": ["url-filter": "^[^:]+://([^/:]+\\.)?\(escaped)[/:]"], "action": ["type": "block"]]
+            ["trigger": ["url-filter": urlFilter(for: domain)], "action": ["type": "block"]]
         }
         rules.append(["trigger": ["url-filter": ".*"],
                       "action": ["type": "css-display-none", "selector": hideSelectors.joined(separator: ", ")]])
-        let data = (try? JSONSerialization.data(withJSONObject: rules)) ?? Data("[]".utf8)
+        let data = (try? JSONSerialization.data(withJSONObject: rules, options: .sortedKeys)) ?? Data("[]".utf8)
         return String(data: data, encoding: .utf8) ?? "[]"
     }
 
-    private static var compiled: WKContentRuleList?
-    private static var waiting: [(WKContentRuleList?) -> Void] = []
+    private static let identifierPrefix = "dialup-adblock-"
 
-    /// Compiles once per launch (WebKit caches the compiled form on disk).
-    static func ruleList(_ done: @escaping (WKContentRuleList?) -> Void) {
-        if let compiled { done(compiled); return }
-        waiting.append(done)
-        guard waiting.count == 1 else { return }
-        WKContentRuleListStore.default().compileContentRuleList(forIdentifier: identifier, encodedContentRuleList: rulesJSON) { list, error in
-            MainActor.assumeIsolated {
-                if let error { NSLog("Dialup ad blocker failed to compile: %@", error.localizedDescription) }
-                compiled = list
-                let callbacks = waiting
-                waiting.removeAll()
-                callbacks.forEach { $0(list) }
-            }
+    /// The compiled list's identifier carries a hash of the rules, so a changed list is
+    /// recompiled while an unchanged one is looked up from WebKit's on-disk cache.
+    static var identifier: String {
+        let digest = SHA256.hash(data: Data(rulesJSON.utf8))
+        return identifierPrefix + digest.prefix(8).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static var compiled: WKContentRuleList?
+    private static var loading: Task<WKContentRuleList?, Never>?
+
+    /// The rule list: from WebKit's cache when the rules are unchanged since the last launch,
+    /// otherwise compiled (and cached for next time). Concurrent callers share one load.
+    static func ruleList() async -> WKContentRuleList? {
+        if let compiled { return compiled }
+        if let loading { return await loading.value }
+        let task = Task { await lookUpOrCompile() }
+        loading = task
+        let list = await task.value
+        compiled = list
+        loading = nil
+        return list
+    }
+
+    private static func lookUpOrCompile() async -> WKContentRuleList? {
+        guard let store = WKContentRuleListStore.default() else { return nil }
+        let id = identifier
+        if let cached = try? await store.contentRuleList(forIdentifier: id) { return cached }
+        do {
+            let list = try await store.compileContentRuleList(forIdentifier: id, encodedContentRuleList: rulesJSON)
+            await removeStaleLists(in: store, keeping: id)
+            return list
+        } catch {
+            NSLog("Dialup ad blocker failed to compile: %@", error.localizedDescription)
+            return nil
         }
     }
 
-    /// Turns blocking on or off for a window's pages (takes effect on the next page load).
-    static func apply(_ enabled: Bool, to controller: WKUserContentController) {
-        ruleList { list in
-            guard let list else { return }
-            controller.remove(list)
-            if enabled { controller.add(list) }
+    /// Deletes lists compiled from older versions of the rules.
+    private static func removeStaleLists(in store: WKContentRuleListStore, keeping current: String) async {
+        let ids = await store.availableIdentifiers() ?? []
+        for id in ids where id.hasPrefix(identifierPrefix) && id != current {
+            try? await store.removeContentRuleList(forIdentifier: id)
         }
+    }
+
+    /// Applies the `blockAds` preference to a window's pages (takes effect on the next page load).
+    static func update(_ controller: WKUserContentController) {
+        if let compiled {
+            install(compiled, on: controller)
+            return
+        }
+        Task {
+            // The preference is read after the (first-launch) compile, so the last change wins.
+            guard let list = await ruleList() else { return }
+            install(list, on: controller)
+        }
+    }
+
+    private static func install(_ list: WKContentRuleList, on controller: WKUserContentController) {
+        controller.remove(list)
+        if PreferencesStore.shared.preferences.blockAds { controller.add(list) }
     }
 }
