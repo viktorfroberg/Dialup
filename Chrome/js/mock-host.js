@@ -15,11 +15,12 @@ export function createMockHost(dialup) {
     2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false },
   };
   const prefs = {
-    skin: new URLSearchParams(location.search).get('skin') || 'aqua',
+    skin: new URLSearchParams(location.search).get('skin') || 'luna',
+    onboarded: new URLSearchParams(location.search).has('onboarded'),
     homePage: 'start', searchEngine: 'duckduckgo', name: '',
     quickLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
     catalog: {
-      skins: [{ id: 'aqua', name: 'Aqua (Mac, 2003)' }, { id: 'luna', name: 'Luna (Windows, 2001)' }],
+      skins: [{ id: 'luna', name: 'Luna (Windows, 2001)' }, { id: 'aqua', name: 'Aqua (Mac, 2003)' }],
       searchEngines: [{ id: 'duckduckgo', name: 'DuckDuckGo' }, { id: 'google', name: 'Google' }],
     },
   };

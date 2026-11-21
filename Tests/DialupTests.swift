@@ -168,3 +168,29 @@ final class PreferencesTests: XCTestCase {
         XCTAssertTrue(js.contains("<\\/script>"))
     }
 }
+
+@MainActor
+final class PageTouchesTests: XCTestCase {
+    func testSafeTouchesOnByDefaultRiskyOff() {
+        var s = DialupModeSettings()
+        s.enabled = true
+        let cfg = DialupModePage.config(for: s, skin: "aqua")
+        XCTAssertEqual(cfg["retroPage"] as? Bool, true)
+        XCTAssertEqual(cfg["squareCorners"] as? Bool, true)
+        XCTAssertEqual(cfg["noShadows"] as? Bool, false)
+        XCTAssertEqual(cfg["noAnimations"] as? Bool, false)
+        XCTAssertEqual(cfg["underlineLinks"] as? Bool, false)
+        XCTAssertEqual(cfg["skin"] as? String, "aqua")
+    }
+
+    func testNothingInjectedWhenDisabled() {
+        let cfg = DialupModePage.config(for: DialupModeSettings())
+        XCTAssertEqual(cfg["retroPage"] as? Bool, false)
+        XCTAssertEqual(cfg["squareCorners"] as? Bool, false)
+    }
+
+    func testFirstRunDefaults() {
+        XCTAssertEqual(Preferences().skin, "luna")
+        XCTAssertFalse(Preferences().onboarded)
+    }
+}

@@ -8,14 +8,16 @@ struct QuickLink: Codable, Equatable {
 /// Browser preferences ("profile"): skin, home page, search engine, start page content.
 /// Persisted in UserDefaults; decoding is tolerant so old or odd values never wipe settings.
 struct Preferences: Codable, Equatable {
-    var skin = "aqua"
+    var skin = "luna"
+    /// Set once the first-run setup wizard has been finished or cancelled.
+    var onboarded = false
     /// "start" for the built-in start page, otherwise a URL.
     var homePage = "start"
     var searchEngine = "duckduckgo"
     var name = ""
     var quickLinks: [QuickLink] = Preferences.defaultLinks
 
-    static let skins: [(id: String, name: String)] = [("aqua", "Aqua (Mac, 2003)"), ("luna", "Luna (Windows, 2001)")]
+    static let skins: [(id: String, name: String)] = [("luna", "Luna (Windows, 2001)"), ("aqua", "Aqua (Mac, 2003)")]
     static let searchEngines: [(id: String, name: String, template: String)] = [
         ("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q=%s"),
         ("google", "Google", "https://www.google.com/search?q=%s"),
@@ -46,6 +48,7 @@ struct Preferences: Codable, Equatable {
         searchEngine = value(.searchEngine, d.searchEngine)
         name = value(.name, d.name)
         quickLinks = value(.quickLinks, d.quickLinks)
+        onboarded = value(.onboarded, d.onboarded)
         sanitize(fallback: d)
     }
 

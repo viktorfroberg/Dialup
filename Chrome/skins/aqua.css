@@ -201,3 +201,12 @@ body.inactive .cap, body.inactive .cap-close { opacity: 1; background: radial-gr
 .dialog input[type=checkbox]:checked::after { border-color: #10204a; left: 4px; top: 1px; }
 .dialog input[type=radio]:checked::after { inset: 4px; background: #10204a; }
 .dialog input:hover:not(:disabled) { box-shadow: inset 0 1px 1px rgba(0, 0, 0, .15); }
+
+/* Wizard on Aqua */
+.wizard-banner { background: linear-gradient(160deg, #3f8cf5, #9fd0ff 60%, #e8f3ff); }
+.wizard-main { background: transparent; }
+.wizard-footer { border-top: 1px solid #c4c4c4; box-shadow: none; }
+.wizard-card:has(input:checked), .wizard-option:has(input:checked) { border-color: #3f8cf5; background: rgba(63, 140, 245, .15); }
+.wizard-option { border-color: #c4c4c4; border-radius: 7px; background: rgba(255, 255, 255, .5); }
+.wizard-option::before { border-color: #6f6f6f; background: var(--aqua-white); }
+.wizard-option:has(input:checked)::before { background: radial-gradient(circle, #10204a 0 2.5px, transparent 3px), var(--aqua-blue); border-color: #2a5fa8; }

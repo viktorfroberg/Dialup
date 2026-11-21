@@ -1,6 +1,7 @@
 import { host, onEvent } from './host.js';
 import { showMenu } from './overlay.js';
 import { openSettings } from './settings.js';
+import { openWizard } from './wizard.js';
 
 const $ = (id) => document.getElementById(id);
 const address = $('address');
@@ -183,6 +184,7 @@ onEvent('prefs', applyPrefs);
 
 const showSettings = (tabId) => openSettings(tabId, { getCurrentUrl: () => tab.url });
 onEvent('openSettings', ({ tab: tabId }) => showSettings(tabId || 'general'));
+onEvent('openWizard', () => openWizard());
 
 // ---------- Layout: tell the host where the page goes ----------
 
@@ -216,4 +218,5 @@ if (init?.tab) { tab = init.tab; render(); }
 renderWindowState(init?.window);
 renderDialupMode(init?.dialupMode ?? {});
 applyPrefs(init?.prefs);
+if (init?.prefs && !init.prefs.onboarded) openWizard(); // first run
 reportInsets();

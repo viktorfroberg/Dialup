@@ -22,8 +22,18 @@ struct DialupModeSettings: Codable, Equatable {
     /// Off by default: window effects only touch the page, the browser UI stays crisp.
     var includeChrome = false
 
+    // Page touches (CSS injected into pages). Safe ones default on; riskier ones are opt-in.
+    /// Classic scrollbars, light mode, dotted focus, retro selection, no smooth scroll, no text shadows.
+    var retroPage = true
+    var squareCorners = true
+    var noShadows = false
+    var noAnimations = false
+    var underlineLinks = false
+
     init(enabled: Bool = false, connection: Connection = .modem56k, colors: Colors = .gifImages,
-         resolution: Resolution = .retina, scanlines: Bool = true, oldFonts: Bool = false, includeChrome: Bool = false) {
+         resolution: Resolution = .retina, scanlines: Bool = true, oldFonts: Bool = false, includeChrome: Bool = false,
+         retroPage: Bool = true, squareCorners: Bool = true, noShadows: Bool = false,
+         noAnimations: Bool = false, underlineLinks: Bool = false) {
         self.enabled = enabled
         self.connection = connection
         self.colors = colors
@@ -31,6 +41,11 @@ struct DialupModeSettings: Codable, Equatable {
         self.scanlines = scanlines
         self.oldFonts = oldFonts
         self.includeChrome = includeChrome
+        self.retroPage = retroPage
+        self.squareCorners = squareCorners
+        self.noShadows = noShadows
+        self.noAnimations = noAnimations
+        self.underlineLinks = underlineLinks
     }
 
     static let fallbackKey = CodingUserInfoKey(rawValue: "fallback")!
@@ -50,10 +65,16 @@ struct DialupModeSettings: Codable, Equatable {
         scanlines = value(.scanlines, d.scanlines)
         oldFonts = value(.oldFonts, d.oldFonts)
         includeChrome = value(.includeChrome, d.includeChrome)
+        retroPage = value(.retroPage, d.retroPage)
+        squareCorners = value(.squareCorners, d.squareCorners)
+        noShadows = value(.noShadows, d.noShadows)
+        noAnimations = value(.noAnimations, d.noAnimations)
+        underlineLinks = value(.underlineLinks, d.underlineLinks)
     }
 
     static let presets: [String: DialupModeSettings] = [
-        "1998": DialupModeSettings(enabled: true, connection: .modem56k, colors: .gifImages, scanlines: true, oldFonts: true),
+        "1998": DialupModeSettings(enabled: true, connection: .modem56k, colors: .gifImages, scanlines: true, oldFonts: true,
+                                   noShadows: true, underlineLinks: true),
         "2003": DialupModeSettings(enabled: true, connection: .dsl, colors: .millions, scanlines: false, oldFonts: false),
     ]
 
@@ -156,7 +177,7 @@ enum DialupModeRenderer {
         target.contentFilters = filters(for: s, backingScale: scale)
         layoutView.scanlinesCoverChrome = s.includeChrome
         layoutView.scanlineView.isHidden = !(s.enabled && s.scanlines)
-        DialupModePage.apply(s, to: page)
+        DialupModePage.apply(s, to: page, skin: PreferencesStore.shared.preferences.skin)
     }
 }
 
@@ -186,27 +207,35 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         onStatus?(webView, remaining, total, url)
     }
 
-    static func config(for s: DialupModeSettings) -> [String: Any] {
+    static func config(for s: DialupModeSettings, skin: String = "luna") -> [String: Any] {
         [
             "enabled": s.enabled,
             "bps": s.bitsPerSecond,
             "gifImages": s.enabled && s.colors == .gifImages,
             "oldFonts": s.enabled && s.oldFonts,
+            "retroPage": s.enabled && s.retroPage,
+            "squareCorners": s.enabled && s.squareCorners,
+            "noShadows": s.enabled && s.noShadows,
+            "noAnimations": s.enabled && s.noAnimations,
+            "underlineLinks": s.enabled && s.underlineLinks,
+            "skin": skin,
         ]
     }
 
-    static func script(for s: DialupModeSettings) -> String {
-        let json = (try? JSONSerialization.data(withJSONObject: config(for: s)))
+    static func script(for s: DialupModeSettings, skin: String = "luna") -> String {
+        let json = (try? JSONSerialization.data(withJSONObject: config(for: s, skin: skin)))
             .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
         return pageScript.replacingOccurrences(of: "__CFG__", with: json)
     }
 
-    static func apply(_ s: DialupModeSettings, to webView: WKWebView) {
+    static func apply(_ s: DialupModeSettings, to webView: WKWebView, skin: String) {
+        // No dark mode in 2003: pages render in light appearance while retro page touches are on.
+        webView.appearance = (s.enabled && s.retroPage) ? NSAppearance(named: .aqua) : nil
         let controller = webView.configuration.userContentController
         let others = controller.userScripts.filter { !$0.source.contains(marker) }
         controller.removeAllUserScripts()
         others.forEach(controller.addUserScript)
-        let source = script(for: s)
+        let source = script(for: s, skin: skin)
         if s.enabled {
             controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart,
                                                   forMainFrameOnly: false, in: world))
@@ -232,6 +261,38 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
         const CSS_FONTS = 'html,body,p,div,td,th,li,dd,dt,a,label,input,textarea,select,button,h1,h2,h3,h4,h5,h6,blockquote{font-family:Verdana,Tahoma,"Times New Roman",serif!important}'
           + 'pre,code,kbd,samp,tt{font-family:"Courier New",Courier,monospace!important}'
           + '*{-webkit-font-smoothing:none!important}';
+
+        // Page touches. Safe set first; the rest are opt-in because they can change layouts.
+        const svgArrow = (d) => `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='${d}' fill='%234d6185'/%3E%3C/svg%3E")`;
+        const SCROLLBARS = {
+          luna: '::-webkit-scrollbar{width:17px!important;height:17px!important;background:#f3f1ec!important}'
+            + '::-webkit-scrollbar-track{background:#f3f1ec!important}'
+            + '::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#cad8fc,#bccdfa 45%,#aec2f8)!important;border:1px solid #93abe9!important;border-radius:3px!important;box-shadow:inset 1px 1px 0 #eef3ff!important}'
+            + '::-webkit-scrollbar-thumb:horizontal{background:linear-gradient(#cad8fc,#bccdfa 45%,#aec2f8)!important}'
+            + '::-webkit-scrollbar-button:single-button{display:block!important;width:17px!important;height:17px!important;background-color:#cad8fc!important;border:1px solid #93abe9!important;border-radius:3px!important;background-repeat:no-repeat!important;background-position:center!important}'
+            + `::-webkit-scrollbar-button:single-button:vertical:decrement{background-image:${svgArrow('M0 6 4 2 8 6z')}!important}`
+            + `::-webkit-scrollbar-button:single-button:vertical:increment{background-image:${svgArrow('M0 2 4 6 8 2z')}!important}`
+            + `::-webkit-scrollbar-button:single-button:horizontal:decrement{background-image:${svgArrow('M6 0 2 4 6 8z')}!important}`
+            + `::-webkit-scrollbar-button:single-button:horizontal:increment{background-image:${svgArrow('M2 0 6 4 2 8z')}!important}`
+            + '::-webkit-scrollbar-corner{background:#f3f1ec!important}',
+          aqua: '::-webkit-scrollbar{width:15px!important;height:15px!important;background:#ececec!important}'
+            + '::-webkit-scrollbar-track{background:linear-gradient(90deg,#cfcfcf,#f2f2f2 40%,#fbfbfb)!important;box-shadow:inset 1px 0 2px rgba(0,0,0,.25)!important}'
+            + '::-webkit-scrollbar-track:horizontal{background:linear-gradient(#cfcfcf,#f2f2f2 40%,#fbfbfb)!important}'
+            + '::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#3f84ea,#a6d4ff 30%,#5ea6ff 55%,#2f74e0)!important;border:1px solid #2a5fa8!important;border-radius:8px!important}'
+            + '::-webkit-scrollbar-thumb:horizontal{background:linear-gradient(#3f84ea,#a6d4ff 30%,#5ea6ff 55%,#2f74e0)!important}'
+            + '::-webkit-scrollbar-button{display:none!important}'
+            + '::-webkit-scrollbar-corner{background:#ececec!important}',
+        };
+        const CSS_RETRO = (skin) => '*{scrollbar-color:auto!important;scrollbar-width:auto!important;text-shadow:none!important}'
+          + 'html{scroll-behavior:auto!important}'
+          + '::selection{background:#316ac5!important;color:#fff!important}'
+          + ':focus-visible{outline:1px dotted currentColor!important;outline-offset:1px!important}'
+          + (SCROLLBARS[skin] || SCROLLBARS.luna);
+        const CSS_SQUARE = '*,*::before,*::after{border-radius:0!important}';
+        const CSS_NO_SHADOWS = '*,*::before,*::after{box-shadow:none!important}';
+        // 0.01ms, not 0: with 0 no transitionend/animationend fires and some sites wait forever.
+        const CSS_NO_MOTION = '*,*::before,*::after{transition-duration:.01ms!important;transition-delay:0s!important;animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important}';
+        const CSS_LINKS = 'a[href]{text-decoration:underline!important}';
 
         const show = (img) => img.setAttribute('data-dialup-shown', '');
         const remaining = () => queue.length + active;
@@ -330,7 +391,9 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
               return;
             }
             if (!style) { style = document.createElement('style'); style.id = 'dialup-mode-style'; }
-            style.textContent = (cfg.bps ? CSS_HIDE : '') + (cfg.gifImages ? CSS_GIF : '') + (cfg.oldFonts ? CSS_FONTS : '');
+            style.textContent = (cfg.bps ? CSS_HIDE : '') + (cfg.gifImages ? CSS_GIF : '') + (cfg.oldFonts ? CSS_FONTS : '')
+              + (cfg.retroPage ? CSS_RETRO(cfg.skin) : '') + (cfg.squareCorners ? CSS_SQUARE : '')
+              + (cfg.noShadows ? CSS_NO_SHADOWS : '') + (cfg.noAnimations ? CSS_NO_MOTION : '') + (cfg.underlineLinks ? CSS_LINKS : '');
             if (!style.isConnected) attach(style);
             if (cfg.gifImages) ensureSvg();
             // Turned on mid-page: don't re-hide what's already loaded; the next page trickles in.

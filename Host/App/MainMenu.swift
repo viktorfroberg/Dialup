@@ -75,7 +75,9 @@ enum MainMenu {
         ])
         NSApp.windowsMenu = windowMenu
 
-        let helpMenu = submenu("Help", [])
+        let helpMenu = submenu("Help", [
+            item("Setup Wizard…", #selector(BrowserWindowController.openSetupWizard(_:))),
+        ])
         NSApp.helpMenu = helpMenu
 
         return main

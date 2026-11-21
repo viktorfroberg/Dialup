@@ -47,6 +47,8 @@ build/Build/Products/Debug/Dialup.app/Contents/MacOS/Dialup -DialupSnapshot /tmp
       dial-in sequence, 256-colour images, faint CRT scanlines, old fonts; hard-mode whole-page colours/pixels
    ✅ Retro HTML menus and dialogs · ✅ Dialup Options (⌘,) with visual Dial-up Mode previews
    ✅ Skins: Aqua (Mac 2003, default) and Luna (Windows 2001) in `Chrome/skins/` · ✅ Retro start page (`Start/`)
+   ✅ First-run Setup Wizard (Help → Setup Wizard…), Luna default · ✅ Page touches: classic scrollbars, light mode,
+      square corners (safe, on) + no shadows / no animations / underlined links (opt-in)
    Next for dial-up mode: modem/click sounds, optional real network throttling, 800×600 window
 1. Tabs, session restore, multiple windows
 2. Skins (`Skins/<id>/skin.json + skin.css`)

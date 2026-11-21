@@ -140,6 +140,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     private func preferencesDidChange() {
         emit("prefs", preferencesPayload)
+        DialupModeRenderer.apply(DialupMode.shared.settings, to: layoutView, page: tab.webView) // skin-specific scrollbars
         if tab.isShowingStartPage { tab.webView.reload() }
     }
 
@@ -308,6 +309,10 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     // MARK: Menu actions (native shortcuts)
+
+    @objc func openSetupWizard(_ sender: Any?) {
+        emit("openWizard", [:])
+    }
 
     @objc func openSettings(_ sender: Any?) {
         emit("openSettings", ["tab": "general"])

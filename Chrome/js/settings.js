@@ -313,6 +313,25 @@ function dialupTab({ draft }) {
     </fieldset>
 
     <fieldset>
+      <legend>Page touches</legend>
+      <p class="hint">Small style changes to web pages. The first ones are safe; the rest can change how some sites look.</p>
+      <div class="split-row">
+        <div class="grow">
+          <label class="choice"><input type="checkbox" data-bind="dialup.retroPage"> Retro basics <span class="hint">classic scrollbars, no dark mode, dotted focus, no smooth scrolling</span></label>
+          <label class="choice"><input type="checkbox" data-bind="dialup.squareCorners"> Square corners <span class="hint">no rounded boxes and buttons</span></label>
+          <label class="choice"><input type="checkbox" data-bind="dialup.noShadows"> No drop shadows <span class="risk">may hide some borders</span></label>
+          <label class="choice"><input type="checkbox" data-bind="dialup.noAnimations"> No smooth animations <span class="risk">things snap instead of slide</span></label>
+          <label class="choice"><input type="checkbox" data-bind="dialup.underlineLinks"> Underline all links <span class="risk">menus get underlined too</span></label>
+        </div>
+        <div class="preview-box touches-preview" id="touches-preview">
+          <div class="tp-card"><div class="tp-avatar"></div><div class="tp-lines"><s></s><s></s></div></div>
+          <div class="tp-row"><span class="tp-button">Sign up</span><a class="tp-link">Learn more</a></div>
+          <div class="preview-caption">Preview</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
       <legend>Extras</legend>
       <div class="split-row">
         <div class="grow">
@@ -389,19 +408,29 @@ function dialupTab({ draft }) {
     ], { duration: ms + 1500, iterations: Infinity, easing: `steps(${Math.max(4, Math.round(ms / 60))}, end)` });
   };
 
-  bind(root, draft, (group, key) => { if (key === 'connection') updateSpeed(); });
+  const touches = root.querySelector('#touches-preview');
+  const updateTouches = () => {
+    touches.classList.toggle('square', !!draft.dialup.squareCorners);
+    touches.classList.toggle('flat', !!draft.dialup.noShadows);
+    touches.classList.toggle('underline', !!draft.dialup.underlineLinks);
+  };
+  bind(root, draft, (group, key) => { if (key === 'connection') updateSpeed(); updateTouches(); });
   for (const button of root.querySelectorAll('[data-preset]')) {
     button.addEventListener('click', () => {
       const presets = {
-        1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true },
-        2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false },
+        1998: { enabled: true, connection: 'modem56k', colors: 'gifImages', resolution: 'retina', scanlines: true, oldFonts: true,
+          retroPage: true, squareCorners: true, noShadows: true, noAnimations: false, underlineLinks: true },
+        2003: { enabled: true, connection: 'dsl', colors: 'millions', resolution: 'retina', scanlines: false, oldFonts: false,
+          retroPage: true, squareCorners: true, noShadows: false, noAnimations: false, underlineLinks: false },
       };
       Object.assign(draft.dialup, presets[button.dataset.preset]);
       sync(root, draft);
       updateSpeed();
+      updateTouches();
     });
   }
   updateSpeed();
+  updateTouches();
   return root;
 }
 
