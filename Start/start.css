@@ -450,3 +450,24 @@ body.skin-classic {
 @media (min-width: 1500px) and (min-height: 860px) {
   .sheet, .colophon { zoom: 1.15; }
 }
+
+/* =====================================================================
+   One page, edge to edge. The page itself fills the window (it's a web
+   page, not a dialog on a desktop): full-width status strip and footer,
+   content centred in an 800x600-friendly column.
+   ===================================================================== */
+html, body { background: var(--paper) !important; background-image: none !important; }
+body { padding: 0; display: block; min-height: 100vh; }
+.sheet.sheet.sheet {
+  width: 100%; max-width: none; height: 100vh; margin: 0;
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  zoom: 1 !important;
+}
+.sheet .bar.bar { border-radius: 0 !important; padding: 0 max(16px, calc(50% - 380px)); }
+.sheet .main { height: 100%; vertical-align: top; padding: 48px max(16px, calc(50% - 380px)) 32px; }
+.sheet .foot.foot { border-radius: 0 !important; padding-left: max(16px, calc(50% - 380px)); padding-right: max(16px, calc(50% - 380px)); }
+.sheet .colophon { margin: 10px 0 0; }
+@media (min-width: 1500px) and (min-height: 860px) {
+  .sheet .main > *, .sheet .foot > * { zoom: 1.12; }
+}
+.skin-classic .colophon, .skin-classic .colophon a { color: #404040 !important; }
