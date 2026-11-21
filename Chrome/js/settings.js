@@ -366,13 +366,19 @@ function dialupTab({ draft, catalog }) {
     </fieldset>
 
     <fieldset>
-      <legend>Colours</legend>
-      <div class="option-cards" id="colour-cards"></div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Pixels</legend>
-      <div class="option-cards" id="pixel-cards"></div>
+      <legend>Colours and pixels</legend>
+      <div class="split-row">
+        <div class="grow">
+          <div class="opt-group"><div class="opt-heading">Colours</div><div id="colour-list"></div></div>
+          <div class="opt-group"><div class="opt-heading">Pixels</div><div id="pixel-list"></div></div>
+        </div>
+        <div class="preview-box looks-preview">
+          <canvas id="look-full"></canvas>
+          <div class="preview-caption">How pages will look</div>
+          <canvas id="look-zoom"></canvas>
+          <div class="preview-caption">Up close (4×)</div>
+        </div>
+      </div>
     </fieldset>
 
     <fieldset>
@@ -423,25 +429,36 @@ function dialupTab({ draft, catalog }) {
     ['chunky', 'Chunky', 'Hard mode: big blocky pixels. Hard to read.', true],
   ];
 
-  const cards = (container, key, options) => {
+  // Plain radio lists (like an old Display Properties dialog) and ONE preview of the current
+  // combination, plus a 4x close-up where banding, dithering and blocky pixels are obvious.
+  const radios = (container, key, options) => {
     for (const [value, title, text, hard] of options) {
-      const card = document.createElement('label');
-      card.className = `option-card${hard ? ' hard' : ''}`;
-      card.append(html`
-        <input type="radio" name="${key}" value="${value}" data-bind="dialup.${key}">
-        <canvas width="150" height="92"></canvas>
-        <div class="option-title">${title}${hard ? ' <span class="hard-badge">HARD</span>' : ''}</div>
-        <div class="option-text">${text}</div>`);
-      // html`` escapes values; restore the badge markup we added on purpose.
-      card.querySelector('.option-title').innerHTML = escape(title) + (hard ? ' <span class="hard-badge">HARD</span>' : '');
-      container.append(card);
-      const canvas = card.querySelector('canvas');
-      const settings = key === 'colors' ? { colors: value, resolution: 'retina' } : { colors: 'millions', resolution: value };
-      whenSampleReady((img) => drawPreview(canvas, img, settings));
+      const row = document.createElement('label');
+      row.className = 'choice opt-choice';
+      row.append(html`<input type="radio" name="${key}" value="${value}" data-bind="dialup.${key}"> <span class="opt-title"></span> <span class="hint"></span>`);
+      row.querySelector('.opt-title').textContent = title;
+      if (hard) row.querySelector('.opt-title').insertAdjacentHTML('beforeend', ' <span class="hard-badge">HARD</span>');
+      row.querySelector('.hint').textContent = text;
+      container.append(row);
     }
   };
-  cards(root.querySelector('#colour-cards'), 'colors', colourOptions);
-  cards(root.querySelector('#pixel-cards'), 'resolution', pixelOptions);
+  radios(root.querySelector('#colour-list'), 'colors', colourOptions);
+  radios(root.querySelector('#pixel-list'), 'resolution', pixelOptions);
+
+  const full = root.querySelector('#look-full');
+  const zoom = root.querySelector('#look-zoom');
+  const updateLook = () => whenSampleReady((img) => {
+    const settings = { colors: draft.dialup.colors, resolution: draft.dialup.resolution };
+    drawPreview(full, img, settings, 200, 124);
+    // close-up: where the picture meets the text, magnified 4x without smoothing
+    const dpr = window.devicePixelRatio || 2;
+    zoom.width = 200 * dpr; zoom.height = 70 * dpr;
+    zoom.style.width = '200px'; zoom.style.height = '70px';
+    const g = zoom.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.drawImage(full, 4 * dpr, 52 * dpr, 50 * dpr, 17.5 * dpr, 0, 0, zoom.width, zoom.height);
+  });
+  updateLook();
 
   // Connection speed explanation + trickle animation
   const explain = root.querySelector('#speed-explain');
@@ -477,13 +494,14 @@ function dialupTab({ draft, catalog }) {
     touches.classList.toggle('flat', !!draft.dialup.noShadows);
     touches.classList.toggle('underline', !!draft.dialup.underlineLinks);
   };
-  bind(root, draft, (group, key) => { if (key === 'connection') updateSpeed(); updateTouches(); });
+  bind(root, draft, (group, key) => { if (key === 'connection') updateSpeed(); if (key === 'colors' || key === 'resolution') updateLook(); updateTouches(); });
   for (const button of root.querySelectorAll('[data-preset]')) {
     button.addEventListener('click', () => {
       Object.assign(draft.dialup, (catalog.dialupPresets || {})[button.dataset.preset] || {});
       sync(root, draft);
       updateSpeed();
       updateTouches();
+      updateLook();
     });
   }
   updateSpeed();
@@ -548,8 +566,9 @@ function whenSampleReady(fn) {
 
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
-function drawPreview(canvas, img, { colors, resolution }) {
-  const W = canvas.width, H = canvas.height;
+function drawPreview(canvas, img, { colors, resolution }, W = 150, H = 92) {
+  canvas.style.width = `${W}px`;
+  canvas.style.height = `${H}px`;
   const dpr = window.devicePixelRatio || 2;
   const scale = resolution === 'retina' ? dpr : resolution === 'classic' ? 1 : 0.5;
   const w = Math.round(W * scale), h = Math.round(H * scale);

@@ -859,3 +859,23 @@ body.fullscreen, body.zoomed { border-radius: 0; }
 
 /* The Dialup logo (CRT app artwork) in the wizard and About box */
 .wizard-logo, .about-logo { background-image: url(img/tango/globe.svg); }
+
+/* Tall dialogs: the dialog never exceeds the window; only the tab content scrolls, so the
+   tabs and the OK/Cancel buttons always stay visible. */
+.dialog-body:has(> .settings) { display: flex; flex-direction: column; overflow: hidden; }
+.settings { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.settings .tab-panels { flex: 1; min-height: 0; overflow-y: auto; }
+.settings .tab-panels { min-height: min(380px, calc(100vh - 170px)); }
+
+/* Colours & pixels: radio lists + one preview. The chosen option is bold, so it's obvious what's on. */
+.opt-group { margin-bottom: 8px; }
+.opt-heading { font-weight: bold; margin: 2px 0 2px; }
+.opt-choice { padding: 2px 0 2px 2px; }
+.opt-choice .hint { display: block; margin: 0 0 2px 22px; font-size: 10px; }
+.settings .choice:has(input:checked) .opt-title,
+.settings .choice:has(input[type=checkbox]:checked) > b,
+.settings .choice:has(input:checked) { font-weight: bold; }
+.settings .choice:has(input:checked) .hint { font-weight: normal; }
+.looks-preview { width: 210px; }
+.looks-preview canvas { display: block; margin: 0 auto; border: 1px solid #808080; image-rendering: pixelated; background: #fff; }
+.looks-preview canvas + .preview-caption { margin-bottom: 8px; }

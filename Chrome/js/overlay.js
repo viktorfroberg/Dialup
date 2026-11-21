@@ -209,6 +209,8 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
     if (closed) return;
     closed = true;
     popKeys(keys);
+    sizeWatcher.disconnect();
+    removeEventListener('resize', keepInView);
     backdrop.remove();
     release();
   };
@@ -244,6 +246,18 @@ export function openDialog({ title, width = 480, body, buttons = [{ label: 'OK',
     dialog.style.top = `${Math.max(8, (innerHeight - dialog.offsetHeight) / 2.4)}px`;
   };
   centre();
+  // Keep the whole dialog inside the window when its content grows (e.g. switching to a tall
+  // tab) or the window shrinks: move it up first; its height is already capped at the window.
+  const keepInView = () => {
+    if (!dialog.isConnected) return;
+    const h = dialog.offsetHeight, w = dialog.offsetWidth;
+    const top = dialog.offsetTop, left = dialog.offsetLeft;
+    if (top + h > innerHeight - 8) dialog.style.top = `${Math.max(8, innerHeight - 8 - h)}px`;
+    if (left + w > innerWidth - 8) dialog.style.left = `${Math.max(8, innerWidth - 8 - w)}px`;
+  };
+  const sizeWatcher = new ResizeObserver(keepInView);
+  sizeWatcher.observe(dialog);
+  addEventListener('resize', keepInView);
   bar.addEventListener('mousedown', (e) => {
     if (e.button !== 0 || e.target.closest('button')) return;
     e.preventDefault();
