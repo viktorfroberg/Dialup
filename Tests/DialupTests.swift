@@ -128,6 +128,8 @@ final class DialupModeTests: XCTestCase {
         XCTAssertEqual(s.bitsPerSecond, 0)
         s.enabled = true
         XCTAssertEqual(s.bitsPerSecond, 53_333)
+        XCTAssertEqual(DialupModePage.config(for: s)["gifImages"] as? Bool, false) // default: millions of colours
+        s.colors = .gifImages
         XCTAssertEqual(DialupModePage.config(for: s)["gifImages"] as? Bool, true)
     }
 
@@ -307,5 +309,18 @@ final class BookmarksTests: XCTestCase {
     func testTabsPreferenceDefaults() {
         XCTAssertTrue(Preferences().tabs)
         XCTAssertFalse(Preferences().merging(["tabs": false]).tabs)
+    }
+}
+
+@MainActor
+final class AdBlockerTests: XCTestCase {
+    func testRulesCompile() async {
+        let compiled = expectation(description: "compiled")
+        AdBlocker.ruleList { list in
+            XCTAssertNotNil(list, "content rule list must compile")
+            compiled.fulfill()
+        }
+        await fulfillment(of: [compiled], timeout: 20)
+        XCTAssertTrue(Preferences().blockAds)
     }
 }

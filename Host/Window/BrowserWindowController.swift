@@ -96,6 +96,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
             MainActor.assumeIsolated { self?.dialupModeDidChange() }
         })
         applyDialupMode()
+        AdBlocker.apply(PreferencesStore.shared.preferences.blockAds, to: pageConfiguration.userContentController)
         window.delegate = self // only now: delegate callbacks assume at least one tab
 
         chromeView.load(URLRequest(url: Self.chromeURL))
@@ -265,6 +266,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSMen
         emit("prefs", preferencesPayload)
         refreshShadow()
         applyDialupMode() // skin-specific scrollbars
+        AdBlocker.apply(PreferencesStore.shared.preferences.blockAds, to: pageConfiguration.userContentController)
         for tab in tabs where tab.isShowingStartPage { tab.webView.reload() }
         emitTabs()
     }

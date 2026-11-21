@@ -15,7 +15,7 @@ struct DialupModeSettings: Codable, Equatable {
 
     var enabled = false
     var connection: Connection = .modem56k
-    var colors: Colors = .gifImages
+    var colors: Colors = .millions
     var resolution: Resolution = .retina
     var scanlines = true
     var oldFonts = false
@@ -30,7 +30,7 @@ struct DialupModeSettings: Codable, Equatable {
     var noAnimations = false
     var underlineLinks = false
 
-    init(enabled: Bool = false, connection: Connection = .modem56k, colors: Colors = .gifImages,
+    init(enabled: Bool = false, connection: Connection = .modem56k, colors: Colors = .millions,
          resolution: Resolution = .retina, scanlines: Bool = true, oldFonts: Bool = false, includeChrome: Bool = false,
          retroPage: Bool = true, squareCorners: Bool = true, noShadows: Bool = false,
          noAnimations: Bool = false, underlineLinks: Bool = false) {
@@ -377,7 +377,9 @@ final class DialupModePage: NSObject, WKScriptMessageHandler {
           svg.setAttribute('height', '0');
           svg.setAttribute('aria-hidden', 'true');
           svg.style.position = 'absolute';
-          const t = 'type="discrete" tableValues="0 .2 .4 .6 .8 1"';
+          // Real GIFs chose their 256 colours per picture, so photos kept most of their tones.
+          // 10 levels per channel gives that look; the strict web-safe 216 is a separate "hard" option.
+          const t = 'type="discrete" tableValues="0 .111 .222 .333 .444 .556 .667 .778 .889 1"';
           svg.innerHTML = `<filter id="dialup-websafe" color-interpolation-filters="sRGB"><feComponentTransfer>`
             + `<feFuncR ${t}/><feFuncG ${t}/><feFuncB ${t}/></feComponentTransfer></filter>`;
           document.body.appendChild(svg);

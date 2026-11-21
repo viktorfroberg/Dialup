@@ -417,8 +417,8 @@ function dialupTab({ draft, catalog }) {
     </fieldset>`);
 
   const colourOptions = [
-    ['millions', 'Millions', 'Modern colours.'],
-    ['gifImages', '256 for pictures', 'Pictures look like old GIFs. Text stays sharp. Recommended.'],
+    ['millions', 'Millions', 'Modern colours. Recommended.'],
+    ['gifImages', '256 for pictures', 'Pictures look like old GIFs. Text stays sharp.'],
     ['thousands', 'Thousands', 'Hard mode: the whole page in 16-bit colour.', true],
     ['websafe', '256 web-safe', 'Hard mode: the whole page in 216 colours.', true],
     ['websafeDither', '256 dithered', 'Hard mode: dotted, like a 1996 monitor.', true],
@@ -511,9 +511,19 @@ function dialupTab({ draft, catalog }) {
 
 // ---------- Privacy ----------
 
-function privacyTab() {
+function privacyTab({ draft }) {
   const root = document.createElement('div');
   root.append(html`
+    <fieldset>
+      <legend>Ads and trackers</legend>
+      <div class="icon-row">
+        <div class="big-icon icon-shield"></div>
+        <div class="grow">
+          <label class="choice"><input type="checkbox" data-bind="prefs.blockAds"> Block ads and trackers</label>
+          <p class="hint">Stops common ad and tracking networks from loading. Takes effect on the next page you open. Some sites show their own ads, which may stay.</p>
+        </div>
+      </div>
+    </fieldset>
     <fieldset>
       <legend>Temporary Internet files</legend>
       <div class="icon-row">
@@ -548,6 +558,7 @@ function privacyTab() {
       root.querySelector('#site-done').textContent = 'Deleted.';
     }
   });
+  bind(root, draft);
   return root;
 }
 
@@ -588,7 +599,7 @@ function drawPreview(canvas, img, { colors, resolution }, W = 150, H = 92) {
   g.font = '10px Verdana, sans-serif';
   g.fillText('Click here for more', 6, imgH + 29);
 
-  const levels = { gifImages: 6, thousands: 32, websafe: 6, websafeDither: 6 }[colors];
+  const levels = { gifImages: 10, thousands: 32, websafe: 6, websafeDither: 6 }[colors];
   if (levels) {
     const regionH = colors === 'gifImages' ? Math.round(imgH * scale) : h;
     const data = g.getImageData(0, 0, w, regionH);

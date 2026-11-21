@@ -15,6 +15,8 @@ struct Preferences: Codable, Equatable {
     var tabs = true
     /// Reopen last session's windows and tabs at launch.
     var restoreSession = true
+    /// Block ads and trackers (native content rule list, see AdBlocker).
+    var blockAds = true
     /// "start" for the built-in start page, otherwise a URL.
     var homePage = "start"
     var searchEngine = "duckduckgo"
@@ -56,6 +58,7 @@ struct Preferences: Codable, Equatable {
         onboarded = value(.onboarded, d.onboarded)
         tabs = value(.tabs, d.tabs)
         restoreSession = value(.restoreSession, d.restoreSession)
+        blockAds = value(.blockAds, d.blockAds)
         sanitize(fallback: d)
     }
 
