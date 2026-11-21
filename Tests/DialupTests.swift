@@ -63,6 +63,12 @@ final class SchemeHandlerTests: XCTestCase {
         XCTAssertNil(handler().resolve(URL(string: "https://chrome/index.html")!))
     }
 
+    func testRefusesSymlinksPointingOutside() throws {
+        let link = root.appendingPathComponent("chrome/leak.txt")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: root.appendingPathComponent("secret.txt"))
+        XCTAssertNil(handler().resolve(URL(string: "kikare://chrome/leak.txt".replacingOccurrences(of: "kikare", with: "dialup"))!))
+    }
+
     func testMimeTypes() {
         XCTAssertTrue(DialupSchemeHandler.mimeType(forExtension: "js").hasPrefix("text/javascript"))
         XCTAssertEqual(DialupSchemeHandler.mimeType(forExtension: "svg"), "image/svg+xml")

@@ -47,8 +47,10 @@ final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
         guard url.scheme == acceptedScheme, let area = url.host, let bases = roots[area] else { return nil }
         let path = (url.path.isEmpty || url.path == "/") ? "/index.html" : url.path
         for base in bases {
-            let root = base.standardizedFileURL.path
-            let candidate = base.appendingPathComponent(path).standardizedFileURL
+            // Resolve symlinks on both sides, so a link inside a folder can't point outside it
+            // (matters once user-installed skins/add-ons live in these folders).
+            let root = base.standardizedFileURL.resolvingSymlinksInPath().path
+            let candidate = base.appendingPathComponent(path).standardizedFileURL.resolvingSymlinksInPath()
             guard candidate.path.hasPrefix(root + "/") else { continue }
             if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
         }

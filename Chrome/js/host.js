@@ -29,4 +29,5 @@ if (native) {
   const report = (message) => native.postMessage({ apiVersion: 1, cmd: 'log', args: { message: String(message) } }).catch(() => {});
   window.addEventListener('error', (e) => report(`${e.message} (${e.filename}:${e.lineno})`));
   window.addEventListener('unhandledrejection', (e) => report(`Unhandled rejection: ${e.reason?.stack ?? e.reason}`));
+  document.addEventListener('securitypolicyviolation', (e) => report(`CSP blocked ${e.violatedDirective}: ${e.blockedURI}`));
 }

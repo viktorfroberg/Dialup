@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- The browser UI only loads its own files: no remote scripts, styles, images, frames or requests. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Dialup</title>
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" id="skin-css">
