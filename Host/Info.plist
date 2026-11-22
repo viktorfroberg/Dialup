@@ -58,5 +58,11 @@
 	<string>© 2026 Viktor Fröberg</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
+	<key>SUFeedURL</key>
+	<string>$(DIALUP_FEED_URL)</string>
+	<key>SUPublicEDKey</key>
+	<string>ljbksQb5dmHsUsCYxvT4JBHN5bUsNaBFC61xpbR/Fao=</string>
 </dict>
 </plist>

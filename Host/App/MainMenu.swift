@@ -26,6 +26,11 @@ enum MainMenu {
 
         submenu("Dialup", [
             item("About Dialup", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
+            {
+                let check = item("Check for Updates…", #selector(Updates.checkForUpdates(_:)))
+                check.target = Updates.shared
+                return check
+            }(),
             .separator(),
             item("Dialup Options…", #selector(BrowserWindowController.openSettings(_:)), ","),
             item("Make Dialup the Default Browser…", #selector(AppDelegate.makeDefaultBrowser(_:))),

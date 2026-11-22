@@ -3,6 +3,10 @@ options:
   bundleIdPrefix: se.dialup
   deploymentTarget:
     macOS: "15.4"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.10.1
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -11,6 +15,8 @@ targets:
   Dialup:
     type: application
     platform: macOS
+    dependencies:
+      - package: Sparkle
     sources:
       - path: Host
       - path: Chrome
@@ -31,6 +37,10 @@ targets:
         NSPrincipalClass: NSApplication
         NSHumanReadableCopyright: "© 2026 Viktor Fröberg"
         LSApplicationCategoryType: public.app-category.productivity
+        # Updates (Sparkle): the newest GitHub release carries appcast.xml; archives are EdDSA-signed.
+        SUFeedURL: $(DIALUP_FEED_URL)
+        SUPublicEDKey: ljbksQb5dmHsUsCYxvT4JBHN5bUsNaBFC61xpbR/Fao=
+        SUEnableAutomaticChecks: false
         # A browser must load plain http:// sites (ATS would block them in the web view).
         NSAppTransportSecurity:
           NSAllowsArbitraryLoadsInWebContent: true
@@ -53,6 +63,7 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         ENABLE_HARDENED_RUNTIME: NO
+        DIALUP_FEED_URL: https://github.com/viktorfroberg/Dialup/releases/latest/download/appcast.xml
   DialupTests:
     type: bundle.unit-test
     platform: macOS

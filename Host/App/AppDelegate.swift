@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, BrowserWindowOpening {
         // Hosting unit tests: no windows, and the user's saved session is left untouched.
         guard !LaunchEnvironment.isHostingTests else { return }
         NSApp.mainMenu = MainMenu.build()
+        Updates.shared.start()
         SkinIcon.apply(PreferencesStore.shared.preferences.skin)
         NotificationCenter.default.addObserver(self, selector: #selector(preferencesDidChange),
                                                name: PreferencesStore.didChange, object: nil)
