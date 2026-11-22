@@ -2,7 +2,9 @@
 
 Milestones so far, oldest first.
 
-## 0.2.0 (not released yet)
+## 1.0.0 (2026-11-22)
+
+The first real release: Dialup now keeps itself up to date.
 
 ### Updates and installing
 - In-app updates from GitHub releases (Sparkle 2). Dialup checks quietly at launch and daily (Dialup Options → General, or the setup wizard, turns it off); Help → Check for Updates… checks now. The update dialog is drawn by the skin: "Dialup Update" with release notes, a progress bar and download speed.
@@ -30,7 +32,7 @@ Milestones so far, oldest first.
 
 ## 0.1.0 (2026-11-21)
 
-First public release.
+Early preview. It has no updater, so download 1.0 by hand once.
 
 ### Foundations
 - Test build: an HTML/CSS/JS browser UI in one WKWebView, the web page in another, a Swift host in between. Address bar, Back/Forward with history dropdowns, throbber, status bar.
