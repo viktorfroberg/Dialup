@@ -624,6 +624,8 @@ body.overlay-open #overlay { pointer-events: auto; }
 /* Tall dialogs never exceed the window: only the tab content scrolls, so the tabs and the
    OK/Cancel buttons always stay visible. */
 .dialog-body:has(> .settings) { display: flex; flex-direction: column; overflow: hidden; }
+/* Dialup Options: a fixed, modest size like the originals; long tabs scroll inside the panel. */
+.dialog:has(> .dialog-body > .settings) { height: min(560px, calc(100vh - 16px)); }
 
 .btn {
   min-width: 75px;
@@ -711,7 +713,7 @@ select.field {
    ====================================================================== */
 
 .settings { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.settings .tab-panels { flex: 1; min-height: min(380px, calc(100vh - 170px)); overflow-y: auto; }
+.settings .tab-panels { flex: 1; min-height: 0; overflow-y: auto; }
 .settings fieldset {
   margin: 0 0 10px;
   padding: 6px 10px 9px;

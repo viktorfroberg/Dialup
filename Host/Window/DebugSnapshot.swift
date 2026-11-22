@@ -5,6 +5,7 @@ import WebKit
 /// composites the chrome and page web views into one PNG, so the look can be checked
 /// without Screen Recording permission. It uses WebKit's own snapshot API.
 /// `-DialupChromeEval "<js>"` runs JavaScript in the chrome 2 s before the snapshot (e.g. open a dialog).
+/// `-DialupSnapshotFrames 20 -DialupSnapshotInterval 0.5` writes a sequence (out-000.png, …) for GIFs.
 /// Debug builds only.
 @MainActor
 enum DebugSnapshot {
@@ -30,7 +31,15 @@ enum DebugSnapshot {
             } else {
                 try? await Task.sleep(for: .seconds(total))
             }
-            await write(chrome: chrome, page: page, container: container, to: URL(fileURLWithPath: path))
+            let frames = max(1, UserDefaults.standard.integer(forKey: "DialupSnapshotFrames"))
+            let interval = UserDefaults.standard.double(forKey: "DialupSnapshotInterval")
+            for frame in 0..<frames {
+                let url = URL(fileURLWithPath: path)
+                let target = frames == 1 ? url : url.deletingPathExtension()
+                    .appendingPathExtension(String(format: "%03d", frame)).appendingPathExtension("png")
+                await write(chrome: chrome, page: page, container: container, to: target)
+                if frame < frames - 1 { try? await Task.sleep(for: .seconds(interval > 0 ? interval : 0.5)) }
+            }
         }
         #endif
     }

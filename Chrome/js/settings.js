@@ -386,7 +386,7 @@ function dialupTab({ draft, catalog }) {
       <div class="split-row">
         <div class="grow">
           <label class="choice"><input type="checkbox" data-bind="dialup.scanlines"> CRT scanlines <span class="hint">faint lines like an old monitor</span></label>
-          <label class="choice"><input type="checkbox" data-bind="dialup.oldFonts"> Old fonts <span class="hint">Verdana &amp; Times, no smoothing (may break some icons)</span></label>
+          <label class="choice"><input type="checkbox" data-bind="dialup.oldFonts"> Old fonts <span class="hint">Times New Roman and Courier, no smoothing (headlines keep theirs)</span></label>
           <label class="choice"><input type="checkbox" data-bind="dialup.includeChrome"> Apply effects to the toolbars too</label>
         </div>
         <div class="preview-box fonts-preview">

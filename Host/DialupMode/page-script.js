@@ -21,8 +21,12 @@
     const MAX_PARALLEL = 4;   // browsers of the era opened a few connections at once
     const CSS_HIDE = 'img:not([data-dialup-shown]){visibility:hidden!important}';
     const CSS_GIF = 'img{filter:url(#dialup-websafe)}';
-    const CSS_FONTS = 'html,body,p,div,td,th,li,dd,dt,a,label,input,textarea,select,button,h1,h2,h3,h4,h5,h6,blockquote{font-family:Verdana,Tahoma,"Times New Roman",serif!important}'
-      + 'pre,code,kbd,samp,tt{font-family:"Courier New",Courier,monospace!important}'
+    // Old fonts: text in Times New Roman, the browser default most pages of the dial-up era showed,
+    // and code in Courier New. Elements are tagged by kind (see tagFonts). Headlines keep the site's
+    // font: many are sized to fit it exactly, line by line, and another font could overflow and get clipped.
+    const HEADLINES = 'h1,h2,h3,h4,h5,h6,[class*="headline" i],[class*="heading" i]'
+    const CSS_FONTS = ':is([data-dialup-font=sans],[data-dialup-font=serif]){font-family:"Times New Roman",Times,serif!important}'
+      + '[data-dialup-font=mono]{font-family:"Courier New",Courier,monospace!important}'
       + '*{-webkit-font-smoothing:none!important}';
 
     // Page touches. Safe set first; the rest are opt-in because they can change layouts.
@@ -180,6 +184,41 @@
       if (seen.has(img) || !img.complete) return; // incomplete ones get a load event later
       if (img.naturalWidth) schedule(img); else show(img); // broken: show alt/box
     };
+    const SERIF_NAMES = /^(-webkit-standard|serif|times|georgia|garamond|palatino|book antiqua|cambria|baskerville|didot|bodoni|caslon|charter|new york|minion|merriweather|lora|playfair|libre baskerville|source serif|pt serif|noto serif|droid serif|iowan)/;
+    const MONO_NAMES = /^(monospace|courier|consolas|menlo|monaco|sf mono|ui-monospace|andale mono|lucida console|source code|fira code|fira mono|jetbrains|roboto mono|ibm plex mono|dejavu sans mono)/;
+    const ICON_NAMES = /icon|awesome|material|symbol|glyph|dashicons|octicons|bootstrap-icons|emoji/;
+    /** "sans", "serif" or "mono" for a computed font-family list; null for icon fonts. */
+    function fontKind(family) {
+      const names = family.toLowerCase().split(',').map((n) => n.trim().replace(/^["']|["']$/g, ''));
+      const first = names[0] || '';
+      if (ICON_NAMES.test(first)) return null; // icon fonts stay, or their glyphs turn into letters
+      if (MONO_NAMES.test(first) || /\bmono\b/.test(first)) return 'mono';
+      if (SERIF_NAMES.test(first) || (/serif/.test(first) && !/sans/.test(first))) return 'serif';
+      if (!/sans/.test(first) && names.includes('serif') && !names.includes('sans-serif')) return 'serif';
+      return 'sans';
+    }
+    const NO_FONT = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'svg', 'IMG', 'VIDEO', 'CANVAS', 'IFRAME', 'BR']);
+    /** Tags elements whose font differs from their parent's with its kind. Children that inherit need no tag. */
+    function tagFonts(root) {
+      if (!root || !root.querySelectorAll) return;
+      const found = [];
+      for (const el of [root, ...root.querySelectorAll('*')]) {
+        if (!(el instanceof Element) || NO_FONT.has(el.tagName) || el.hasAttribute('data-dialup-font') || el.closest(HEADLINES)) continue;
+        const family = getComputedStyle(el).fontFamily;
+        const parent = el.parentElement;
+        if (parent && parent !== document.documentElement && getComputedStyle(parent).fontFamily === family) continue;
+        const kind = fontKind(family);
+        if (kind) found.push([el, kind]);
+      }
+      // Read everything first, then tag: tagging changes what children inherit.
+      for (const [el, kind] of found) el.setAttribute('data-dialup-font', kind);
+    }
+    document.addEventListener('DOMContentLoaded', () => { if (cfg.enabled && cfg.oldFonts) tagFonts(document.body); });
+    new MutationObserver((records) => {
+      if (!cfg.enabled || !cfg.oldFonts) return;
+      for (const record of records) for (const node of record.addedNodes) if (node.nodeType === 1) tagFonts(node);
+    }).observe(document, { childList: true, subtree: true });
+
     new MutationObserver((records) => {
       if (!cfg.enabled || !cfg.bps) return;
       for (const record of records) {
@@ -212,6 +251,7 @@
           + (cfg.noShadows ? CSS_NO_SHADOWS : '') + (cfg.noAnimations ? CSS_NO_MOTION : '') + (cfg.underlineLinks ? CSS_LINKS : '');
         if (!style.isConnected) attach(style);
         if (cfg.gifImages) ensureSvg();
+        if (cfg.oldFonts && document.body) tagFonts(document.body);
         // Turned on mid-page: don't re-hide what's already loaded; the next page trickles in.
         if (!wasActive) document.querySelectorAll('img').forEach((img) => { if (img.complete) { seen.add(img); show(img); } });
         if (!cfg.bps) queue.splice(0).forEach(show);
