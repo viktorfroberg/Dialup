@@ -39,6 +39,9 @@ enum HostCommand {
     case addFavorite(title: String, url: String)
     /// Open or reveal a file this window downloaded (only paths from completed downloads are accepted).
     case openDownload(path: String, reveal: Bool)
+    case checkForUpdates
+    /// A button in the update dialog.
+    case updateChoice(UpdateChoice)
 
     // Sounds
     case sound(SoundEffects.Sound)
@@ -108,6 +111,10 @@ enum HostCommand {
         case "openDownload":
             guard let path = a.nonEmptyString("path") else { throw invalid }
             self = .openDownload(path: path, reveal: a.bool("reveal") ?? false)
+        case "checkForUpdates": self = .checkForUpdates
+        case "updateChoice":
+            guard let choice = a.string("choice").flatMap(UpdateChoice.init(rawValue:)) else { throw invalid }
+            self = .updateChoice(choice)
 
         case "windowClose": self = .windowClose
         case "windowMinimize": self = .windowMinimize

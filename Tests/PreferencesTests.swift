@@ -10,6 +10,7 @@ final class PreferencesTests: XCTestCase {
         XCTAssertTrue(p.tabs)
         XCTAssertTrue(p.restoreSession)
         XCTAssertTrue(p.blockAds)
+        XCTAssertTrue(p.checkForUpdates)
         XCTAssertEqual(p.quickLinks, Preferences.defaultLinks)
     }
 

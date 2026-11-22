@@ -744,6 +744,15 @@ select.field {
 .icon-cookie  { background-image: url(img/tango/privacy.svg); }
 .icon-lock    { background-image: url(img/tango/lock.svg); }
 .icon-favorite { background-image: url(img/tango/favorites.svg); }
+.icon-update  { background-image: url(img/tango/globe.svg); }
+.icon-update-error { background-image: url(img/tango/warning.svg); }
+
+/* Dialup Update: a progress bar in the skin's style (the same fill as the status bar). */
+.update-meter { height: 18px; padding: 2px; margin-top: 8px; overflow: hidden; }
+.update-fill { height: 100%; width: 0; background: var(--progress-fill); }   /* each skin draws its own bar */
+.update-meter.busy .update-fill { width: 30%; animation: update-busy 1.6s steps(24) infinite; }
+@keyframes update-busy { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+.update-detail { margin-top: 4px; }
 
 /* Start Page tab: favorites table */
 .link-table { margin: 4px 0 8px; }
@@ -932,7 +941,7 @@ select.field {
 
 @media (prefers-reduced-motion: reduce) {
   .throbber.busy::before, .tab-item.loading .tab-icon, .menu, .menu-item.picked,
-  .dialog.flash .dialog-titlebar, .btn.primary { animation: none !important; }
+  .dialog.flash .dialog-titlebar, .btn.primary, .update-meter.busy .update-fill { animation: none !important; }
 }
 
 }

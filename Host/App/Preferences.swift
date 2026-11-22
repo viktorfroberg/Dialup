@@ -57,6 +57,8 @@ struct Preferences: PatchableSettings {
     var restoreSession = true
     /// Block ads and trackers (native content rule list, see AdBlocker).
     var blockAds = true
+    /// Check GitHub for a new version at launch (and daily while open). See `Updates`.
+    var checkForUpdates = true
     /// `startPageHome` for the built-in start page, otherwise a URL.
     var homePage = Preferences.startPageHome
     var searchEngine = SearchEngine.duckduckgo
@@ -96,6 +98,7 @@ struct Preferences: PatchableSettings {
         tabs = c.value(.tabs, or: d.tabs)
         restoreSession = c.value(.restoreSession, or: d.restoreSession)
         blockAds = c.value(.blockAds, or: d.blockAds)
+        checkForUpdates = c.value(.checkForUpdates, or: d.checkForUpdates)
         sanitize()
     }
 

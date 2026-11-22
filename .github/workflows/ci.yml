@@ -37,4 +37,5 @@ jobs:
             -scheme Dialup \
             -destination 'platform=macOS' \
             -derivedDataPath build \
+            -packageAuthorizationProvider netrc \
             | grep -E "error:|warning:|Test Suite|Executed|\*\* (BUILD|TEST)"

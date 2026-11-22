@@ -243,6 +243,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
     func chromeDidBecomeReady() -> [String: Any] {
         chromeReady = true
         refreshShadow()
+        Updates.shared.chromeDidBecomeReady(in: self)
         lastWindowState = windowState
         return [
             "apiVersion": ChromeBridge.apiVersion,

@@ -23,7 +23,7 @@ final class HostCommandTests: XCTestCase {
     func testCommandsWithoutArguments() {
         for cmd in ["ready", "back", "forward", "reload", "stop", "home", "focusPage", "securityInfo",
                     "windowClose", "windowMinimize", "windowZoom", "windowDrag", "titlebarDoubleClick",
-                    "prefsGet", "dialupModeGet", "importBookmarks", "exportBookmarks"] {
+                    "prefsGet", "dialupModeGet", "importBookmarks", "exportBookmarks", "checkForUpdates"] {
             XCTAssertNotNil(parse(cmd), cmd)
         }
     }
@@ -139,5 +139,12 @@ final class HostCommandTests: XCTestCase {
         guard case .popupMenu(let items, let point) = parse("popupMenu", ["x": 10, "y": 20]) else { return XCTFail() }
         XCTAssertTrue(items.isEmpty)
         XCTAssertEqual(point, NSPoint(x: 10, y: 20))
+    }
+
+    func testUpdateChoiceIsAnAllowlist() {
+        guard case .updateChoice(let choice) = parse("updateChoice", ["choice": "skip"]) else { return XCTFail() }
+        XCTAssertEqual(choice, .skip)
+        XCTAssertEqual(error("updateChoice"), .invalidArguments("updateChoice"))
+        XCTAssertEqual(error("updateChoice", ["choice": "installFromURL"]), .invalidArguments("updateChoice"))
     }
 }

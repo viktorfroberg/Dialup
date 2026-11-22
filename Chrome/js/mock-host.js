@@ -20,7 +20,7 @@ export function createMockHost(dialup) {
   const prefs = {
     skin: new URLSearchParams(location.search).get('skin') || 'luna',
     onboarded: new URLSearchParams(location.search).has('onboarded'),
-    tabs: true, restoreSession: true,
+    tabs: true, restoreSession: true, checkForUpdates: true,
     homePage: 'start', searchEngine: 'duckduckgo', name: '',
     quickLinks: [{ title: 'Wikipedia', url: 'https://www.wikipedia.org/' }, { title: 'Neocities', url: 'https://neocities.org/' }],
     // Mirrors Preferences.catalog in Host/App/Preferences.swift (the real source of truth).

@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # the build number is the commit count, so it always goes up
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -26,6 +28,12 @@ jobs:
       - name: Generate the Xcode project
         run: xcodegen generate
 
+      - name: Check the update signing key
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          [ -n "$SPARKLE_PRIVATE_KEY" ] || { echo "::error::The SPARKLE_PRIVATE_KEY secret is missing (see docs/RELEASING.md)"; exit 1; }
+
       # Universal (Apple silicon + Intel), ad-hoc signed: no Developer ID, so not notarized.
       - name: Build
         run: |
@@ -36,7 +44,9 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -derivedDataPath build \
+            -packageAuthorizationProvider netrc \
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            CURRENT_PROJECT_VERSION=$(git rev-list --count HEAD) \
             | grep -E "error:|warning:|\*\* BUILD"
 
       - name: Package
@@ -49,10 +59,27 @@ jobs:
           ditto -c -k --keepParent "$APP" Dialup.zip
           shasum -a 256 Dialup.zip | tee Dialup.zip.sha256
 
+      # appcast.xml lists this release for Sparkle, with the zip's EdDSA signature. Apps read it from
+      # releases/latest/download/appcast.xml, so every release must carry one.
+      - name: Sign the update and write the appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          SPARKLE_VERSION: 2.10.1
+        run: |
+          curl -fsSL -o sparkle.tar.xz "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz"
+          mkdir sparkle && tar -xf sparkle.tar.xz -C sparkle
+          mkdir feed && cp Dialup.zip feed/
+          echo "$SPARKLE_PRIVATE_KEY" | sparkle/bin/generate_appcast --ed-key-file - \
+            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
+            --full-release-notes-url "https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME" \
+            --link "https://github.com/$GITHUB_REPOSITORY" \
+            feed
+          cat feed/appcast.xml
+
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" Dialup.zip Dialup.zip.sha256 \
+          gh release create "$GITHUB_REF_NAME" Dialup.zip Dialup.zip.sha256 feed/appcast.xml \
             --title "Dialup ${GITHUB_REF_NAME#v}" \
             --notes-file .github/release-notes.md

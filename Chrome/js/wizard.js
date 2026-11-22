@@ -35,7 +35,7 @@ export async function openWizard() {
   const original = { skin: prefs.skin };
   // First run recommends early broadband; a re-run starts from the current setup.
   const initialExperience = prefs.onboarded ? currentExperience(dialup) : 'broadband';
-  const choice = { skin: prefs.skin || 'luna', experience: initialExperience, tabs: prefs.tabs === false ? 'windows' : 'tabs',
+  const choice = { skin: prefs.skin || 'luna', experience: initialExperience, tabs: prefs.tabs === false ? 'windows' : 'tabs', updates: prefs.checkForUpdates !== false,
     name: prefs.name || '', searchEngine: prefs.searchEngine || 'duckduckgo' };
   const engines = catalog.searchEngines || [{ id: 'duckduckgo', name: 'DuckDuckGo' }];
 
@@ -106,6 +106,7 @@ export async function openWizard() {
         <li>Windows: <b>${choice.tabs === 'tabs' ? 'Tabs' : 'One page per window'}</b></li>
         <li>Search: <b>${engines.find((e) => e.id === choice.searchEngine)?.name || 'DuckDuckGo'}</b></li>
       </ul>
+      <label class="choice"><input type="checkbox" id="wiz-updates"> Check for new versions of Dialup when it starts</label>
       <p class="wizard-continue">To close this wizard and start surfing, click ${nav.finish}.</p>`,
   ];
 
@@ -149,12 +150,17 @@ export async function openWizard() {
       engine.value = choice.searchEngine;
       engine.addEventListener('change', () => { choice.searchEngine = engine.value; });
     }
+    const updates = page.querySelector('#wiz-updates');
+    if (updates) {
+      updates.checked = choice.updates;
+      updates.addEventListener('change', () => { choice.updates = updates.checked; });
+    }
     page.querySelector('#wiz-name')?.addEventListener('input', (e) => { choice.name = e.target.value; });
     page.querySelector('input')?.focus();
   };
 
   const finish = async () => {
-    await host.call('prefsSet', { skin: choice.skin, name: choice.name, searchEngine: choice.searchEngine, tabs: choice.tabs === 'tabs', onboarded: true });
+    await host.call('prefsSet', { skin: choice.skin, name: choice.name, searchEngine: choice.searchEngine, tabs: choice.tabs === 'tabs', checkForUpdates: choice.updates, onboarded: true });
     // Only touch Dial-up Mode if the answer changed (a re-run keeps a custom setup).
     if (!prefs.onboarded || choice.experience !== initialExperience) {
       const settings = experienceSettings(choice.experience, catalog);

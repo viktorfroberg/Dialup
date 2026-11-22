@@ -70,6 +70,8 @@ extension BrowserWindowController: HostCommandHandling {
         case .addFavorite(let title, let url):
             PreferencesStore.shared.preferences.addFavorites([QuickLink(title: title, url: url)])
 
+        case .checkForUpdates: Updates.shared.checkForUpdates(nil)
+        case .updateChoice(let choice): Updates.shared.choose(choice)
         case .openDownload(let path, let reveal):
             // Never open arbitrary paths from the chrome: only files this window finished downloading.
             guard completedDownloads.contains(path) else { return nil }
@@ -140,11 +142,11 @@ extension BrowserWindowController: HostCommandHandling {
         WKWebsiteDataStore.default().removeData(ofTypes: types, modifiedSince: .distantPast) {}
     }
 
-    /// Same trick Tauri uses: start a native window drag from the current mouse-down.
+    /// Same trick Tauri uses: start a native window drag from the title bar's mouse-down.
     /// The JS message arrives asynchronously, so only drag while the button is still held.
     private func dragWindow() {
-        guard let event = NSApp.currentEvent, event.type == .leftMouseDown || event.type == .leftMouseDragged,
-              NSEvent.pressedMouseButtons & 1 != 0 else { return }
+        guard NSEvent.pressedMouseButtons & 1 != 0,
+              let event = (window as? DialupWindow)?.lastLeftMouseDown ?? NSApp.currentEvent else { return }
         window?.performDrag(with: event)
     }
 

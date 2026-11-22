@@ -85,15 +85,29 @@ body.zoomed .cap-max::after { left: 3px; top: 7px; width: 9px; height: 8px; back
 
 /* ---------- Tab strip (Firefox 1.0 on XP) ---------- */
 
-#tabstrip { border-bottom-color: #919b9c; }
+#tabstrip { gap: 2px; padding-top: 4px; border-bottom-color: #919b9c; }
+.tabs-list { gap: 0; }
+/* XP tab control: white-to-beige tabs with a pixel-cut top, side by side; the selected tab is
+   white, 2px taller and wider (it overlaps its neighbours) with the orange "hot" edge on top. */
 .tab-item {
+  height: 21px;
   border: 1px solid #919b9c;
+  border-bottom: 0;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(#fdfdfb, #e3e1d6);
-  color: #333;
+  margin-right: -1px;
+  background: linear-gradient(#fff, #fafaf7 45%, #ecebe5 85%, #dcdbd2);
+  color: #000;
 }
-.tab-item:hover { box-shadow: inset 0 2px 0 #f8b636; }
-.tab-item.active { border-bottom-color: #fcfcfe; background: #fcfcfe; box-shadow: inset 0 2px 0 #e68b2c; color: #000; }
+.tab-item:hover { border-top-color: #f8b636; box-shadow: inset 0 1px 0 #ffd88c, inset 0 2px 0 #fbcf6c; }
+.tab-item.active {
+  height: 23px;
+  margin: 0 -2px -1px;
+  padding: 0 6px 0 8px;
+  border-top-color: #e68b2c;
+  background: #fcfcfe;
+  box-shadow: inset 0 1px 0 #ffc73c, inset 0 2px 0 #ffc73c;
+}
+.tab-item.active + .tab-item { margin-left: 1px; }
 .tab-close { color: #555; }
 .tab-close:hover { background: #e3321c; border-color: #8a1407; color: #fff; }
 .tab-new:hover { background-color: transparent; background-image: var(--icon-tab-new), var(--button-hover-bg); background-size: 16px, auto; }

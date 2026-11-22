@@ -14,6 +14,15 @@ final class DialupWindow: NSWindow {
         isMovableByWindowBackground = false
     }
 
+    /// The latest left mouse-down. Title bar drags start from it: the chrome's `windowDrag` message
+    /// arrives asynchronously, when `NSApp.currentEvent` may already be another event.
+    private(set) var lastLeftMouseDown: NSEvent?
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown { lastLeftMouseDown = event }
+        super.sendEvent(event)
+    }
+
     // Borderless windows don't become key or main by default.
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }

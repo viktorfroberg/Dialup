@@ -5,6 +5,7 @@ import { openWizard } from './wizard.js';
 import { initMenus, renderLinksBar, addFavorite } from './menus.js';
 import './tooltips.js';
 import './find.js';
+import './update.js';
 import { renderTabs } from './tabs.js';
 import { applySkin } from './skin.js';
 import { html, markup, isWeb } from './dom.js';

@@ -4,6 +4,7 @@
 import { host } from './host.js';
 import { showMenu, openDialog } from './overlay.js';
 import { el, html, isWeb } from './dom.js';
+import { checkForUpdates } from './update.js';
 
 let ctx = null;
 
@@ -108,6 +109,7 @@ const menus = {
   ],
   help: () => [
     { id: 'tips', title: 'Tip of the Day' },
+    { id: 'updates', title: 'Check for Updates…' },
     { separator: true },
     { id: 'about', title: 'About Dialup' },
   ],
@@ -145,6 +147,7 @@ function run(id) {
   else if (kind === 'wizard') ctx.openWizard();
   else if (kind === 'sounds') ctx.setSounds(!ctx.getSounds());
   else if (kind === 'about') aboutDialog();
+  else if (kind === 'updates') checkForUpdates();
   else if (kind === 'tips') host.call('navigate', { input: 'about:home' });
   else if (kind === 'fav' && arg === 'add') addFavorite(tab);
   else if (kind === 'fav') {

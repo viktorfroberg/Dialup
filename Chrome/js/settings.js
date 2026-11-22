@@ -181,6 +181,7 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
         <div class="grow">
           <label class="choice"><input type="checkbox" data-bind="prefs.tabs"> Open pages in tabs <span class="hint">like Firefox 1.0 (off: one page per window, like 2001)</span></label>
           <label class="choice"><input type="checkbox" data-bind="prefs.restoreSession"> Reopen my windows and tabs from last time</label>
+          <label class="choice"><input type="checkbox" data-bind="prefs.checkForUpdates"> Check for new versions when Dialup starts</label>
         </div>
       </div>
     </fieldset>
