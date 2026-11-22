@@ -1,8 +1,10 @@
-<h1 align="center"><img src="site/img/icon-64.png" width="64" height="64" alt=""><br>Dialup</h1>
+<h1 align="center"><a href="https://viktorfroberg.github.io/Dialup/"><img src="site/img/header-globe.png" width="76" height="76" alt=""></a><br>Dialup</h1>
+
+<p align="center"><b><a href="https://viktorfroberg.github.io/Dialup/">Website</a></b> · <a href="https://github.com/viktorfroberg/Dialup/releases/latest/download/Dialup.zip">Download</a> · <a href="https://github.com/viktorfroberg/Dialup/releases/latest">What's new</a></p>
 
 <p align="center">
   <a href="https://github.com/viktorfroberg/Dialup/releases/latest/download/Dialup.zip"><img src="site/img/btn-get-dialup.gif" width="88" height="31" alt="Get Dialup!"></a>
-  <img src="site/img/btn-made-on-mac.gif" width="88" height="31" alt="Made on a Mac">
+  <a href="https://viktorfroberg.github.io/Dialup/"><img src="site/img/btn-made-on-mac.gif" width="88" height="31" alt="Made on a Mac"></a>
   <a href="LICENSE"><img src="site/img/btn-mit.gif" width="88" height="31" alt="MIT open source"></a>
   <img src="site/img/btn-no-cookies.gif" width="88" height="31" alt="No cookies">
 </p>
