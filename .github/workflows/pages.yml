@@ -1,14 +1,17 @@
 name: Website
 
 # Publishes site/ to GitHub Pages (https://viktorfroberg.github.io/Dialup/).
-# Runs with each published release, or by hand from the Actions tab.
+# Runs after each successful release (a release made by a workflow can't trigger `release` events),
+# or by hand from the Actions tab.
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read     # to find the uploaded site
   pages: write
   id-token: write
 
@@ -19,6 +22,7 @@ concurrency:
 jobs:
   # Two jobs, like GitHub's template: the deploy job only starts once the upload is complete.
   build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
