@@ -30,11 +30,10 @@ h1, h2, h3 { font-family: Verdana, Tahoma, sans-serif; }
 }
 #header .logo { position: absolute; left: 14px; top: 14px; }
 #header .name {
-  position: absolute; left: 88px; top: 12px; margin: 0;
+  position: absolute; left: 92px; top: 27px; margin: 0;   /* centred on the 64px icon */
   font: bold 36px/1 Georgia, "Times New Roman", serif; letter-spacing: -1px;
   text-shadow: 2px 2px 0 #142a55;
 }
-#header .tag { position: absolute; left: 90px; top: 56px; color: #cfdcf3; font-size: 11px; }
 #header .top-right { position: absolute; right: 12px; top: 10px; font-size: 10px; color: #a9bde3; }
 #header .top-right a { color: #fff; }
 
@@ -166,7 +165,6 @@ table.links td:first-child { width: 150px; background: #eef2f8; font-weight: bol
   body { padding: 0; }
   #page { border: 0; box-shadow: none; }
   #header .top-right { display: none; }
-  #header .tag { right: 10px; }
   #cols { flex-direction: column-reverse; }
   #left { width: 100%; border-right: 0; border-top: 1px solid #b8c3d6; }
   #main { padding: 12px 10px; }
