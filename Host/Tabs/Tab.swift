@@ -160,7 +160,7 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
         download.delegate = self
     }
 
-    // MARK: Downloads (to ~/Downloads, never overwriting)
+    // MARK: Downloads (to the downloads folder, never overwriting; or wherever the user picks)
 
     /// `state` in the `download` event.
     enum DownloadState: String { case downloading, done, failed }
@@ -170,9 +170,19 @@ final class Tab: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegat
     private var downloadPaths: [ObjectIdentifier: URL] = [:]
 
     func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String) async -> URL? {
-        let folder = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser
-        let destination = Self.uniqueDestination(in: folder, for: suggestedFilename)
+        let prefs = PreferencesStore.shared.preferences
+        var destination = Self.uniqueDestination(in: prefs.downloadsURL, for: suggestedFilename)
+        if prefs.askWhereToSave {
+            let panel = NSSavePanel()
+            panel.directoryURL = prefs.downloadsURL
+            panel.nameFieldStringValue = destination.lastPathComponent
+            let response: NSApplication.ModalResponse
+            if let window = webView.window { response = await panel.beginSheetModal(for: window) } else { response = panel.runModal() }
+            guard response == .OK, let picked = panel.url else { return nil } // Cancel cancels the download
+            // The panel already asked about replacing; WebKit won't overwrite, so clear the way.
+            if FileManager.default.fileExists(atPath: picked.path) { try? FileManager.default.trashItem(at: picked, resultingItemURL: nil) }
+            destination = picked
+        }
         let id = ObjectIdentifier(download)
         downloadNames[id] = destination.lastPathComponent
         downloadPaths[id] = destination

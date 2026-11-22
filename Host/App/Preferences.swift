@@ -21,6 +21,23 @@ enum Skin: String, CaseIterable, Codable {
     }
 }
 
+/// View → Text Size, like Internet Explorer's. Applied as the pages' default zoom.
+enum TextSize: String, CaseIterable, Codable {
+    case largest, larger, medium, smaller, smallest
+
+    var displayName: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
+
+    var zoom: Double {
+        switch self {
+        case .largest: 1.3
+        case .larger: 1.15
+        case .medium: 1
+        case .smaller: 0.9
+        case .smallest: 0.8
+        }
+    }
+}
+
 enum SearchEngine: String, CaseIterable, Codable {
     case duckduckgo, google, bing, wikipedia
 
@@ -59,6 +76,12 @@ struct Preferences: PatchableSettings {
     var blockAds = true
     /// Check GitHub for a new version at launch (and daily while open). See `Updates`.
     var checkForUpdates = true
+    /// Default zoom for pages (View → Text Size). ⌘+ / ⌘− change the current tab only.
+    var textSize = TextSize.medium
+    /// Where downloads go; empty means ~/Downloads. Set by the folder panel (`chooseDownloadFolder`).
+    var downloadFolder = ""
+    /// Show a save panel for each download instead of saving straight to `downloadFolder`.
+    var askWhereToSave = false
     /// `startPageHome` for the built-in start page, otherwise a URL.
     var homePage = Preferences.startPageHome
     var searchEngine = SearchEngine.duckduckgo
@@ -99,6 +122,9 @@ struct Preferences: PatchableSettings {
         restoreSession = c.value(.restoreSession, or: d.restoreSession)
         blockAds = c.value(.blockAds, or: d.blockAds)
         checkForUpdates = c.value(.checkForUpdates, or: d.checkForUpdates)
+        textSize = c.value(.textSize, or: d.textSize)
+        downloadFolder = c.value(.downloadFolder, or: d.downloadFolder)
+        askWhereToSave = c.value(.askWhereToSave, or: d.askWhereToSave)
         sanitize()
     }
 
@@ -110,6 +136,19 @@ struct Preferences: PatchableSettings {
             homePage = AddressResolver.resolveAddress(homePage)?.absoluteString ?? Self.startPageHome
         }
         quickLinks = quickLinks.prefix(Self.maxFavorites).compactMap(Self.sanitized)
+        // Only an existing folder (absolute path); otherwise back to ~/Downloads.
+        var isDirectory: ObjCBool = false
+        if !downloadFolder.isEmpty, !(downloadFolder.hasPrefix("/")
+            && FileManager.default.fileExists(atPath: downloadFolder, isDirectory: &isDirectory) && isDirectory.boolValue) {
+            downloadFolder = ""
+        }
+    }
+
+    /// The folder downloads are saved to.
+    var downloadsURL: URL {
+        if !downloadFolder.isEmpty { return URL(fileURLWithPath: downloadFolder, isDirectory: true) }
+        return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
     }
 
     private static func sanitized(_ link: QuickLink) -> QuickLink? {
@@ -145,6 +184,7 @@ struct Preferences: PatchableSettings {
         [
             "skins": Skin.allCases.map { ["id": $0.rawValue, "name": $0.displayName] },
             "searchEngines": SearchEngine.allCases.map { ["id": $0.rawValue, "name": $0.displayName] },
+            "textSizes": TextSize.allCases.map { ["id": $0.rawValue, "name": $0.displayName] },
             "defaultLinks": defaultLinks.map { ["title": $0.title, "url": $0.url] },
             "dialupPresets": DialupModeSettings.presets.mapValues(\.dictionary),
             "connectionSpeeds": Dictionary(uniqueKeysWithValues: DialupModeSettings.Connection.allCases.map {

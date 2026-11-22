@@ -75,6 +75,17 @@ enum MainMenu {
             item("Zoom In", #selector(BrowserWindowController.zoomIn(_:)), "+"),
             item("Zoom Out", #selector(BrowserWindowController.zoomOut(_:)), "-"),
             item("Actual Size", #selector(BrowserWindowController.actualSize(_:)), "0"),
+            {
+                let sizes = NSMenu(title: "Text Size")
+                for (index, size) in TextSize.allCases.enumerated() {
+                    let entry = NSMenuItem(title: size.displayName, action: #selector(BrowserWindowController.setTextSize(_:)), keyEquivalent: "")
+                    entry.tag = index
+                    sizes.addItem(entry)
+                }
+                let holder = NSMenuItem(title: "Text Size", action: nil, keyEquivalent: "")
+                holder.submenu = sizes
+                return holder
+            }(),
             .separator(),
             item("Dial-up Mode", #selector(BrowserWindowController.toggleDialupMode(_:)), "d", [.command, .shift]),
             item("Enter Full Screen", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),

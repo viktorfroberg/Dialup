@@ -10,7 +10,14 @@ Milestones so far, oldest first.
 - One-line installer (`install.sh`): installs without the "can't be opened" warning a browser download gets.
 - Releases carry `appcast.xml` and build numbers that always go up. A website for the app in `site/` (GitHub Pages).
 
+### Settings
+- Sounds on/off in Dialup Options → Appearance.
+- Text size (View → Text Size, Largest … Smallest, like Internet Explorer): the pages' default zoom.
+- Downloads: choose the folder, or ask where to save each file.
+- Make Dialup the default browser from Dialup Options → General.
+
 ### Look and feel
+- A new app icon: a glossy globe drawn by a script from Natural Earth map data, on a tile in each skin's colours.
 - Luna tabs look like the XP tab control: white-to-beige tabs side by side; the selected one is white, taller and overlaps its neighbours, with the orange top edge.
 - Dialup Options is a fixed, smaller dialog; long tabs scroll.
 - The title bar drags from its whole height, not just the top part.

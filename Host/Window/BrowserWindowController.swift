@@ -49,6 +49,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
     private(set) var closedTabs: [URL] = []
     /// Files this window finished downloading; the only paths `openDownload` accepts.
     private(set) var completedDownloads: Set<String> = []
+    private var appliedTextSize = PreferencesStore.shared.preferences.textSize
     /// Events are only sent once the chrome has called `ready`.
     private var chromeReady = false
     private var lastWindowState: [String: Bool] = [:]
@@ -153,6 +154,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
     func addTab(configuration: WKWebViewConfiguration? = nil, url: URL?, at position: TabList<Tab>.Position = .afterActive,
                 select: Bool, lazy: Bool = false) -> Tab {
         let tab = Tab(configuration: configuration ?? pageConfiguration, pendingURL: lazy ? url : nil)
+        tab.webView.pageZoom = textZoom
         tab.onChange = { [weak self, weak tab] in
             guard let self, let tab else { return }
             tabDidChange(tab)
@@ -302,12 +304,35 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
     }
 
     var preferencesPayload: [String: Any] {
-        PreferencesStore.shared.preferences.dictionary.merging(["catalog": Preferences.catalog]) { current, _ in current }
+        let extras: [String: Any] = [
+            "catalog": Preferences.catalog,
+            // Read-only facts for Dialup Options (never stored).
+            "downloadsPath": PreferencesStore.shared.preferences.downloadsURL.path,
+            "isDefaultBrowser": Self.isDefaultBrowser,
+        ]
+        return PreferencesStore.shared.preferences.dictionary.merging(extras) { current, _ in current }
+    }
+
+    static var isDefaultBrowser: Bool {
+        guard let url = URL(string: "https://example.com"),
+              let app = NSWorkspace.shared.urlForApplication(toOpen: url) else { return false }
+        return app.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL
+    }
+
+    /// The pages' default zoom (View → Text Size), applied to every tab when it changes.
+    var textZoom: Double { PreferencesStore.shared.preferences.textSize.zoom }
+
+    func applyTextSize() {
+        for tab in tabs.elements { tab.webView.pageZoom = textZoom }
     }
 
     // MARK: App-wide changes
 
     @objc private func preferencesDidChange(_ notification: Notification) {
+        if PreferencesStore.shared.preferences.textSize != appliedTextSize {
+            appliedTextSize = PreferencesStore.shared.preferences.textSize
+            applyTextSize()
+        }
         emit("prefs", preferencesPayload)
         refreshShadow()
         applyDialupMode() // skin-specific scrollbars

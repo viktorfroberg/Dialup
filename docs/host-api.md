@@ -31,7 +31,7 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `dialupModeGet` | – | dial-up mode settings `{ enabled, connection, colors, resolution, scanlines, oldFonts, includeChrome, retroPage, squareCorners, noShadows, noAnimations, underlineLinks }` |
 | `dialupModeSet` | any subset of the settings | – applies to all windows. Unknown keys and invalid values are ignored |
 | `dialupModePreset` | `{ id: '1998' \| '2003' }` | – |
-| `prefsGet` | – | preferences `{ skin, homePage, searchEngine, name, quickLinks, onboarded, tabs, restoreSession, blockAds, checkForUpdates, catalog }`. `quickLinks` are the favorites (`[{ title, url }]`). `catalog` is the single source for lists and constants: `skins` and `searchEngines` (`[{ id, name }]`), `defaultLinks`, `dialupPresets`, `connectionSpeeds` (`{ <connection>: bitsPerSecond }`), `pictureCapMs`, `maxFavorites` |
+| `prefsGet` | – | preferences `{ skin, homePage, searchEngine, name, quickLinks, onboarded, tabs, restoreSession, blockAds, checkForUpdates, textSize, downloadFolder, askWhereToSave, catalog }` plus read-only `downloadsPath` (the folder in use) and `isDefaultBrowser`. `textSize` is `largest`…`smallest` (the pages' default zoom); an empty `downloadFolder` means ~/Downloads. `quickLinks` are the favorites (`[{ title, url }]`). `catalog` is the single source for lists and constants: `skins`, `searchEngines` and `textSizes` (`[{ id, name }]`), `defaultLinks`, `dialupPresets`, `connectionSpeeds` (`{ <connection>: bitsPerSecond }`), `pictureCapMs`, `maxFavorites` |
 | `prefsSet` | any subset of the preferences | – validated and applied to all windows. Unknown keys and invalid values are ignored |
 | `overlay` | `{ open? }` default false | – raises the transparent chrome above the page while a menu/dialog is open (see `js/overlay.js`) |
 | `clearData` | `{ what?: 'cache' \| 'all' }` default `'cache'` | – clears website data. Any other `what` clears nothing |
@@ -48,6 +48,8 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `soundSet` | `{ enabled? }` default true | – app-wide; broadcast as the `sounds` event |
 | `addFavorite` | `{ url, title? }` title defaults to the URL | – appends to the favorites unless the URL is already there or there are `maxFavorites` |
 | `openDownload` | `{ path, reveal? }` | – opens (or reveals in Finder) a file **this window finished downloading**; any other path is ignored |
+| `makeDefaultBrowser` | – | – asks macOS to make Dialup the default browser (macOS asks the user); open windows then get a fresh `prefs` event |
+| `chooseDownloadFolder` | – | `{ path }` after the user picks a folder in a native panel (saved as `downloadFolder`), or null if cancelled |
 | `checkForUpdates` | – | – checks GitHub for a new version now (Help → Check for Updates…); the answer arrives as `update` events |
 | `updateChoice` | `{ choice: 'install' \| 'skip' \| 'dismiss' \| 'cancel' }` | – a button in the update dialog: install (or install and restart), skip this version, remind me later / OK, stop the check or download |
 | `popupMenu` | `{ items: [{ id, title, enabled?, checked?, separator?, items? }], x, y }` (`items` = submenu, up to 3 levels) | picked `id` or `null` (native NSMenu, so it never gets clipped) |

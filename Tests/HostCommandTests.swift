@@ -23,7 +23,7 @@ final class HostCommandTests: XCTestCase {
     func testCommandsWithoutArguments() {
         for cmd in ["ready", "back", "forward", "reload", "stop", "home", "focusPage", "securityInfo",
                     "windowClose", "windowMinimize", "windowZoom", "windowDrag", "titlebarDoubleClick",
-                    "prefsGet", "dialupModeGet", "importBookmarks", "exportBookmarks", "checkForUpdates"] {
+                    "prefsGet", "dialupModeGet", "importBookmarks", "exportBookmarks", "checkForUpdates", "makeDefaultBrowser", "chooseDownloadFolder"] {
             XCTAssertNotNil(parse(cmd), cmd)
         }
     }

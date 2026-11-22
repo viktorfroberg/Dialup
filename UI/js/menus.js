@@ -94,6 +94,9 @@ const menus = {
       { id: 'stop', title: 'Stop', enabled: !!tab.loading },
       { id: 'reload', title: 'Refresh' },
       { separator: true },
+      { title: 'Text Size', enabled: false },
+      ...(ctx.getPrefs().catalog?.textSizes || []).map((s) => ({ id: `textsize:${s.id}`, title: `    ${s.name}`, checked: ctx.getPrefs().textSize === s.id })),
+      { separator: true },
       { id: 'dialup', title: 'Dial-up Mode', checked: !!ctx.getDialup().enabled },
       { id: 'action:toggleFullScreen', title: 'Full Screen' },
     ];
@@ -148,6 +151,7 @@ function run(id) {
   else if (kind === 'sounds') ctx.setSounds(!ctx.getSounds());
   else if (kind === 'about') aboutDialog();
   else if (kind === 'updates') checkForUpdates();
+  else if (kind === 'textsize') host.call('prefsSet', { textSize: arg });
   else if (kind === 'tips') host.call('navigate', { input: 'about:home' });
   else if (kind === 'fav' && arg === 'add') addFavorite(tab);
   else if (kind === 'fav') {

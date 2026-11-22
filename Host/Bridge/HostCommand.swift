@@ -40,6 +40,10 @@ enum HostCommand {
     /// Open or reveal a file this window downloaded (only paths from completed downloads are accepted).
     case openDownload(path: String, reveal: Bool)
     case checkForUpdates
+    /// Ask macOS to make Dialup the default web browser (macOS asks the user to confirm).
+    case makeDefaultBrowser
+    /// Pick the downloads folder in a native panel; replies `{ path }` (null if cancelled).
+    case chooseDownloadFolder
     /// A button in the update dialog.
     case updateChoice(UpdateChoice)
 
@@ -112,6 +116,8 @@ enum HostCommand {
             guard let path = a.nonEmptyString("path") else { throw invalid }
             self = .openDownload(path: path, reveal: a.bool("reveal") ?? false)
         case "checkForUpdates": self = .checkForUpdates
+        case "makeDefaultBrowser": self = .makeDefaultBrowser
+        case "chooseDownloadFolder": self = .chooseDownloadFolder
         case "updateChoice":
             guard let choice = a.string("choice").flatMap(UpdateChoice.init(rawValue:)) else { throw invalid }
             self = .updateChoice(choice)

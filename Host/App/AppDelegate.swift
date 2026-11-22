@@ -52,6 +52,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, BrowserWindowOpening {
         Task {
             try? await NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "http")
             try? await NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "https")
+            // Dialup Options shows whether Dialup is the default; let open windows know.
+            for case let controller as BrowserWindowController in NSApp.windows.map(\.windowController) {
+                controller.emit("prefs", controller.preferencesPayload)
+            }
         }
     }
 

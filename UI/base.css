@@ -748,6 +748,9 @@ select.field {
 .icon-favorite { background-image: url(img/tango/favorites.svg); }
 .icon-update  { background-image: url(img/tango/globe.svg); }
 .icon-sound   { background-image: url(img/tango/sound.svg); }
+.icon-folder  { background-image: url(img/tango/folder.svg); }
+.icon-globe   { background-image: url(img/tango/globe.svg); }
+.field.path   { display: block; min-width: 0; padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .icon-update-error { background-image: url(img/tango/warning.svg); }
 
 /* Dialup Update: a progress bar in the skin's style (the same fill as the status bar). */

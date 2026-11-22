@@ -71,6 +71,8 @@ extension BrowserWindowController: HostCommandHandling {
             PreferencesStore.shared.preferences.addFavorites([QuickLink(title: title, url: url)])
 
         case .checkForUpdates: Updates.shared.checkForUpdates(nil)
+        case .makeDefaultBrowser: (NSApp.delegate as? AppDelegate)?.makeDefaultBrowser(nil)
+        case .chooseDownloadFolder: return chooseDownloadFolder()
         case .updateChoice(let choice): Updates.shared.choose(choice)
         case .openDownload(let path, let reveal):
             // Never open arbitrary paths from the chrome: only files this window finished downloading.
@@ -140,6 +142,20 @@ extension BrowserWindowController: HostCommandHandling {
         case .all: WKWebsiteDataStore.allWebsiteDataTypes()
         }
         WKWebsiteDataStore.default().removeData(ofTypes: types, modifiedSince: .distantPast) {}
+    }
+
+    /// Modal folder panel; the choice is saved natively, never taken as a path from the chrome.
+    private func chooseDownloadFolder() -> [String: Any]? {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.prompt = "Choose"
+        panel.message = "Choose where Dialup saves downloads"
+        panel.directoryURL = PreferencesStore.shared.preferences.downloadsURL
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        PreferencesStore.shared.preferences.downloadFolder = url.path
+        return ["path": PreferencesStore.shared.preferences.downloadsURL.path]
     }
 
     /// Same trick Tauri uses: start a native window drag from the title bar's mouse-down.

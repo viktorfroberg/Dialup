@@ -45,7 +45,14 @@ extension BrowserWindowController: NSMenuItemValidation {
 
     @objc func zoomIn(_ sender: Any?) { zoom(by: 1) }
     @objc func zoomOut(_ sender: Any?) { zoom(by: -1) }
-    @objc func actualSize(_ sender: Any?) { activeTab.webView.pageZoom = 1 }
+    /// Back to the Text Size setting's zoom.
+    @objc func actualSize(_ sender: Any?) { activeTab.webView.pageZoom = textZoom }
+
+    /// View → Text Size → Largest … Smallest (the item's tag is the `TextSize` index).
+    @objc func setTextSize(_ sender: NSMenuItem) {
+        guard TextSize.allCases.indices.contains(sender.tag) else { return }
+        PreferencesStore.shared.preferences.textSize = TextSize.allCases[sender.tag]
+    }
 
     private func zoom(by step: Int) {
         let webView = activeTab.webView
@@ -81,6 +88,9 @@ extension BrowserWindowController: NSMenuItemValidation {
         case #selector(reopenClosedTab(_:)): return !closedTabs.isEmpty
         case #selector(addToFavorites(_:)): return ["http", "https"].contains(webView.url?.scheme ?? "")
         case #selector(selectTabByNumber(_:)): return menuItem.tag <= tabs.count
+        case #selector(setTextSize(_:)):
+            menuItem.state = TextSize.allCases.firstIndex(of: PreferencesStore.shared.preferences.textSize) == menuItem.tag ? .on : .off
+            return true
         case #selector(toggleDialupMode(_:)):
             menuItem.state = DialupModeStore.shared.settings.enabled ? .on : .off
             return true

@@ -11,6 +11,9 @@ final class PreferencesTests: XCTestCase {
         XCTAssertTrue(p.restoreSession)
         XCTAssertTrue(p.blockAds)
         XCTAssertTrue(p.checkForUpdates)
+        XCTAssertEqual(p.textSize, .medium)
+        XCTAssertEqual(p.downloadFolder, "")
+        XCTAssertFalse(p.askWhereToSave)
         XCTAssertEqual(p.quickLinks, Preferences.defaultLinks)
     }
 
@@ -119,5 +122,18 @@ final class CatalogTests: XCTestCase {
         let engines = Preferences.catalog["searchEngines"] as? [[String: String]]
         XCTAssertEqual(engines?.map { $0["id"] }, ["duckduckgo", "google", "bing", "wikipedia"])
         XCTAssertEqual(engines?.first?["name"], "DuckDuckGo")
+    }
+
+    func testDownloadFolderMustBeAnExistingFolder() {
+        XCTAssertEqual(Preferences().merging(["downloadFolder": "/no/such/folder"]).downloadFolder, "")
+        XCTAssertEqual(Preferences().merging(["downloadFolder": "relative/path"]).downloadFolder, "")
+        let tmp = FileManager.default.temporaryDirectory.path
+        XCTAssertEqual(Preferences().merging(["downloadFolder": tmp]).downloadFolder, tmp)
+        XCTAssertEqual(Preferences().downloadsURL.lastPathComponent, "Downloads")
+    }
+
+    func testUnknownTextSizeFallsBack() {
+        XCTAssertEqual(Preferences().merging(["textSize": "huge"]).textSize, .medium)
+        XCTAssertEqual(Preferences().merging(["textSize": "larger"]).textSize.zoom, 1.15)
     }
 }

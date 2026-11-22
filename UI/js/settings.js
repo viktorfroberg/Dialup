@@ -10,6 +10,9 @@ const SAMPLE = 'img/sample.svg';
 const PICTURE_BYTES = 40 * 1024; // "a typical 40 KB photo"
 
 let current = null;  // the open dialog, so ⌘, twice doesn't stack dialogs
+// "Make Default" finishes after macOS asks; the host then sends fresh prefs.
+const defaultBrowserWatchers = new Set();
+onEvent('prefs', (p) => { for (const watch of defaultBrowserWatchers) watch(p.isDefaultBrowser); });
 
 // After importing bookmarks, pull the new favorites into an open Dialup Options dialog.
 onEvent('bookmarksImported', ({ added, found }) => current?.onImported?.(added, found));
@@ -95,6 +98,7 @@ export async function openSettings(startTab = 'general', { getCurrentUrl, getSou
     const [freshPrefs, freshDialup] = await Promise.all([host.call('prefsGet'), host.call('dialupModeGet')]);
     baseline = { prefs: withoutCatalog(freshPrefs), dialup: structuredClone(freshDialup), app: { ...draft.app } };
     Object.assign(draft, structuredClone(baseline));
+    defaultBrowserWatchers.clear();
     for (const { panel, build } of Object.values(byId)) panel.replaceChildren(build(ctx));
   };
 
@@ -112,6 +116,7 @@ export async function openSettings(startTab = 'general', { getCurrentUrl, getSou
       if (value === 'ok') await apply();
       else applySkin(baseline.prefs.skin); // Cancel / close box: undo the live preview
       current = null;
+      defaultBrowserWatchers.clear();
       return true;
     },
   });
@@ -208,9 +213,44 @@ function generalTab({ draft, catalog, getCurrentUrl }) {
           <p class="hint">Used to greet you on the Start Page. It never leaves this computer.</p>
         </div>
       </div>
+    </fieldset>
+    <fieldset>
+      <legend>Downloads</legend>
+      <div class="icon-row">
+        <div class="big-icon icon-folder"></div>
+        <div class="grow">
+          <div class="row">Save files to: <span class="field grow path" id="downloads-path"></span> <button class="btn small" id="downloads-change">Change…</button></div>
+          <label class="choice"><input type="checkbox" data-bind="prefs.askWhereToSave"> Ask where to save each file</label>
+        </div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Default browser</legend>
+      <div class="icon-row">
+        <div class="big-icon icon-globe"></div>
+        <div class="grow">
+          <div class="row"><span class="grow" id="default-status"></span> <button class="btn small" id="make-default">Make Default</button></div>
+          <p class="hint">Links from other apps open in your default browser. macOS asks you to confirm.</p>
+        </div>
+      </div>
     </fieldset>`;
   const root = el('div');
   root.append(frag);
+
+  const pathLabel = root.querySelector('#downloads-path');
+  const showPath = () => { pathLabel.textContent = (draft.prefs.downloadsPath || '~/Downloads').replace(/^\/Users\/[^/]+/, '~'); };
+  showPath();
+  root.querySelector('#downloads-change').addEventListener('click', async () => {
+    const picked = await host.call('chooseDownloadFolder');
+    if (picked?.path) { draft.prefs.downloadsPath = picked.path; draft.prefs.downloadFolder = picked.path; showPath(); }
+  });
+  const showDefault = (isDefault) => {
+    root.querySelector('#default-status').textContent = isDefault ? 'Dialup is your default browser.' : 'Dialup is not your default browser.';
+    root.querySelector('#make-default').disabled = !!isDefault;
+  };
+  showDefault(draft.prefs.isDefaultBrowser);
+  root.querySelector('#make-default').addEventListener('click', () => host.call('makeDefaultBrowser'));
+  defaultBrowserWatchers.add(showDefault);
 
   const select = root.querySelector('select');
   for (const engine of catalog.searchEngines) select.append(new Option(engine.name, engine.id));
@@ -305,6 +345,11 @@ function appearanceTab({ draft, catalog, previewSkin }) {
     </fieldset>
     <p class="hint">Want to make your own? Skins are plain CSS files in <code>UI/skins/</code>.</p>
     <fieldset>
+      <legend>Text size</legend>
+      <label class="row">Show pages at: <select class="field" data-bind="prefs.textSize"></select></label>
+      <p class="hint">Like View → Text Size. ⌘+ and ⌘− still zoom the page you're on.</p>
+    </fieldset>
+    <fieldset>
       <legend>Sounds</legend>
       <div class="icon-row">
         <div class="big-icon icon-sound"></div>
@@ -314,6 +359,8 @@ function appearanceTab({ draft, catalog, previewSkin }) {
         </div>
       </div>
     </fieldset>`);
+  const sizes = root.querySelector('select[data-bind="prefs.textSize"]');
+  for (const size of catalog.textSizes || []) sizes.append(new Option(size.name, size.id));
   const cards = root.querySelector('.skin-cards');
   for (const skin of catalog.skins) {
     const card = el('label', `skin-card skin-${skin.id}`);
