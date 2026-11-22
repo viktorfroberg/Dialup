@@ -40,7 +40,8 @@ targets:
         # Updates (Sparkle): the newest GitHub release carries appcast.xml; archives are EdDSA-signed.
         SUFeedURL: $(DIALUP_FEED_URL)
         SUPublicEDKey: ljbksQb5dmHsUsCYxvT4JBHN5bUsNaBFC61xpbR/Fao=
-        SUEnableAutomaticChecks: false
+        # Check daily in the background, without Sparkle's "check automatically?" prompt.
+        SUEnableAutomaticChecks: true
         # A browser must load plain http:// sites (ATS would block them in the web view).
         NSAppTransportSecurity:
           NSAllowsArbitraryLoadsInWebContent: true

@@ -59,7 +59,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUEnableAutomaticChecks</key>
-	<false/>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>$(DIALUP_FEED_URL)</string>
 	<key>SUPublicEDKey</key>

@@ -10,7 +10,11 @@ final class Updates: NSObject {
     private lazy var controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil,
                                                                userDriverDelegate: nil)
 
-    func start() { _ = controller }
+    /// Starts the daily schedule and checks once now, quietly: the update window only appears
+    /// when there is a newer version (and not one the user chose to skip).
+    func start() {
+        controller.updater.checkForUpdatesInBackground()
+    }
 
     @objc func checkForUpdates(_ sender: Any?) { controller.checkForUpdates(sender) }
 }
