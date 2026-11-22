@@ -747,6 +747,7 @@ select.field {
 .icon-lock    { background-image: url(img/tango/lock.svg); }
 .icon-favorite { background-image: url(img/tango/favorites.svg); }
 .icon-update  { background-image: url(img/tango/globe.svg); }
+.icon-sound   { background-image: url(img/tango/sound.svg); }
 .icon-update-error { background-image: url(img/tango/warning.svg); }
 
 /* Dialup Update: a progress bar in the skin's style (the same fill as the status bar). */

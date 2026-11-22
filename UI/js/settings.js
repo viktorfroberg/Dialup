@@ -27,7 +27,7 @@ function changed(before, after) {
   return out;
 }
 
-export async function openSettings(startTab = 'general', { getCurrentUrl } = {}) {
+export async function openSettings(startTab = 'general', { getCurrentUrl, getSounds } = {}) {
   if (current) { current.select(startTab); return; }
   if (opening) { pendingTab = startTab; return; }
   opening = true;
@@ -37,7 +37,8 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
   const catalog = prefs.catalog || { skins: [], searchEngines: [] };
   // baseline = what the host had when we last synced. Only keys changed from it are sent,
   // so changes made elsewhere meanwhile (⇧⌘D, another window) aren't overwritten.
-  let baseline = { prefs: withoutCatalog(prefs), dialup: structuredClone(dialup) };
+  // `app` holds settings the host keeps outside the preferences (sounds).
+  let baseline = { prefs: withoutCatalog(prefs), dialup: structuredClone(dialup), app: { sounds: getSounds?.() ?? true } };
   const draft = structuredClone(baseline);
 
   const tabs = [
@@ -89,9 +90,10 @@ export async function openSettings(startTab = 'general', { getCurrentUrl } = {})
     const dialupPatch = changed(baseline.dialup, draft.dialup);
     if (Object.keys(prefsPatch).length) await host.call('prefsSet', prefsPatch);
     if (Object.keys(dialupPatch).length) await host.call('dialupModeSet', dialupPatch);
+    if (draft.app.sounds !== baseline.app.sounds) await host.call('soundSet', { enabled: draft.app.sounds });
     // Re-read the host's validated values and rebuild the panels, so the dialog shows what was saved.
     const [freshPrefs, freshDialup] = await Promise.all([host.call('prefsGet'), host.call('dialupModeGet')]);
-    baseline = { prefs: withoutCatalog(freshPrefs), dialup: structuredClone(freshDialup) };
+    baseline = { prefs: withoutCatalog(freshPrefs), dialup: structuredClone(freshDialup), app: { ...draft.app } };
     Object.assign(draft, structuredClone(baseline));
     for (const { panel, build } of Object.values(byId)) panel.replaceChildren(build(ctx));
   };
@@ -301,7 +303,17 @@ function appearanceTab({ draft, catalog, previewSkin }) {
       <p class="hint">Changes the whole browser: title bar, buttons, toolbars, menus and dialogs. Click one to try it.</p>
       <div class="skin-cards"></div>
     </fieldset>
-    <p class="hint">Want to make your own? Skins are plain CSS files in <code>UI/skins/</code>.</p>`);
+    <p class="hint">Want to make your own? Skins are plain CSS files in <code>UI/skins/</code>.</p>
+    <fieldset>
+      <legend>Sounds</legend>
+      <div class="icon-row">
+        <div class="big-icon icon-sound"></div>
+        <div class="grow">
+          <label class="choice"><input type="checkbox" data-bind="app.sounds"> Play sounds <span class="hint">clicks, a tick when a page is done, error dings and the modem handshake</span></label>
+          <p class="hint">Also in Tools → Sounds, or click the speaker in the status bar.</p>
+        </div>
+      </div>
+    </fieldset>`);
   const cards = root.querySelector('.skin-cards');
   for (const skin of catalog.skins) {
     const card = el('label', `skin-card skin-${skin.id}`);

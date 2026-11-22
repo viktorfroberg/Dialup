@@ -313,7 +313,7 @@ function applyPrefs(next = {}) {
 }
 onEvent('prefs', applyPrefs);
 
-const showSettings = (tabId) => openSettings(tabId, { getCurrentUrl: () => tab.url });
+const showSettings = (tabId) => openSettings(tabId, { getCurrentUrl: () => tab.url, getSounds: () => soundsOn });
 onEvent('openSettings', ({ tab: tabId }) => showSettings(tabId || 'general'));
 onEvent('openWizard', () => openWizard());
 

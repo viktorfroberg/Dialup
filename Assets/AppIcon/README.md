@@ -1,13 +1,14 @@
 # App icons
 
-The Dialup mark is the **Tango "internet-web-browser" globe** (Tango Icon Library 0.8.90, public domain)
-on a plain macOS-shaped tile, coloured per skin: sky blue (Luna), light grey (Aqua), navy (Classic).
-The 32 px size uses Tango's hand-pixelled 22 px globe.
+Dialup's globe is drawn by [`tools/make_globe.py`](tools/make_globe.py) from real map data: Natural Earth's
+1:110m land polygons ([`data/ne_110m_land.geojson`](data/ne_110m_land.geojson), public domain,
+[naturalearthdata.com](https://www.naturalearthdata.com/)), projected onto a sphere over the Atlantic and shaded
+in the glossy style of early-2000s icons. It sits on a macOS-shaped tile in each skin's colours: sky blue (Luna),
+light grey (Aqua), navy (Classic).
 
-Recipe (needs ImageMagick):
 ```sh
-swiftc -O tools/webrender.swift -o /tmp/webrender      # renders SVG with WebKit (keeps Tango's gradients)
-/tmp/webrender globe.svg /tmp/globe-1024.png 1024
-# tile: 824x824 rounded square (radius 185) at +100+100 on a 1024 canvas, soft shadow, globe at 700 px centred
+python3 Assets/AppIcon/tools/make_globe.py     # needs numpy and Pillow
 ```
-Outputs go to `Host/Assets.xcassets/AppIcon.appiconset/` (Luna) and `Resources/SkinIcons/<skin>.png`.
+
+Writes `Host/Assets.xcassets/AppIcon.appiconset/` (Luna), `Resources/SkinIcons/<skin>.png` (the Dock icon
+follows the skin) and `globe.png`. Small sizes get a globe drawn at their own size.

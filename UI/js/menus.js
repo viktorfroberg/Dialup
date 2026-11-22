@@ -182,7 +182,7 @@ function aboutDialog() {
     <div class="about-banner"><div class="about-logo"></div><div><div class="about-name">Dialup</div><div class="about-tag">Version ${ctx.getVersion?.() || '0.1'}</div></div></div>
     <div class="about-text">
       <p>Cipher Strength: 128-bit<br>Product ID: 55555-OEM-0001337-56K<br>Update Versions: SP1; dial-up</p>
-      <p>Based on modern WebKit, wearing a 2003 outfit.<br>Icons from the Tango Icon Library (public domain). No modems were harmed.</p>
+      <p>Based on modern WebKit, wearing a 2003 outfit.<br>Toolbar icons from the Tango Icon Library (public domain). No modems were harmed.</p>
       <p class="hint">Warning: this computer program is protected by nostalgia.</p>
     </div>`);
   openDialog({ title: 'About Dialup', width: 400, body, buttons: [{ label: 'OK', value: 'ok', primary: true }] });

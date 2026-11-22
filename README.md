@@ -48,7 +48,7 @@ How it works, skinning, tests and the roadmap: [docs/DEVELOPING.md](docs/DEVELOP
 
 ## Credits
 
-Icons from the [Tango Icon Library](http://tango.freedesktop.org/) (public domain). Updates by [Sparkle](https://sparkle-project.org/). Skins are inspired by the era and contain no Microsoft or Apple artwork; the names mentioned are trademarks of their owners. [MIT license](LICENSE).
+Toolbar icons from the [Tango Icon Library](http://tango.freedesktop.org/) (public domain); the app icon's globe is drawn from [Natural Earth](https://www.naturalearthdata.com/) map data. Updates by [Sparkle](https://sparkle-project.org/). Skins are inspired by the era and contain no Microsoft or Apple artwork; the names mentioned are trademarks of their owners. [MIT license](LICENSE).
 
 <p align="center">
   <img src="site/img/btn-dialup-now.gif" width="88" height="31" alt="Dialup NOW!">

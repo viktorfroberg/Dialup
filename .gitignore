@@ -6,3 +6,4 @@ xcuserdata/
 build-ui/
 build-swift/
 build-rel/
+__pycache__/
