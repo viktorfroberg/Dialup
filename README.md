@@ -1,20 +1,17 @@
 <h1 align="center"><img src="site/img/icon-64.png" width="64" height="64" alt=""><br>Dialup</h1>
 
-<p align="center"><i>The web browser that looks like 2003.</i></p>
-
 <p align="center">
   <a href="https://github.com/viktorfroberg/Dialup/releases/latest/download/Dialup.zip"><img src="site/img/btn-get-dialup.gif" width="88" height="31" alt="Get Dialup!"></a>
   <img src="site/img/btn-made-on-mac.gif" width="88" height="31" alt="Made on a Mac">
   <a href="LICENSE"><img src="site/img/btn-mit.gif" width="88" height="31" alt="MIT open source"></a>
   <img src="site/img/btn-no-cookies.gif" width="88" height="31" alt="No cookies">
-  <img src="site/img/btn-800x600.gif" width="88" height="31" alt="Best viewed at 800x600">
 </p>
 
 <p align="center">
   <a href="https://github.com/viktorfroberg/Dialup/actions/workflows/ci.yml"><img src="https://github.com/viktorfroberg/Dialup/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
-Dialup is a macOS browser that looks like 2003: the XP title bar, the brushed-metal Mac toolbar, the grey bevels of Windows 98. Underneath it's modern WebKit, so today's web works fine.
+Dialup is a macOS browser with the look of the early 2000s: the XP title bar, the brushed-metal Mac toolbar, the grey bevels of Windows 98. Underneath it's modern WebKit, so today's web works fine.
 
 <p align="center">
   <img src="docs/screenshots/dialup-mode.gif" width="800" alt="Animation: Dial-up Mode loading the 1996 Space Jam website. The planets appear one by one while the status bar counts down the items remaining, then reads Done.">
@@ -56,6 +53,5 @@ Icons from the [Tango Icon Library](http://tango.freedesktop.org/) (public domai
 <p align="center">
   <img src="site/img/btn-dialup-now.gif" width="88" height="31" alt="Dialup NOW!">
   <img src="site/img/btn-valid-html.gif" width="88" height="31" alt="Valid HTML">
-  <img src="site/img/counter.gif" alt="Visitor counter (decoration)"><br>
-  <sub>Best viewed in Dialup at 800×600.</sub>
+  <img src="site/img/counter.gif" alt="Visitor counter (decoration)">
 </p>
