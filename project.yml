@@ -19,7 +19,7 @@ targets:
       - package: Sparkle
     sources:
       - path: Host
-      - path: Chrome
+      - path: UI
         type: folder
         buildPhase: resources
       - path: Start

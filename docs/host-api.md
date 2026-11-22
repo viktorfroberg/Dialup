@@ -1,6 +1,6 @@
 # Host API (v1)
 
-The chrome UI (`Chrome/`) talks to the native host through `js/host.js`.
+The browser UI, called the *chrome* here (`UI/`), talks to the native host through `js/host.js`.
 
 ```js
 import { host, onEvent } from './host.js';
@@ -31,7 +31,7 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `dialupModeGet` | – | dial-up mode settings `{ enabled, connection, colors, resolution, scanlines, oldFonts, includeChrome, retroPage, squareCorners, noShadows, noAnimations, underlineLinks }` |
 | `dialupModeSet` | any subset of the settings | – applies to all windows. Unknown keys and invalid values are ignored |
 | `dialupModePreset` | `{ id: '1998' \| '2003' }` | – |
-| `prefsGet` | – | preferences `{ skin, homePage, searchEngine, name, quickLinks, onboarded, tabs, restoreSession, blockAds, catalog }`. `quickLinks` are the favorites (`[{ title, url }]`). `catalog` is the single source for lists and constants: `skins` and `searchEngines` (`[{ id, name }]`), `defaultLinks`, `dialupPresets`, `connectionSpeeds` (`{ <connection>: bitsPerSecond }`), `pictureCapMs`, `maxFavorites` |
+| `prefsGet` | – | preferences `{ skin, homePage, searchEngine, name, quickLinks, onboarded, tabs, restoreSession, blockAds, checkForUpdates, catalog }`. `quickLinks` are the favorites (`[{ title, url }]`). `catalog` is the single source for lists and constants: `skins` and `searchEngines` (`[{ id, name }]`), `defaultLinks`, `dialupPresets`, `connectionSpeeds` (`{ <connection>: bitsPerSecond }`), `pictureCapMs`, `maxFavorites` |
 | `prefsSet` | any subset of the preferences | – validated and applied to all windows. Unknown keys and invalid values are ignored |
 | `overlay` | `{ open? }` default false | – raises the transparent chrome above the page while a menu/dialog is open (see `js/overlay.js`) |
 | `clearData` | `{ what?: 'cache' \| 'all' }` default `'cache'` | – clears website data. Any other `what` clears nothing |
@@ -48,6 +48,8 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `soundSet` | `{ enabled? }` default true | – app-wide; broadcast as the `sounds` event |
 | `addFavorite` | `{ url, title? }` title defaults to the URL | – appends to the favorites unless the URL is already there or there are `maxFavorites` |
 | `openDownload` | `{ path, reveal? }` | – opens (or reveals in Finder) a file **this window finished downloading**; any other path is ignored |
+| `checkForUpdates` | – | – checks GitHub for a new version now (Help → Check for Updates…); the answer arrives as `update` events |
+| `updateChoice` | `{ choice: 'install' \| 'skip' \| 'dismiss' \| 'cancel' }` | – a button in the update dialog: install (or install and restart), skip this version, remind me later / OK, stop the check or download |
 | `popupMenu` | `{ items: [{ id, title, enabled?, checked?, separator?, items? }], x, y }` (`items` = submenu, up to 3 levels) | picked `id` or `null` (native NSMenu, so it never gets clipped) |
 
 ## Events (host → chrome)
@@ -66,6 +68,7 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `bookmarksImported` | `{ added, found }` |
 | `dialupMode` | dial-up mode settings. The chrome sets body class `dialup-mode` |
 | `download` | `{ name, fraction, state: 'downloading' \| 'done' \| 'failed', path }`. Downloads go to ~/Downloads and never overwrite (`file 2.zip`…) |
+| `update` | one step of a software update, as `{ phase, … }`: `checking`; `found` `{ version, current, notesURL, downloaded }`; `notFound` `{ current }`; `error` `{ message }`; `downloading` `{ received, total }` (bytes, repeated); `extracting` `{ progress }` (0–1, repeated); `ready`; `installing`; `dismiss` (close the dialog). One window shows it; a window that opens mid-update gets the current step. Answer with `updateChoice` |
 | `openFind` | – sent on ⌘F; the chrome shows its Find dialog |
 | `findAgain` | `{ backwards }` – sent on ⌘G / ⇧⌘G |
 | `findResult` | `{ found }` – the answer to `find` |

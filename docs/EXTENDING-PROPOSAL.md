@@ -20,8 +20,8 @@ The Nostalgic Browser sets the bar for user experience: installing anything shou
 ## 2. What exists today, and what's missing
 
 **Already in place:**
-- **The chrome is all CSS and HTML.** `Chrome/base.css` declares variables (`--face`, `--rebar-bg`, `--icon-back`…) and a documented class list in its header comment (`.rebar .band .gripper .tb .drop .address-box .throbber #statusbar .cell`). `Chrome/skins/aqua.css` shows that one CSS file can completely restyle the browser, down to caption buttons, menus and dialogs.
-- **Skin switching is a single `href` swap.** `applyPrefs` in `Chrome/js/main.js` sets `skins/${skin}.css` and `body[data-skin]`.
+- **The chrome is all CSS and HTML.** `UI/base.css` declares variables (`--face`, `--rebar-bg`, `--icon-back`…) and a documented class list in its header comment (`.rebar .band .gripper .tb .drop .address-box .throbber #statusbar .cell`). `UI/skins/aqua.css` shows that one CSS file can completely restyle the browser, down to caption buttons, menus and dialogs.
+- **Skin switching is a single `href` swap.** `applyPrefs` in `UI/js/main.js` sets `skins/${skin}.css` and `body[data-skin]`.
 - **The scheme handler already supports user folders.** `DialupSchemeHandler` takes `roots: [area: [URL]]`, searched in order, "user folder first", and its comment already mentions `"skins"` and `"toolbars"` areas. Only `bundled()` with `chrome` is wired up so far.
 - **The bridge is ready for iframes.** `ChromeBridge.accepts` only accepts the chrome's main frame on `dialup:`, and the test `testBridgeOnlyAcceptsChromeMainFrame` enforces it. host-api.md already says plugin iframes must go through the chrome.
 - **Settings decoding is tolerant.** `Preferences.merging` / `DialupModeSettings.merging` drop unknown keys and fall back on bad values, which is exactly what you want for import.
@@ -31,7 +31,7 @@ The Nostalgic Browser sets the bar for user experience: installing anything shou
 **Gaps:**
 - **Skins, search engines and presets are hard-coded.** `Preferences.skins` and `Preferences.searchEngines` are static arrays, and `sanitize()` resets any unknown id, so a user skin would be silently reset to Luna. `DialupModeSettings.presets` has only `1998` and `2003`.
 - **Skin previews are hard-coded** in `base.css` (`.skin-luna .mini-titlebar` and friends) and in `wizard.js` (three fixed cards). The page scrollbar CSS in `DialupMode.swift` is keyed by skin id (`SCROLLBARS[skin] || SCROLLBARS.luna`).
-- **The chrome has no CSP** (`Chrome/index.html`). Today that's fine because everything is first-party, but it has to be fixed before a third-party CSS file goes into that document.
+- **The chrome has no CSP** (`UI/index.html`). Today that's fine because everything is first-party, but it has to be fixed before a third-party CSS file goes into that document.
 - **Possible symlink escape.** `DialupSchemeHandler.resolve` checks `standardizedFileURL`, which doesn't resolve symlinks. A downloaded add-on folder containing `secret -> ~/.ssh/id_ed25519` passes the prefix check. That's harmless for bundled files but a real hole once user folders exist and toolbars can `fetch()` their own files.
 - **The rebar is static markup** in `index.html`, with no drag, no layout persistence and no slot for extra bands.
 - **Sounds can't be replaced.** `SoundEffects` synthesizes all five sounds (`click, complete, error, ding, modem`) and has no override hook.
@@ -62,7 +62,7 @@ On disk:
     style-src dialup: 'unsafe-inline'; img-src dialup: data:; font-src dialup:; frame-src dialup://toolbars;
     connect-src 'none'">
   ```
-  With this, skin CSS can't beacon out with `url(https://…)` or `@import`, and no script outside `Chrome/` can run in the trusted document.
+  With this, skin CSS can't beacon out with `url(https://…)` or `@import`, and no script outside `UI/` can run in the trusted document.
 
 ### 3.1 User skins
 
@@ -137,7 +137,7 @@ The toolbar shows up as a new rebar band. View → Toolbars lists every band wit
 **How it runs.**
 - The chrome renders each band as `<iframe sandbox="allow-scripts allow-forms" src="dialup://toolbars/babel-bar/band.html">`. Without `allow-same-origin` the frame gets an opaque origin, so it has no access to the chrome DOM, `localStorage` or cookies. `ChromeBridge` already rejects it (it's not the main frame).
 - The scheme handler sends a per-add-on CSP header built from the manifest: `default-src dialup://toolbars/babel-bar/ dialup://sdk/; connect-src https://api.mymemory.translated.net; img-src … data:; form-action 'none'`. No remote `script-src`, ever: everything that runs ships in the folder, so a reviewed toolbar can't change under you.
-- `Chrome/js/addons.js` (new) is the broker. It owns each iframe, checks `event.source === frame.contentWindow`, matches the method against the granted permissions and rate-limits calls. It only ever maps calls onto a **fixed** set of host commands. It never forwards a raw `host.call`.
+- `UI/js/addons.js` (new) is the broker. It owns each iframe, checks `event.source === frame.contentWindow`, matches the method against the granted permissions and rate-limits calls. It only ever maps calls onto a **fixed** set of host commands. It never forwards a raw `host.call`.
 
 **API.** The toolbar loads `dialup://sdk/addon-v1.js`, a roughly 60-line postMessage RPC shim:
 ```js
@@ -282,7 +282,7 @@ The page boundary still holds: extensions run in WebKit's own extension contexts
 | **5. Sharing** | `dialup-install:` links, Export as `.dialupaddon`, optional catalog subscriptions with pinned keys | M | Lets people share without us running anything |
 | **6. WebExtensions** | Experimental unpacked MV3 | L | Only if users ask after phase 4 |
 
-**Build first:** phase 0 plus user skins with `base` inheritance and hot reload. A day or two of work turns "Skins are plain CSS files in `Chrome/skins/`" (the current hint in `settings.js`, which points into the app bundle) into something real.
+**Build first:** phase 0 plus user skins with `base` inheritance and hot reload. A day or two of work turns "Skins are plain CSS files in `UI/skins/`" (the current hint in `settings.js`, which points into the app bundle) into something real.
 
 ### Things we should NOT do
 

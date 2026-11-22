@@ -301,7 +301,7 @@ function appearanceTab({ draft, catalog, previewSkin }) {
       <p class="hint">Changes the whole browser: title bar, buttons, toolbars, menus and dialogs. Click one to try it.</p>
       <div class="skin-cards"></div>
     </fieldset>
-    <p class="hint">Want to make your own? Skins are plain CSS files in <code>Chrome/skins/</code>.</p>`);
+    <p class="hint">Want to make your own? Skins are plain CSS files in <code>UI/skins/</code>.</p>`);
   const cards = root.querySelector('.skin-cards');
   for (const skin of catalog.skins) {
     const card = el('label', `skin-card skin-${skin.id}`);

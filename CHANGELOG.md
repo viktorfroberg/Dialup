@@ -2,6 +2,25 @@
 
 Milestones so far, oldest first.
 
+## 0.2.0 (not released yet)
+
+### Updates and installing
+- In-app updates from GitHub releases (Sparkle 2). Dialup checks quietly at launch and daily (Dialup Options → General, or the setup wizard, turns it off); Help → Check for Updates… checks now. The update dialog is drawn by the skin: "Dialup Update" with release notes, a progress bar and download speed.
+- Updates are signed with an EdDSA key and checked before installing; after the first install they open without a Gatekeeper warning.
+- One-line installer (`install.sh`): installs without the "can't be opened" warning a browser download gets.
+- Releases carry `appcast.xml` and build numbers that always go up. A website for the app in `site/` (GitHub Pages).
+
+### Look and feel
+- Luna tabs look like the XP tab control: white-to-beige tabs side by side; the selected one is white, taller and overlaps its neighbours, with the orange top edge.
+- Dialup Options is a fixed, smaller dialog; long tabs scroll.
+- The title bar drags from its whole height, not just the top part.
+
+### Dial-up Mode
+- Old fonts are Times New Roman (and Courier New for code), the default most pages of the era showed. Headlines keep the site's font, so headlines sized to fit no longer overflow, and icon fonts keep their icons.
+
+### Code
+- The browser UI folder is `UI/` (was `Chrome/`, which read like Google Chrome).
+
 ## 0.1.0 (2026-11-21)
 
 First public release.

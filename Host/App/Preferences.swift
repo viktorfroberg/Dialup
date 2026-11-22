@@ -7,7 +7,7 @@ struct QuickLink: Codable, Equatable {
     var url: String
 }
 
-/// A built-in skin. The raw value is the skin's id: `Chrome/skins/<id>.css` and
+/// A built-in skin. The raw value is the skin's id: `UI/skins/<id>.css` and
 /// `Resources/SkinIcons/<id>.png`.
 enum Skin: String, CaseIterable, Codable {
     case luna, aqua, classic

@@ -5,6 +5,7 @@ import WebKit
 /// composites the chrome and page web views into one PNG, so the look can be checked
 /// without Screen Recording permission. It uses WebKit's own snapshot API.
 /// `-DialupChromeEval "<js>"` runs JavaScript in the chrome 2 s before the snapshot (e.g. open a dialog).
+/// `-DialupChromeEvalLead 0.2` changes that 2 s.
 /// `-DialupSnapshotFrames 20 -DialupSnapshotInterval 0.5` writes a sequence (out-000.png, …) for GIFs.
 /// Debug builds only.
 @MainActor
@@ -18,16 +19,18 @@ enum DebugSnapshot {
         guard let path = UserDefaults.standard.string(forKey: "DialupSnapshot") else { return }
         let delay = UserDefaults.standard.double(forKey: "DialupSnapshotDelay")
         let eval = UserDefaults.standard.string(forKey: "DialupChromeEval")
+        let storedLead = UserDefaults.standard.double(forKey: "DialupChromeEvalLead")
+        let lead = storedLead > 0 ? storedLead : evalLeadTime
         Task { @MainActor in
             let total = delay > 0 ? delay : defaultDelay
             if let eval {
-                try? await Task.sleep(for: .seconds(max(0.5, total - evalLeadTime)))
+                try? await Task.sleep(for: .seconds(max(0.5, total - lead)))
                 do {
                     _ = try await chrome.evaluateJavaScript(eval, contentWorld: .page) // this overload tolerates an undefined result
                 } catch {
                     NSLog("Dialup chrome eval failed: %@", error.localizedDescription)
                 }
-                try? await Task.sleep(for: .seconds(evalLeadTime))
+                try? await Task.sleep(for: .seconds(lead))
             } else {
                 try? await Task.sleep(for: .seconds(total))
             }

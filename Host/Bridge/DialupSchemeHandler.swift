@@ -20,7 +20,7 @@ final class DialupSchemeHandler: NSObject, WKURLSchemeHandler {
     static var bundleResources: URL { Bundle.main.resourceURL! }
 
     static func bundled() -> DialupSchemeHandler {
-        DialupSchemeHandler(roots: ["chrome": [bundleResources.appendingPathComponent("Chrome")]])
+        DialupSchemeHandler(roots: ["chrome": [bundleResources.appendingPathComponent("UI")]])
     }
 
     func webView(_ webView: WKWebView, start task: any WKURLSchemeTask) {
