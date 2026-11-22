@@ -2,6 +2,7 @@
 
 | Document | What's in it |
 |---|---|
+| [DEVELOPING.md](DEVELOPING.md) | Building, how it works, skinning, debug snapshots, roadmap. |
 | [PLAN.md](PLAN.md) | Architecture as built, what's done, and what's next. Kept current. |
 | [host-api.md](host-api.md) | The bridge between the browser UI (`UI/`) and the Swift host: commands, events, keyboard, menus and dialogs, the start page. |
 | [EXTENDING-PROPOSAL.md](EXTENDING-PROPOSAL.md) | Proposal (not built yet) for user skins, toolbars, page styles, sound packs and an add-on gallery, with the security model. |
