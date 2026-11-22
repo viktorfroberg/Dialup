@@ -11,7 +11,7 @@
   <a href="https://github.com/viktorfroberg/Dialup/actions/workflows/ci.yml"><img src="https://github.com/viktorfroberg/Dialup/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
-Dialup is a macOS browser with the look of the early 2000s: the XP title bar, the brushed-metal Mac toolbar, the grey bevels of Windows 98. Underneath it's modern WebKit, so today's web works fine.
+Dialup is a fast, free web browser for your Mac. Browse in tabs, leave the ads behind and dress the whole browser in the skin you like best: Luna, Aqua or Classic. It runs on the same engine as Safari, so the Web just works.
 
 <p align="center">
   <img src="docs/screenshots/dialup-mode.gif" width="800" alt="Animation: Dial-up Mode loading the 1996 Space Jam website. The planets appear one by one while the status bar counts down the items remaining, then reads Done.">
@@ -29,9 +29,9 @@ Dialup isn't notarized, so the zip needs **System Settings → Privacy & Securit
 
 ## Features
 
-- **Three skins:** Luna (XP), Aqua (Mac OS X) and Classic (Windows 98). Each is one CSS file.
-- **Dial-up Mode** (⇧⌘D): pictures load at modem speed, "(3 items remaining)", 256 colours, old fonts.
-- **A 2004-style start page**, tabs or one page per window, a Wayback button, ad blocking and synthesized sounds.
+- **Skins:** Luna, Aqua and Classic restyle the whole browser. Each is one CSS file, so you can make your own.
+- **Dial-up Mode** (⇧⌘D): see the Web the way 56k visitors do, with pictures arriving one by one.
+- **Tabbed browsing**, ad and tracker blocking, its own start page, a Wayback button and automatic updates.
 
 <p align="center">
   <img src="docs/screenshots/skins.gif" width="800" alt="Animation: the start page in the three skins, Luna, Aqua and Classic, one after another">
@@ -53,5 +53,4 @@ Toolbar icons from the [Tango Icon Library](http://tango.freedesktop.org/) (publ
 <p align="center">
   <img src="site/img/btn-dialup-now.gif" width="88" height="31" alt="Dialup NOW!">
   <img src="site/img/btn-valid-html.gif" width="88" height="31" alt="Valid HTML">
-  <img src="site/img/counter.gif" alt="Visitor counter (decoration)">
 </p>

@@ -159,8 +159,6 @@ table.links td:first-child { width: 150px; background: #eef2f8; font-weight: bol
 #footer { border-top: 1px solid #8f97a6; background: #eeede6; padding: 10px 10px 12px; text-align: center; font-size: 10px; color: #555; }
 #footer .buttons { margin-bottom: 8px; line-height: 0; }
 #footer .buttons a, #footer .buttons img { display: inline-block; margin: 2px; vertical-align: top; }
-#footer .counter { margin: 6px 0; }
-#footer .counter img { vertical-align: middle; margin: 0 4px; }
 .totop { text-align: right; font-size: 10px; margin: 4px 0 0; }
 
 /* ---------- small screens: keep the look, stack the columns ---------- */

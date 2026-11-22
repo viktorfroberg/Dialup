@@ -2,7 +2,7 @@
 """Generate the small pixel graphics for the Dialup homepage (site/img/).
 
 Everything here is drawn from scratch with PIL: 88x31 buttons, the NEW! badge,
-bullets, the gradient tiles and the (decorative) hit counter.
+bullets, the gradient tiles.
 Text is rendered without antialiasing (fontmode "1"), the way 2003 buttons looked.
 
 Also copies/resizes the screenshots and the favicon from the repo.
@@ -226,16 +226,6 @@ def gradient_tiles():
     vgrad(24, (250, 250, 247), (222, 220, 210), "navbar-bg.gif")
 
 
-def counter():
-    digits = "004221"
-    cw, ch = 11, 16
-    im, d = canvas(cw * len(digits) + 2, ch + 2, (60, 60, 60))
-    f = VERDANA_B(11)
-    for i, c in enumerate(digits):
-        x = 1 + i * cw
-        d.rectangle([x, 1, x + cw - 2, ch], fill=(0, 0, 0))
-        text_c(d, (x, 1, x + cw - 1, ch + 1), c, f, (120, 255, 120))
-    save_gif([im], "counter.gif", [0])
 
 
 # ---------------------------------------------------------------- photos & icons
@@ -286,6 +276,6 @@ def icons():
 if __name__ == "__main__":
     btn_dialup_now(); btn_made_on_mac(); btn_valid_html(); btn_mit()
     btn_no_cookies(); btn_get_dialup(); btn_800x600()
-    new_badge(); bullets(); gradient_tiles(); counter()
+    new_badge(); bullets(); gradient_tiles()
     screenshots(); icons()
     print("wrote", len(list(OUT.iterdir())), "files to", OUT)
