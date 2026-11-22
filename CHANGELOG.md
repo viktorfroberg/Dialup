@@ -2,6 +2,11 @@
 
 Milestones so far, oldest first.
 
+## 1.0.1 (2026-11-22)
+
+- Tab tooltips no longer pop up over the page when the pointer crosses a tab on its way down.
+- Dial-up Mode's old fonts are applied in idle batches, so busy pages with lots of new content stay smooth.
+
 ## 1.0.0 (2026-11-22)
 
 The first real release: Dialup now keeps itself up to date.
