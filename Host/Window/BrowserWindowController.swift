@@ -91,6 +91,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, WKNav
 
         window.contentView = layoutView
         layoutView.chromeView = chromeView
+        layoutView.onPointerEnteredPage = { [weak self] in self?.emit("pointerOnPage", [:]) }
         if let key = NSApp.keyWindow, Self.all.count > 0 {
             window.setFrame(key.frame, display: false)
             window.setFrameTopLeftPoint(window.cascadeTopLeft(from: NSPoint(x: key.frame.minX, y: key.frame.maxY)))

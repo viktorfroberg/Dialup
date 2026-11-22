@@ -199,24 +199,37 @@
     }
     const NO_FONT = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'svg', 'IMG', 'VIDEO', 'CANVAS', 'IFRAME', 'BR']);
     /** Tags elements whose font differs from their parent's with its kind. Children that inherit need no tag. */
-    function tagFonts(root) {
-      if (!root || !root.querySelectorAll) return;
+    function tagFonts(roots) {
       const found = [];
-      for (const el of [root, ...root.querySelectorAll('*')]) {
-        if (!(el instanceof Element) || NO_FONT.has(el.tagName) || el.hasAttribute('data-dialup-font') || el.closest(HEADLINES)) continue;
-        const family = getComputedStyle(el).fontFamily;
-        const parent = el.parentElement;
-        if (parent && parent !== document.documentElement && getComputedStyle(parent).fontFamily === family) continue;
-        const kind = fontKind(family);
-        if (kind) found.push([el, kind]);
+      for (const root of roots) {
+        if (!root || !root.isConnected || !root.querySelectorAll) continue;
+        for (const el of [root, ...root.querySelectorAll('*')]) {
+          if (!(el instanceof Element) || NO_FONT.has(el.tagName) || el.hasAttribute('data-dialup-font') || el.closest(HEADLINES)) continue;
+          const family = getComputedStyle(el).fontFamily;
+          const parent = el.parentElement;
+          if (parent && parent !== document.documentElement && getComputedStyle(parent).fontFamily === family) continue;
+          const kind = fontKind(family);
+          if (kind) found.push([el, kind]);
+        }
       }
-      // Read everything first, then tag: tagging changes what children inherit.
+      // Read everything first, then tag: tagging changes what children inherit, and mixing reads
+      // and writes would make WebKit recalculate styles again and again.
       for (const [el, kind] of found) el.setAttribute('data-dialup-font', kind);
     }
-    document.addEventListener('DOMContentLoaded', () => { if (cfg.enabled && cfg.oldFonts) tagFonts(document.body); });
+    // New content (infinite scroll, ads, live updates) is tagged in one batch when the page is idle.
+    let fontQueue = [];
+    let fontScheduled = false;
+    function queueFonts(node) {
+      fontQueue.push(node);
+      if (fontScheduled) return;
+      fontScheduled = true;
+      const run = () => { fontScheduled = false; tagFonts(fontQueue.splice(0)); };
+      if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 400 }); else setTimeout(run, 100);
+    }
+    document.addEventListener('DOMContentLoaded', () => { if (cfg.enabled && cfg.oldFonts) tagFonts([document.body]); });
     new MutationObserver((records) => {
       if (!cfg.enabled || !cfg.oldFonts) return;
-      for (const record of records) for (const node of record.addedNodes) if (node.nodeType === 1) tagFonts(node);
+      for (const record of records) for (const node of record.addedNodes) if (node.nodeType === 1) queueFonts(node);
     }).observe(document, { childList: true, subtree: true });
 
     new MutationObserver((records) => {
@@ -251,7 +264,7 @@
           + (cfg.noShadows ? CSS_NO_SHADOWS : '') + (cfg.noAnimations ? CSS_NO_MOTION : '') + (cfg.underlineLinks ? CSS_LINKS : '');
         if (!style.isConnected) attach(style);
         if (cfg.gifImages) ensureSvg();
-        if (cfg.oldFonts && document.body) tagFonts(document.body);
+        if (cfg.oldFonts && document.body) tagFonts([document.body]);
         // Turned on mid-page: don't re-hide what's already loaded; the next page trickles in.
         if (!wasActive) document.querySelectorAll('img').forEach((img) => { if (img.complete) { seen.add(img); show(img); } });
         if (!cfg.bps) queue.splice(0).forEach(show);

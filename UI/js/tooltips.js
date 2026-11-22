@@ -2,6 +2,8 @@
 // The chrome sits under the page, so tips are kept inside the chrome area (above the cursor
 // when they would otherwise fall onto the page).
 
+import { onEvent } from './host.js';
+
 const tip = document.getElementById('tooltip');
 let timer = null;
 let current = null;
@@ -39,6 +41,8 @@ document.addEventListener('mouseover', (e) => {
   timer = setTimeout(() => showFor(target, clientX, clientY), delay());
 });
 document.addEventListener('mousedown', hide, true);
+// The pointer moved onto the page (which covers the chrome there): no more mouse events reach us.
+onEvent('pointerOnPage', hide);
 document.addEventListener('mouseleave', hide);
 
 // Icon-only buttons get their tooltip as their accessible name. Buttons whose text label a skin

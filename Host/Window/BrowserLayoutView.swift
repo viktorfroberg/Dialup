@@ -53,6 +53,25 @@ final class BrowserLayoutView: NSView {
         didSet { needsLayout = true }
     }
 
+    /// Called when the pointer moves onto the page. The page covers the chrome there, so the chrome
+    /// would never hear that the mouse left its tab or button (and a pending tooltip would show).
+    var onPointerEnteredPage: (() -> Void)?
+    private var pageTracking: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let pageTracking { removeTrackingArea(pageTracking) }
+        pageTracking = nil
+        guard let pageView, !pageView.isHidden else { return }
+        let area = NSTrackingArea(rect: pageView.frame, options: [.mouseEnteredAndExited, .activeAlways], owner: self, userInfo: nil)
+        addTrackingArea(area)
+        pageTracking = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        if event.trackingArea === pageTracking, !chromeOnTop { onPointerEnteredPage?() }
+    }
+
     /// nil until the chrome has reported its layout; the page stays hidden until then.
     var insets: NSEdgeInsets? {
         didSet { needsLayout = true }
@@ -74,5 +93,6 @@ final class BrowserLayoutView: NSView {
             width: max(0, bounds.width - i.left - i.right),
             height: max(0, bounds.height - i.top - i.bottom)
         )
+        updateTrackingAreas()
     }
 }

@@ -70,6 +70,7 @@ Arguments marked `?` are optional; the default is given where it matters.
 | `bookmarksImported` | `{ added, found }` |
 | `dialupMode` | dial-up mode settings. The chrome sets body class `dialup-mode` |
 | `download` | `{ name, fraction, state: 'downloading' \| 'done' \| 'failed', path }`. Downloads go to ~/Downloads and never overwrite (`file 2.zip`…) |
+| `pointerOnPage` | – the mouse moved onto the page area; the chrome hides tooltips (it gets no mouse events there) |
 | `update` | one step of a software update, as `{ phase, … }`: `checking`; `found` `{ version, current, notesURL, downloaded }`; `notFound` `{ current }`; `error` `{ message }`; `downloading` `{ received, total }` (bytes, repeated); `extracting` `{ progress }` (0–1, repeated); `ready`; `installing`; `dismiss` (close the dialog). One window shows it; a window that opens mid-update gets the current step. Answer with `updateChoice` |
 | `openFind` | – sent on ⌘F; the chrome shows its Find dialog |
 | `findAgain` | `{ backwards }` – sent on ⌘G / ⇧⌘G |
